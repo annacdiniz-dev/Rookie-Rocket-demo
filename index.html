@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css?v=4">
+<link rel="stylesheet" href="estilo.css?v=5">
 </head>
 <body class="inicio">
 
@@ -20,21 +20,20 @@
 <div id="game" aria-label="Rookie Rocket 3D"></div>
 <div id="world-ui" aria-hidden="true"></div>
 
-<!-- ===== HUD ===== -->
+<!-- ===== HUD: esquerda = idioma, créditos, álbum · direita = astronauta e missões ===== -->
 <div class="hud hud-top-left">
-  <div class="chip brand"><svg class="logo"><use href="#logo"/></svg> ROOKIE ROCKET</div>
-  <button class="icon-btn" id="btn-map" data-i18n-title="btn_mapa" aria-label="Mapa">🗺️</button>
-  <button class="icon-btn lang-btn" id="btn-lang" data-i18n-title="btn_idioma" aria-label="Idioma">EN</button>
-  <button class="icon-btn" id="btn-credits" data-i18n-title="btn_creditos" aria-label="Créditos">ⓘ</button>
+  <button class="hud-btn" id="btn-lang" data-i18n-title="btn_idioma"><span class="ico">🌐</span><b id="btn-lang-txt">EN</b></button>
+  <button class="hud-btn so-ico" id="btn-credits" data-i18n-title="btn_creditos"><span class="ico-i">i</span></button>
+  <button class="hud-btn" id="btn-album" data-i18n-title="btn_album"><span class="ico">📖</span><b data-i18n="btn_album">Álbum espacial</b></button>
 </div>
 
 <div class="hud leaderstats">
-  <div class="ls-head"><span data-i18n="ls_nome">Astronauta</span><span data-i18n="ls_expos">Expos</span><span>★</span></div>
-  <div class="ls-row"><span id="ls-name">—</span><span id="ls-expo">0/6</span><span id="ls-badges">0</span></div>
+  <div class="ls-head"><span data-i18n="ls_nome">Astronauta</span><span data-i18n="ls_miss">Missões</span></div>
+  <div class="ls-row"><span id="ls-name">—</span><span id="ls-miss">0/2</span></div>
 </div>
 
 <aside class="hud missions" id="missions">
-  <button class="missions-head" id="missions-toggle" aria-expanded="true"><span><svg class="logo"><use href="#logo"/></svg> <span data-i18n="missoes_titulo">MISSÕES</span></span> <i>▾</i></button>
+  <button class="missions-head" id="missions-toggle" aria-expanded="true"><span><svg class="logo"><use href="#logo"/></svg> <span data-i18n="missoes_titulo">OBJETIVOS</span></span> <i>▾</i></button>
   <ol id="mission-list"></ol>
 </aside>
 
@@ -57,51 +56,46 @@
   <button class="jump-btn" id="jump-btn" aria-label="Jump">⤒</button>
 </div>
 
-<!-- ===== Missão: cabine em primeira pessoa ===== -->
+<!-- ===== Fase 1: cabine em primeira pessoa ===== -->
 <div id="missao" hidden>
   <div class="m-vermelho" id="m-vermelho"></div>
   <div class="m-visor"></div>
+  <div class="m-mira" id="m-mira" aria-hidden="true"></div>
+  <div class="m-splash" id="m-splash"><svg class="logo"><use href="#logo"/></svg><small id="m-splash-fase"></small><b id="m-splash-task"></b></div>
   <div class="m-top">
     <div class="m-titulo"><svg class="logo"><use href="#logo"/></svg><div><small id="m-fase"></small><b id="m-task"></b></div></div>
     <div class="m-alerta" id="m-alerta"></div>
     <button class="m-sair" id="m-sair"></button>
   </div>
-  <div class="m-rcs"><span id="m-rcs-l"></span><div class="m-barra"><i id="m-rcs-bar"></i></div><b id="m-rcs-v">100%</b></div>
   <div class="m-alvos"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div><span id="m-tempo-l"></span><b id="m-tempo">0,0 s</b></div>
-  <div class="m-baixo">
-    <div class="m-dica" id="m-dica"></div>
-    <div class="m-controles">
-      <button class="m-seta" id="m-esq" aria-label="←">◀</button>
-      <button class="m-botao" id="m-botao"></button>
-      <button class="m-seta" id="m-dir" aria-label="→">▶</button>
-    </div>
-  </div>
+  <div class="m-baixo"><div class="m-dica" id="m-dica"></div></div>
 </div>
 
-<dialog id="m-brief" class="m-card">
-  <div class="m-card-head"><svg class="logo"><use href="#logo"/></svg><div><small id="mb-fase"></small><h2 id="mb-task"></h2></div><span class="tag" id="mb-tipo"></span></div>
-  <div class="m-card-body">
-    <div class="m-col">
-      <p class="m-intro" id="mb-intro"></p>
-      <h3 id="mb-como-t"></h3><ol id="mb-como"></ol>
-      <button class="big-btn" id="mb-comecar"></button>
-    </div>
-    <div class="m-col m-hist">
-      <div class="m-fotos" id="mb-fotos"></div>
-      <h3 id="mb-hist-t"></h3><ul id="mb-fatos"></ul>
-      <p class="m-aviso" id="mb-aviso"></p>
-      <div class="source" id="mb-fontes"></div>
-    </div>
+<!-- Banner: missão concluída + card da missão real -->
+<dialog id="m-fim" class="banner">
+  <div class="banner-topo ok"><span class="selo">✔</span><h2 id="mf-titulo"></h2></div>
+  <div class="banner-corpo">
+    <small class="novo-card" id="mf-novo"></small>
+    <div id="mf-card"></div>
+    <div class="banner-botoes"><button class="big-btn alt" id="mf-voltar"></button><button class="big-btn" id="mf-proxima"></button></div>
   </div>
 </dialog>
 
-<dialog id="m-fim" class="m-card m-fim">
-  <div class="m-fim-icone" id="mf-icone"></div>
-  <h2 id="mf-titulo"></h2>
-  <p id="mf-texto"></p>
-  <div class="m-stats" id="mf-stats"></div>
-  <p class="m-aprendizado" id="mf-aprendizado"></p>
-  <div class="m-fim-botoes"><button class="big-btn small alt" id="mf-voltar"></button><button class="big-btn small" id="mf-tentar"></button></div>
+<!-- Banner: continuar no Roblox -->
+<dialog id="roblox" class="banner pequeno">
+  <button class="close" data-close data-i18n-label="fechar">✕</button>
+  <div class="banner-topo"><svg class="logo"><use href="#logo"/></svg><h2 id="rb-titulo"></h2></div>
+  <div class="banner-corpo centro">
+    <p id="rb-texto"></p>
+    <a class="big-btn" id="rb-link" target="_blank" rel="noopener noreferrer"></a>
+  </div>
+</dialog>
+
+<!-- Álbum espacial -->
+<dialog id="album" class="banner">
+  <button class="close" data-close data-i18n-label="fechar">✕</button>
+  <div class="banner-topo"><span class="selo livro">📖</span><div><h2 id="al-titulo"></h2><p id="al-sub"></p></div></div>
+  <div class="banner-corpo"><div class="al-grade" id="al-grade"></div></div>
 </dialog>
 
 <!-- ===== Tela inicial ===== -->
@@ -154,7 +148,7 @@
   </div>
 </div>
 
-<!-- ===== Card de exposição ===== -->
+<!-- ===== Card de exposição (fecha só no ✕) ===== -->
 <dialog id="info">
   <button class="close" data-close data-i18n-label="fechar">✕</button>
   <div class="info-photo"><img id="info-img" alt=""><div class="info-thumbs" id="info-thumbs"></div></div>
@@ -163,30 +157,18 @@
     <h2 id="info-title"></h2>
     <ul id="info-facts"></ul>
     <div class="source" id="info-source"></div>
-    <button class="big-btn small" data-close data-i18n="continuar"></button>
   </div>
 </dialog>
 
-<!-- ===== Mapa ===== -->
-<dialog id="map">
-  <button class="close" data-close data-i18n-label="fechar">✕</button>
-  <span class="tag" data-i18n="mapa_tag"></span>
-  <h2 data-i18n="mapa_titulo"></h2>
-  <div class="map-grid">
-    <button data-tp="recepcao"><b>01</b> <span data-i18n="tp_recepcao"></span><small data-i18n="tp_recepcao_s"></small></button>
-    <button data-tp="museu"><b>02</b> <span data-i18n="tp_museu"></span><small data-i18n="tp_museu_s"></small></button>
-    <button data-tp="hangar"><b>03</b> <span data-i18n="tp_hangar"></span><small data-i18n="tp_hangar_s"></small></button>
-    <button data-tp="elevador"><b>04</b> <span data-i18n="tp_elevador"></span><small data-i18n="tp_elevador_s"></small></button>
-    <button data-tp="braco"><b>05</b> <span data-i18n="tp_braco"></span><small data-i18n="tp_braco_s"></small></button>
-  </div>
-  <p class="map-note" data-i18n="mapa_nota"></p>
-</dialog>
-
-<!-- ===== Créditos ===== -->
+<!-- ===== Fontes, créditos e equipe ===== -->
 <dialog id="credits">
   <button class="close" data-close data-i18n-label="fechar">✕</button>
   <span class="tag" data-i18n="cr_tag"></span>
   <h2 data-i18n="cr_titulo"></h2>
+  <div class="equipe">
+    <div class="equipe-titulo"><svg class="logo"><use href="#logo"/></svg><b data-i18n="cr_equipe">EQUIPE</b></div>
+    <div class="equipe-nomes" id="cr-equipe"></div>
+  </div>
   <p data-i18n-html="cr_p1"></p>
   <p data-i18n-html="cr_p2"></p>
   <p data-i18n-html="cr_p3"></p>
@@ -198,7 +180,7 @@
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js?v=4"></script>
-<script src="jogo.js?v=4"></script>
+<script src="dados.js?v=5"></script>
+<script src="jogo.js?v=5"></script>
 </body>
 </html>

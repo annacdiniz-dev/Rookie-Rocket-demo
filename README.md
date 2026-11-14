@@ -16,19 +16,31 @@ Um único card, nesta ordem:
 
 No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa.
 
-## Fase 1 · Projeto Mercury · Task 1: O Colapso do Piloto Automático
+## HUD
 
-Ao embarcar pela escotilha no braço de acesso, o **capacete aparece automaticamente** e abre o briefing da missão. A cabine é **em primeira pessoa**, vista através da viseira:
+- **Esquerda:** idioma (🌐 PT/EN), **i** (fontes, créditos e a equipe em destaque) e **Álbum espacial**.
+- **Direita:** nome do astronauta e **Missões 0/2** (vira 1/2 ao concluir a Fase 1).
 
-1. A tela treme, fica vermelha e pisca o alerta laranja **FALHA NO SISTEMA AUTOMÁTICO**.
-2. O jogador clica no botão vermelho **DESLIGAR AUTOPILOTO** (ou aperta Enter/Espaço).
-3. A cruz do mostrador de atitude começa a deslizar sozinha. Com **← e →** (ou os botões na tela), o jogador leva a cruz até o **alvo verde** e segura ali. São **4 alvos**.
-4. Cada toque gasta **combustível RCS** (40 toques no tanque). Segurar a tecla não dispara mais propulsores: cada toque conta. Em pânico, o combustível acaba em cerca de 10 s e a missão falha.
-5. Com 4 alvos travados, o piloto automático volta, tudo se normaliza e a conquista **Piloto do Projeto Mercury** é liberada.
+**Equipe:** Anna Clara Diniz, Hurias Felipe Silveira, Luis Renato Fernandes, Nando Nogueira, Túlio Amaral e Valter Cauã Alves.
 
-Testes automáticos com um "jogador calmo" venceram as 5 rodadas (27 a 34 s, sobrando de 28% a 50% de RCS). Com o "jogador em pânico", o combustível acabou em 10,2 s. Os ajustes de dificuldade ficam no topo do bloco da missão em `jogo.js` (`const AJ`).
+## Fase 1 · Projeto Mercury: O Colapso do Piloto Automático
 
-**Base histórica (NASA):** Friendship 7 (9248362), Aurora 7 (62PC-52), treino de controle manual no ALFA (s62-01145) e o simulador MASTIF (GRC-1959-C-52235). A API da NASA **não** tem registros que descrevam a pane de piloto automático desses voos, então o briefing avisa que a pane é uma simulação do jogo, inspirada nessas missões e nesse treinamento.
+Ao embarcar pela escotilha, o **capacete aparece sozinho** e a cabine abre **em primeira pessoa**, já com o piloto automático desligado. Na tela aparece só o título da fase.
+
+1. A tela treme e fica vermelha, e pisca o alerta **FALHA NO PILOTO AUTOMÁTICO**.
+2. Há um **+** no centro da visão e **4 pontos vermelhos no espaço**, fora da nave.
+3. O jogador move a câmera (mouse, setas/WASD ou arrastar no celular) até o + ficar sobre um ponto e **segura 2 s**. Um **círculo branco** em volta do ponto mostra o tempo.
+4. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
+5. Aparece o banner **Missão concluída com sucesso!** com o **card da missão real** (Friendship 7, 1962: objetivo, o que aconteceu e foto oficial da NASA). O card entra no **Álbum espacial**.
+6. **Voltar a explorar** volta ao mapa. **Próxima fase** abre o banner **A aventura continua no Roblox!**. Embarcar de novo depois da Fase 1 também abre esse banner.
+
+O capacete sai da cabeça quando o jogador desce da plataforma de cima (pulando ou de elevador) e volta quando ele sobe de novo.
+
+**Fontes do card:** foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório oficial da NASA no NTRS (20040110111), que registra dificuldades no voo e mudanças na sequência planejada.
+
+## Link do Roblox
+
+Quando o jogo estiver pronto, cole o link em `linkRoblox`, no topo do [dados.js](dados.js). Enquanto estiver vazio, o botão mostra "Link do jogo em breve".
 
 ## O que tem no mapa
 
@@ -38,14 +50,13 @@ Testes automáticos com um "jogador calmo" venceram as 5 rodadas (27 a 34 s, sob
 | → | Corredor 1 | Setas neon e placas "Museu KSC" |
 | 02 | **Museu: Kennedy Space Center Visitor Complex** | 6 exposições: Rocket Garden, Sigma 7 sobre Redstone, Controle de Missão Mercury, Hall da Fama com estátua, **Atlantis erguido e inclinado 43,21° com as portas abertas**, **Saturn V suspenso na horizontal** |
 | → | Corredor 2 (na parede **oposta** à entrada) | "Corredor de embarque" |
-| 03 | **Hangar** | Nave RR-01, **escada à direita da nave** até a plataforma, **elevador** até o braço de acesso e a escotilha, que leva à **Fase 1** |
+| 03 | **Hangar** | Nave RR-01, **escada à direita da nave** até a plataforma, **elevador** (com botões de chamada no chão, embaixo e em cima) até o braço de acesso e a escotilha, que leva à **Fase 1** |
 
 ## Controles
 
 - **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo.
 - **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom.
 - **Clique** em personagens, totens, Atlantis, Saturn V ou na nave para abrir as informações.
-- **M** ou 🗺️: mapa com teleporte rápido.
 - **Celular**: joystick, botão de pulo e toque nos prompts.
 
 O progresso (nome, missões, exposições vistas) fica salvo no navegador.
@@ -53,7 +64,8 @@ O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 **Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
 - `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`, `braco`)
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
-- `index.html#lang=pt&g=m&jogar&missao`: abre o briefing da Fase 1 (`missao=direto` pula o briefing)
+- `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 (`missao=fim` mostra o banner de conclusão)
+- `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
 
 ## Regra de dados: só NASA
 

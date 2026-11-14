@@ -45,13 +45,21 @@ const DADOS = {
     ]
   },
 
-  // Fase 1 · Task 1 (briefing da missão)
-  missao1: [
-    { id: '9248362', data: '1962-02-20', credito: 'NASA/MSFC', foto: 'nasa/9248362.jpg' },
-    { id: '62PC-52', data: '1962-05-24', credito: 'NASA', foto: 'nasa/62PC-52.jpg' },
-    { id: 's62-01145', data: '1961-01-01', credito: 'NASA', foto: 'nasa/s62-01145.jpg' },
-    { id: 'GRC-1959-C-52235', data: '1959-12-23', credito: 'NASA/GRC', foto: 'nasa/GRC-1959-C-52235.jpg' }
+  // >>> LINK DO JOGO NO ROBLOX <<<
+  // Quando o jogo oficial estiver pronto, cole o link entre as aspas (ex.: 'https://www.roblox.com/games/123456/Rookie-Rocket').
+  // Enquanto estiver vazio, o banner mostra "link em breve".
+  linkRoblox: '',
+
+  equipe: ['Anna Clara Diniz', 'Hurias Felipe Silveira', 'Luis Renato Fernandes', 'Nando Nogueira', 'Túlio Amaral', 'Valter Cauã Alves'],
+
+  // Álbum espacial: um card de missão real por fase concluída. O total de espaços define o "Missões 0/2".
+  // Fase 1 → Friendship 7 (foto: NASA Image and Video Library 9248362; "o que aconteceu": relatório NTRS abaixo).
+  album: [
+    { id: 'missao1', ano: '1962', foto: 'nasa/9248362.jpg', registro: { id: '9248362', data: '1962-02-20', credito: 'NASA/MSFC' } },
+    { id: 'missao2' } // espaço reservado para o card da próxima fase
   ],
+  // NASA Technical Reports Server (API oficial https://ntrs.nasa.gov/api): "Summary results of the first United States manned orbital space flight"
+  ntrs: { id: '20040110111', url: 'https://ntrs.nasa.gov/citations/20040110111' },
 
   exposMuseu: ['jardim', 'sigma7', 'controle', 'halldafama', 'atlantis', 'saturnv'],
   missoes: [{ id: 'falar' }, { id: 'museu' }, { id: 'expo', meta: 6 }, { id: 'hangar' }, { id: 'escada' }, { id: 'elevador' }, { id: 'missao1' }],
@@ -68,7 +76,7 @@ const DADOS = {
         jogar: '▶ JOGAR', carregando: 'Carregando a base…', escolha_genero: 'Escolha Feminino ou Masculino para jogar',
         start_texto: 'Seu primeiro dia na agência espacial começa agora. Fale com o guia, explore o museu do Kennedy Space Center e encontre sua nave no hangar.',
         start_nota: 'Demo local do jogo que está sendo criado no Roblox · Fatos e fotos: NASA Image and Video Library',
-        missoes_titulo: 'MISSÕES', ls_nome: 'Astronauta', ls_expos: 'Expos',
+        missoes_titulo: 'OBJETIVOS', ls_nome: 'Astronauta', ls_miss: 'Missões', btn_album: 'Álbum espacial', cr_equipe: 'EQUIPE',
         hint_andar: 'andar', hint_pular: 'pular', hint_interagir: 'interagir', hint_capacete: 'capacete', hint_camera: 'arraste para girar · roda = zoom',
         conquista: 'CONQUISTA DESBLOQUEADA',
         mapa_tag: 'TELEPORTE RÁPIDO', mapa_titulo: 'Mapa da base',
@@ -83,7 +91,7 @@ const DADOS = {
         cr_p2: 'Todos os fatos e fotos das exposições vêm da <b>NASA Image and Video Library</b> (API oficial images-api.nasa.gov). Cada card mostra o ID do registro, a data e o crédito.',
         cr_p3: 'Cenários, personagens, trajes e a nave RR-01 são criações originais em estilo de blocos. O museu é uma representação simplificada, não uma réplica arquitetônica.',
         cr_p4: 'As falas do personagem Marcos Pontes são <b>fictícias</b>, escritas para o jogo. Os fatos citados nelas vêm dos registros da NASA iss012e22280 e 20060409_exp12_11.',
-        cr_p5: 'Motor 3D: three.js r128 (licença MIT). Fonte de títulos: Michroma (SIL Open Font License). Ambos incluídos na pasta lib.',
+        cr_p5: 'Motor 3D: three.js r128 (licença MIT). Fontes: Outfit e Michroma (SIL Open Font License). Tudo incluído na pasta lib.',
         cr_desafio: 'Página do desafio',
         continuar: 'Continuar explorando', fechar: 'Fechar',
         btn_mapa: 'Mapa (M)', btn_creditos: 'Fontes e créditos', btn_idioma: 'Trocar idioma', btn_capacete: 'Capacete (H)',
@@ -133,7 +141,7 @@ const DADOS = {
           'Foi o primeiro voo de teste integrado dos sistemas de exploração do espaço profundo da NASA: Orion, SLS e sistemas de solo.',
           'A Orion voltou em 11 de dezembro de 2022, depois de 25,5 dias. Nenhuma nave feita para humanos tinha ido tão longe no espaço profundo.'] }
       },
-      missoes: { falar: 'Fale com Marcos Pontes', museu: 'Entre no museu do Kennedy Space Center', expo: 'Explore as exposições do museu', expo_cont: 'exposições', hangar: 'Chegue ao hangar da nave', escada: 'Suba a escada da plataforma', elevador: 'Use o elevador até o braço de acesso', missao1: 'Embarque na nave: Fase 1 · Task 1' },
+      missoes: { falar: 'Fale com Marcos Pontes', museu: 'Entre no museu do Kennedy Space Center', expo: 'Explore as exposições do museu', expo_cont: 'exposições', hangar: 'Chegue ao hangar da nave', escada: 'Suba a escada da plataforma', elevador: 'Use o elevador até o braço de acesso', missao1: 'Embarque na nave e conclua a Fase 1' },
       conquistas: { falar: 'Recrutad{o}!', museu: 'Visitante do KSC', expo: 'Historiador{a} Espacial', hangar: 'Dentro do Hangar', escada: 'Fôlego de Astronauta', elevador: 'Pront{o} para Embarcar', missao1: 'Pilot{o} do Projeto Mercury' },
       zonas: {
         recepcao: ['AGÊNCIA ROOKIE ROCKET', 'Recepção'], c1: ['EM TRÂNSITO', 'Corredor para o museu'],
@@ -150,34 +158,26 @@ const DADOS = {
         perto: 'Chegue mais perto para interagir! 🚶', capacete: '🪖 Capacete travado! Preparando o embarque…'
       },
       missao: {
-        fase: 'FASE 1 · PROJETO MERCURY', task: 'Task 1: O Colapso do Piloto Automático', tipo: 'O CONTROLE',
-        intro: 'Sua cápsula está em órbita quando o sistema automático falha. Assuma o controle manual, mantenha a nave estável e economize combustível!',
-        historia_titulo: 'BASE HISTÓRICA (NASA)',
-        fatos: [
-          'Friendship 7 (MA-6), 20/02/1962: John Glenn fez o primeiro voo orbital tripulado dos EUA, com cerca de 5 horas e três voltas na Terra.',
-          'Aurora 7 (MA-7), 24/05/1962: Scott Carpenter decolou do Complexo 14 no segundo voo orbital tripulado.',
-          'Carpenter treinou controle manual no simulador ALFA, que mostrava a imagem da superfície da Terra enquanto ele pilotava a nave.',
-          'No simulador MASTIF, que girava em três eixos (de 2 a 50 rotações por minuto), os astronautas do Mercury usavam pequenos propulsores de gás nitrogênio para controlar uma nave girando. Se o controle de atitude falhasse, o escudo térmico ficaria fora de posição e a nave queimaria na reentrada.'
-        ],
-        aviso: 'A pane desta tarefa é uma simulação do jogo, inspirada nessas missões e nesse treinamento.',
-        como_titulo: 'COMO JOGAR',
-        como: [
-          'Quando o alarme tocar, clique no botão vermelho DESLIGAR AUTOPILOTO.',
-          'Use ← e → (ou os botões na tela) para levar a cruz até o alvo verde e segure ali.',
-          'Cada toque gasta combustível RCS. Toques suaves e precisos! Em pânico, o combustível acaba em segundos.',
-          'Trave 4 alvos e o piloto automático volta a funcionar.'
-        ],
-        comecar: 'Começar a missão', sair: 'Sair da missão',
-        alerta: '⚠ FALHA NO SISTEMA AUTOMÁTICO', restaurado: '✔ PILOTO AUTOMÁTICO RESTAURADO',
-        botao: 'DESLIGAR AUTOPILOTO', dica_alarme: 'A nave está girando sozinha! Desligue o piloto automático.',
-        dica_manual: 'Leve a cruz até o alvo verde com toques curtos em ← →', segure: 'Segure no alvo…', travado: 'Alvo travado!',
-        panico: 'Calma! Toques suaves economizam combustível.', rcs: 'COMBUSTÍVEL RCS', alvos: 'ALVOS', tempo: 'TEMPO',
-        sucesso_titulo: 'Missão cumprida!', sucesso_txt: 'Você manteve a cápsula estável no controle manual até o piloto automático voltar.',
-        aprendizado: 'Aprendizado: controle manual e gerenciamento de recursos em situação de estresse.',
-        restou: 'Combustível restante', fim_tempo: 'Tempo',
-        falha_titulo: 'Sem combustível RCS!', falha_txt: 'Os propulsores secaram e a cápsula ficou à deriva. Dica: faça correções suaves e deixe a nave deslizar até o alvo antes de corrigir de novo.',
-        tentar: 'Tentar de novo', voltar: 'Voltar ao hangar'
+        fase: 'FASE 1 · PROJETO MERCURY', task: 'O Colapso do Piloto Automático', sair: 'Sair',
+        alerta: '⚠ FALHA NO PILOTO AUTOMÁTICO', restaurado: '✔ PILOTO AUTOMÁTICO RESTAURADO',
+        dica: 'Mova a câmera: leve o + até um ponto vermelho e segure 2 s',
+        dica_toque: 'Arraste a tela: leve o + até um ponto vermelho e segure 2 s',
+        segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO',
+        sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'Novo card no seu Álbum Espacial',
+        voltar: 'Voltar a explorar', proxima: 'Próxima fase'
       },
+      // Cards das missões reais (álbum). Fase 1: foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório NTRS 20040110111.
+      cards: {
+        missao1: {
+          nome: 'Friendship 7 · Mercury-Atlas 6',
+          objetivo: 'Fazer o primeiro voo orbital tripulado dos EUA: John Glenn deu três voltas na Terra em cerca de 5 horas.',
+          aconteceu: 'O relatório da NASA registra dificuldades durante o voo e mudanças na sequência planejada. A conclusão: o astronauta ajuda a missão a dar certo com sua capacidade de controlar a nave e seus sistemas.',
+          vazio: 'Conclua a Fase 1'
+        },
+        missao2: { nome: 'Fase 2', vazio: 'Card da Fase 2' }
+      },
+      album: { titulo: 'Álbum Espacial', sub: 'Conclua as fases para colecionar os cards das missões reais.', real: 'MISSÃO REAL', objetivo: 'Objetivo: ', aconteceu: 'O que aconteceu: ' },
+      roblox: { titulo: 'A aventura continua no Roblox!', texto: 'As próximas fases estão no jogo oficial do Rookie Rocket.', botao: 'Jogar no Roblox', em_breve: 'Link do jogo em breve' },
       placas: {
         totem_topo: '★ EXPOSIÇÃO ★', totem_pe: 'Aperte E para ver',
         recepcao: 'RECEPÇÃO', programa: 'PROGRAMA ESTAGIÁRIO ASTRONAUTA',
@@ -208,7 +208,7 @@ const DADOS = {
         jogar: '▶ PLAY', carregando: 'Loading the base…', escolha_genero: 'Choose Female or Male to play',
         start_texto: 'Your first day at the space agency starts now. Talk to your guide, explore the Kennedy Space Center museum and find your ship in the hangar.',
         start_nota: 'Local demo of the game being built on Roblox · Facts and photos: NASA Image and Video Library',
-        missoes_titulo: 'MISSIONS', ls_nome: 'Astronaut', ls_expos: 'Exhibits',
+        missoes_titulo: 'OBJECTIVES', ls_nome: 'Astronaut', ls_miss: 'Missions', btn_album: 'Space album', cr_equipe: 'TEAM',
         hint_andar: 'walk', hint_pular: 'jump', hint_interagir: 'interact', hint_capacete: 'helmet', hint_camera: 'drag to turn · wheel = zoom',
         conquista: 'BADGE UNLOCKED',
         mapa_tag: 'QUICK TELEPORT', mapa_titulo: 'Base map',
@@ -223,7 +223,7 @@ const DADOS = {
         cr_p2: 'All exhibit facts and photos come from the <b>NASA Image and Video Library</b> (official API images-api.nasa.gov). Each card shows the record ID, date and credit.',
         cr_p3: 'Scenery, characters, suits and the RR-01 ship are original block-style creations. The museum is a simplified representation, not an architectural replica.',
         cr_p4: 'The lines spoken by the Marcos Pontes character are <b>fictional</b>, written for the game. The facts they mention come from NASA records iss012e22280 and 20060409_exp12_11.',
-        cr_p5: '3D engine: three.js r128 (MIT license). Title font: Michroma (SIL Open Font License). Both included in the lib folder.',
+        cr_p5: '3D engine: three.js r128 (MIT license). Fonts: Outfit and Michroma (SIL Open Font License). All included in the lib folder.',
         cr_desafio: 'Challenge page',
         continuar: 'Keep exploring', fechar: 'Close',
         btn_mapa: 'Map (M)', btn_creditos: 'Sources and credits', btn_idioma: 'Change language', btn_capacete: 'Helmet (H)',
@@ -273,7 +273,7 @@ const DADOS = {
           'It was the first integrated flight test of NASA’s deep space exploration systems: Orion, SLS and ground systems.',
           'Orion splashed down on Dec. 11, 2022, after a 25.5-day mission that took it farther into deep space than any human-rated spacecraft had ever flown.'] }
       },
-      missoes: { falar: 'Talk to Marcos Pontes', museu: 'Enter the Kennedy Space Center museum', expo: 'Explore the museum exhibits', expo_cont: 'exhibits', hangar: 'Reach the ship hangar', escada: 'Climb the platform stairs', elevador: 'Ride the elevator to the access arm', missao1: 'Board the ship: Phase 1 · Task 1' },
+      missoes: { falar: 'Talk to Marcos Pontes', museu: 'Enter the Kennedy Space Center museum', expo: 'Explore the museum exhibits', expo_cont: 'exhibits', hangar: 'Reach the ship hangar', escada: 'Climb the platform stairs', elevador: 'Ride the elevator to the access arm', missao1: 'Board the ship and complete Phase 1' },
       conquistas: { falar: 'Recruited!', museu: 'KSC Visitor', expo: 'Space Historian', hangar: 'Inside the Hangar', escada: 'Astronaut Stamina', elevador: 'Ready to Board', missao1: 'Project Mercury Pilot' },
       zonas: {
         recepcao: ['ROOKIE ROCKET AGENCY', 'Reception'], c1: ['IN TRANSIT', 'Hallway to the museum'],
@@ -290,34 +290,26 @@ const DADOS = {
         perto: 'Get closer to interact! 🚶', capacete: '🪖 Helmet locked! Getting ready to board…'
       },
       missao: {
-        fase: 'PHASE 1 · PROJECT MERCURY', task: 'Task 1: Autopilot Meltdown', tipo: 'THE CONTROL',
-        intro: 'Your capsule is in orbit when the automatic system fails. Take manual control, keep the spacecraft stable and save fuel!',
-        historia_titulo: 'HISTORICAL BASIS (NASA)',
-        fatos: [
-          'Friendship 7 (MA-6), Feb. 20, 1962: John Glenn flew the first U.S. manned orbital flight, lasting about 5 hours and orbiting the Earth three times.',
-          'Aurora 7 (MA-7), May 24, 1962: Scott Carpenter lifted off from Complex 14 on the second manned orbital mission.',
-          'Carpenter practiced manual control in the ALFA trainer, which let him see the image of Earth’s surface while manually controlling the spacecraft.',
-          'In the MASTIF, a rig that spun on three axes from 2 to 50 rotations per minute, Mercury astronauts used small nitrogen gas thrusters to bring a spinning spacecraft under control. If the attitude control failed, the heat shield would be out of place and the spacecraft would burn up during reentry.'
-        ],
-        aviso: 'The failure in this task is a game simulation inspired by these missions and this training.',
-        como_titulo: 'HOW TO PLAY',
-        como: [
-          'When the alarm goes off, click the red SHUT OFF AUTOPILOT button.',
-          'Use ← and → (or the on-screen buttons) to bring the cross onto the green target and hold it there.',
-          'Every tap burns RCS fuel. Use smooth, precise taps! If you panic, the fuel runs out in seconds.',
-          'Lock 4 targets and the autopilot comes back online.'
-        ],
-        comecar: 'Start mission', sair: 'Exit mission',
-        alerta: '⚠ AUTOMATIC SYSTEM FAILURE', restaurado: '✔ AUTOPILOT RESTORED',
-        botao: 'SHUT OFF AUTOPILOT', dica_alarme: 'The spacecraft is spinning on its own! Shut off the autopilot.',
-        dica_manual: 'Bring the cross to the green target with short taps on ← →', segure: 'Hold on the target…', travado: 'Target locked!',
-        panico: 'Easy! Smooth taps save fuel.', rcs: 'RCS FUEL', alvos: 'TARGETS', tempo: 'TIME',
-        sucesso_titulo: 'Mission complete!', sucesso_txt: 'You kept the capsule stable under manual control until the autopilot came back.',
-        aprendizado: 'Lesson: manual control and resource management under stress.',
-        restou: 'Fuel left', fim_tempo: 'Time',
-        falha_titulo: 'Out of RCS fuel!', falha_txt: 'The thrusters ran dry and the capsule drifted. Tip: make smooth corrections and let the spacecraft glide to the target before correcting again.',
-        tentar: 'Try again', voltar: 'Back to the hangar'
+        fase: 'PHASE 1 · PROJECT MERCURY', task: 'Autopilot Meltdown', sair: 'Exit',
+        alerta: '⚠ AUTOPILOT FAILURE', restaurado: '✔ AUTOPILOT RESTORED',
+        dica: 'Move the camera: put the + on a red dot and hold for 2 s',
+        dica_toque: 'Drag the screen: put the + on a red dot and hold for 2 s',
+        segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME',
+        sucesso_titulo: 'Mission accomplished!', novo_card: 'New card in your Space Album',
+        voltar: 'Keep exploring', proxima: 'Next phase'
       },
+      // Real mission cards (album). Phase 1: photo and goal from NASA record 9248362; "what happened" from NTRS report 20040110111.
+      cards: {
+        missao1: {
+          nome: 'Friendship 7 · Mercury-Atlas 6',
+          objetivo: 'Fly the first U.S. manned orbital flight: John Glenn orbited the Earth three times in about 5 hours.',
+          aconteceu: 'NASA’s report records a few difficulties during the flight and deviations from the planned sequence. Its conclusion: the astronaut contributes to mission success through the capacity to control the spacecraft and its systems.',
+          vazio: 'Complete Phase 1'
+        },
+        missao2: { nome: 'Phase 2', vazio: 'Phase 2 card' }
+      },
+      album: { titulo: 'Space Album', sub: 'Complete the phases to collect the real mission cards.', real: 'REAL MISSION', objetivo: 'Goal: ', aconteceu: 'What happened: ' },
+      roblox: { titulo: 'The adventure continues on Roblox!', texto: 'The next phases are in the official Rookie Rocket game.', botao: 'Play on Roblox', em_breve: 'Game link coming soon' },
       placas: {
         totem_topo: '★ EXHIBIT ★', totem_pe: 'Press E to view',
         recepcao: 'RECEPTION', programa: 'ROOKIE ASTRONAUT PROGRAM',
