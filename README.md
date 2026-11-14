@@ -2,7 +2,17 @@
 
 Demo navegável do jogo que está sendo criado no Roblox para o **NASA Space Apps Challenge 2026 · Space Mission Design Game**.
 
-**Como abrir:** dê dois cliques em `index.html`. Não precisa de servidor, instalação nem internet: o motor 3D (`lib/three.min.js`) e as fotos (`nasa/`) já estão na pasta.
+**Como abrir:** dê dois cliques em `index.html`. Não precisa de servidor, instalação nem internet: o motor 3D (`lib/three.min.js`), a fonte dos títulos (`lib/Michroma-Regular.ttf`) e as fotos (`nasa/`) já estão na pasta.
+
+**Site publicado:** https://annacdiniz-dev.github.io/Rookie-Rocket-demo/
+
+## Início do jogo
+
+1. **Idioma:** Português ou English. O site inteiro muda: interface, falas do Marcos, exposições, placas 3D, missões e conquistas.
+2. **Monte seu astronauta:** as 4 opções do storyboard (homem ou mulher, com ou sem capacete).
+3. **Nome:** aparece sobre o personagem, no telão e nas falas. Em português, as palavras com gênero acompanham o avatar (Estagiário/Estagiária, selecionado/selecionada).
+
+No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa, e **H** (ou 🪖) põe e tira o capacete.
 
 ## O que tem no mapa
 
@@ -16,7 +26,7 @@ Demo navegável do jogo que está sendo criado no Roblox para o **NASA Space App
 
 ## Controles
 
-- **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo.
+- **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo. **H**: capacete.
 - **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom.
 - **Clique** em personagens, totens, Atlantis, Saturn V ou na nave para abrir as informações.
 - **M** ou 🗺️: mapa com teleporte rápido.
@@ -24,7 +34,7 @@ Demo navegável do jogo que está sendo criado no Roblox para o **NASA Space App
 
 O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 
-**Atalhos para apresentar:** `index.html#jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`) e `index.html#jogar&expo=atlantis`.
+**Atalhos para apresentar** (pulam a tela inicial): `index.html#lang=pt&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`), `index.html#lang=en&jogar&expo=atlantis` e `index.html#lang=en&av=m1&jogar` (avatar `h1`, `h0`, `m1` ou `m0`).
 
 ## Regra de dados: só NASA
 
@@ -42,7 +52,7 @@ Todos os fatos e fotos das exposições vêm da **NASA Image and Video Library**
 | Saturn V | KSC-98pc1004 |
 | Artemis I (inspiração da nave) | NHQ202211160030, MAF_20221211_Splashdown02 |
 
-Os textos estão em [dados.js](dados.js). Para trocar ou acrescentar uma exposição, edite só esse arquivo.
+Os textos estão em [dados.js](dados.js), em `idiomas.pt` e `idiomas.en`. Para trocar ou acrescentar uma exposição, edite só esse arquivo, sempre nos dois idiomas. Os textos em inglês seguem de perto as descrições originais da NASA.
 
 ## Pendências e avisos
 
@@ -66,8 +76,9 @@ A demo foi feita em **studs**, com os valores padrão do Roblox, então dá para
 
 - `index.html`: estrutura e HUD.
 - `estilo.css`: visual da interface (HUD, balões, prompts, cards, celular).
-- `dados.js`: falas, exposições (com fontes da NASA), missões e conquistas.
+- `dados.js`: textos em PT e EN (falas, exposições com fontes da NASA, placas, missões e conquistas).
 - `jogo.js`: mundo 3D, personagens, física (escada e elevador), câmera, interações e salvamento.
 - `lib/three.min.js`: three.js r128 (licença MIT).
+- `lib/Michroma-Regular.ttf`: fonte dos títulos, no estilo do storyboard (SIL Open Font License, em `lib/Michroma-OFL.txt`).
 - `nasa/`: 13 fotos baixadas da NASA Image and Video Library.
 - `versao-anterior/`: a demo 2D anterior, guardada sem alterações.

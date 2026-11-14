@@ -1,166 +1,276 @@
 // =====================================================================
-// ROOKIE ROCKET · conteúdo da demo
+// ROOKIE ROCKET · conteúdo da demo (Português + English)
 // ---------------------------------------------------------------------
 // Regra do projeto: só usar dados liberados pelo desafio Space Apps ou
 // dados de APIs oficiais da NASA.
 //
-// Todos os fatos e fotos abaixo vêm da NASA Image and Video Library
-// (API oficial: https://images-api.nasa.gov), consultada em 14/11/2026.
-// Cada exposição traz o nasa_id, a data e o crédito do registro original.
-// As conversões de unidade (pés/milhas → metros/km) são só aritmética.
+// Todos os fatos e fotos das exposições vêm da NASA Image and Video
+// Library (API oficial https://images-api.nasa.gov), consultada em
+// 14/11/2026. Os textos em inglês seguem de perto as descrições originais
+// da NASA; os em português são traduções. Conversões de unidade são só
+// aritmética.
 //
-// As falas do personagem Marcos Pontes são FICTÍCIAS, escritas para o
-// jogo. Os fatos citados nelas vêm dos registros iss012e22280 e
-// 20060409_exp12_11.
+// As falas de Marcos Pontes são FICTÍCIAS, escritas para o jogo. Os fatos
+// citados nelas vêm dos registros iss012e22280 e 20060409_exp12_11.
+//
+// Marcadores nos textos:  {nome} = nome do jogador
+//                         {o}    = "o" ou "a" conforme o avatar (só PT)
 // =====================================================================
 
 const FONTE_API = 'NASA Image and Video Library (images-api.nasa.gov)';
 
 const DADOS = {
-  desafio: {
-    nome: 'NASA Space Apps Challenge 2026 · Space Mission Design Game',
-    url: 'https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/'
+  desafio: { url: 'https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/' },
+
+  // Registros oficiais usados em cada exposição (iguais nos dois idiomas)
+  registros: {
+    pontes: [
+      { id: 'iss012e22280', data: '2006-04-03', credito: 'NASA', foto: 'nasa/iss012e22280.jpg' },
+      { id: '20060409_exp12_11', data: '2006-04-08', credito: 'NASA/Bill Ingalls', foto: 'nasa/20060409_exp12_11.jpg' }
+    ],
+    recepcao: [{ id: 'KSC-03pd2164', data: '2003-07-22', credito: 'NASA', foto: 'nasa/KSC-03pd2164.jpg' }],
+    jardim: [{ id: 'KSC-03pd2174', data: '2003-07-22', credito: 'NASA', foto: 'nasa/KSC-03pd2174.jpg' }],
+    sigma7: [{ id: 'KSC-20161107-PH_GEB02_0276', data: '2016-11-07', credito: 'NASA/Glenn Benson', foto: 'nasa/KSC-20161107-PH_GEB02_0276.jpg' }],
+    controle: [{ id: 'KSC-20161107-PH_GEB02_0090', data: '2016-11-07', credito: 'NASA/Glenn Benson', foto: 'nasa/KSC-20161107-PH_GEB02_0090.jpg' }],
+    halldafama: [{ id: 'KSC-20161107-PH_GEB02_0118', data: '2016-11-07', credito: 'NASA/Glenn Benson', foto: 'nasa/KSC-20161107-PH_GEB02_0118.jpg' }],
+    atlantis: [
+      { id: 'KSC-2012-6136', data: '2012-11-02', credito: 'NASA/Jim Grossmann', foto: 'nasa/KSC-2012-6136.jpg' },
+      { id: 'KSC-2012-6362', data: '2012-11-29', credito: 'NASA/Dimitri Gerondidakis', foto: 'nasa/KSC-2012-6362.jpg' },
+      { id: '2013-2311', data: '2013-05-10', credito: 'NASA/Kim Shiflett', foto: 'nasa/2013-2311.jpg' }
+    ],
+    saturnv: [{ id: 'KSC-98pc1004', data: '1998-08-07', credito: 'NASA', foto: 'nasa/KSC-98pc1004.jpg' }],
+    artemis: [
+      { id: 'NHQ202211160030', data: '2022-11-16', credito: 'NASA/Joel Kowsky', foto: 'nasa/NHQ202211160030.jpg' },
+      { id: 'MAF_20221211_Splashdown02', data: '2022-12-11', credito: 'NASA/Michael DeMocker', foto: 'nasa/MAF_20221211_Splashdown02.jpg' }
+    ]
   },
 
-  // Fala do guia. {nome} é trocado pelo nome do jogador.
-  marcos: [
-    'E aí, {nome}! 👋 Aqui é o Marcos Pontes, o primeiro astronauta brasileiro a ir para o espaço.',
-    'Tenho uma notícia incrível: você foi selecionado(a) para o Programa Estagiário Astronauta! A partir de hoje, você faz parte da tripulação. 🚀',
-    'Em 2006 eu vivi um pouco mais de uma semana na Estação Espacial Internacional. Tudo começou com curiosidade, igualzinho a você agora.',
-    'Sua primeira missão: atravesse o corredor e explore o museu do Kennedy Space Center. Lá tem foguete de verdade, cápsula histórica e até um ônibus espacial!',
-    'Depois, siga pelo corredor do outro lado do museu até o hangar. Sua nave está te esperando lá. Bora decolar, {nome}? 🌎✨'
-  ],
+  exposMuseu: ['jardim', 'sigma7', 'controle', 'halldafama', 'atlantis', 'saturnv'],
+  missoes: [{ id: 'falar' }, { id: 'museu' }, { id: 'expo', meta: 6 }, { id: 'hangar' }, { id: 'escada' }, { id: 'elevador' }],
 
-  // Exposições: o texto do card resume, em português, a descrição oficial do registro.
-  exposicoes: {
-    pontes: {
-      titulo: 'Quem é Marcos Pontes?',
-      sala: 'Recepção',
-      fatos: [
-        'Foi o primeiro astronauta do Brasil a ir ao espaço, pela Agência Espacial Brasileira.',
-        'Em 3 de abril de 2006 trabalhou no laboratório Destiny da Estação Espacial Internacional, logo depois de chegar.',
-        'Voltou à Terra em 9 de abril de 2006, na nave Soyuz TMA-7, pousando nas estepes do Cazaquistão depois de um pouco mais de uma semana na estação.'
+  idiomas: {
+    /* ============================== PORTUGUÊS ============================== */
+    pt: {
+      codigo: 'pt-BR',
+      nomePadrao: 'Estagiári{o}',
+      ui: {
+        tagline: 'PROGRAMA ESTAGIÁRIO ASTRONAUTA',
+        perfil_titulo: 'MONTE SEU ASTRONAUTA',
+        av_h1: 'HOMEM · COM CAPACETE', av_h0: 'HOMEM · SEM CAPACETE', av_m1: 'MULHER · COM CAPACETE', av_m0: 'MULHER · SEM CAPACETE',
+        nome_label: 'Qual é o seu nome de astronauta?', nome_ph: 'Digite seu nome',
+        jogar: '▶ JOGAR', voltar_idioma: '← Trocar idioma',
+        start_texto: 'Seu primeiro dia na agência espacial começa agora. Fale com o guia, explore o museu do Kennedy Space Center e encontre sua nave no hangar.',
+        start_nota: 'Demo local do jogo que está sendo criado no Roblox · Fatos e fotos: NASA Image and Video Library',
+        missoes_titulo: 'MISSÕES', ls_nome: 'Astronauta', ls_expos: 'Expos',
+        hint_andar: 'andar', hint_pular: 'pular', hint_interagir: 'interagir', hint_capacete: 'capacete', hint_camera: 'arraste para girar · roda = zoom',
+        conquista: 'CONQUISTA DESBLOQUEADA',
+        mapa_tag: 'TELEPORTE RÁPIDO', mapa_titulo: 'Mapa da base',
+        tp_recepcao: 'Recepção', tp_recepcao_s: 'Lobby da agência + Marcos Pontes',
+        tp_museu: 'Museu KSC', tp_museu_s: 'Kennedy Space Center Visitor Complex',
+        tp_hangar: 'Hangar', tp_hangar_s: 'Nave RR-01 e escada',
+        tp_elevador: 'Plataforma', tp_elevador_s: 'Elevador para o braço de acesso',
+        mapa_nota: 'A recepção leva ao museu por um corredor. Na parede oposta do museu, outro corredor leva ao hangar.',
+        cr_tag: 'TRANSPARÊNCIA', cr_titulo: 'Fontes e créditos',
+        cr_p1: 'Esta é uma <b>demo local</b> de um jogo em desenvolvimento no Roblox para o NASA Space Apps Challenge 2026 · Space Mission Design Game. Não é um produto oficial da NASA nem do Kennedy Space Center Visitor Complex.',
+        cr_p2: 'Todos os fatos e fotos das exposições vêm da <b>NASA Image and Video Library</b> (API oficial images-api.nasa.gov). Cada card mostra o ID do registro, a data e o crédito.',
+        cr_p3: 'Cenários, personagens, trajes e a nave RR-01 são criações originais em estilo de blocos. O museu é uma representação simplificada, não uma réplica arquitetônica.',
+        cr_p4: 'As falas do personagem Marcos Pontes são <b>fictícias</b>, escritas para o jogo. Os fatos citados nelas vêm dos registros da NASA iss012e22280 e 20060409_exp12_11.',
+        cr_p5: 'Motor 3D: three.js r128 (licença MIT). Fonte de títulos: Michroma (SIL Open Font License). Ambos incluídos na pasta lib.',
+        cr_desafio: 'Página do desafio',
+        continuar: 'Continuar explorando', fechar: 'Fechar',
+        btn_mapa: 'Mapa (M)', btn_creditos: 'Fontes e créditos', btn_idioma: 'Trocar idioma', btn_capacete: 'Capacete (H)',
+        fonte: 'Fonte', credito: 'Crédito', foto: 'Foto', foto_nasa: 'foto NASA'
+      },
+      marcos: [
+        'E aí, {nome}! 👋 Aqui é o Marcos Pontes, o primeiro astronauta brasileiro a ir para o espaço.',
+        'Tenho uma notícia incrível: você foi selecionad{o} para o Programa Estagiário Astronauta! A partir de hoje, você faz parte da tripulação. 🚀',
+        'Em 2006 eu vivi um pouco mais de uma semana na Estação Espacial Internacional. Tudo começou com curiosidade, igualzinho a você agora.',
+        'Sua primeira missão: atravesse o corredor e explore o museu do Kennedy Space Center. Lá tem foguete de verdade, cápsula histórica e até um ônibus espacial!',
+        'Depois, siga pelo corredor do outro lado do museu até o hangar. Sua nave está te esperando lá. Bora decolar, {nome}? 🌎✨'
       ],
-      registros: [
-        { id: 'iss012e22280', data: '2006-04-03', credito: 'NASA', foto: 'nasa/iss012e22280.jpg' },
-        { id: '20060409_exp12_11', data: '2006-04-08', credito: 'NASA/Bill Ingalls', foto: 'nasa/20060409_exp12_11.jpg' }
-      ]
+      balao: { quem: 'MARCOS PONTES', proximo: 'clique ou E ▶', fim: 'fala fictícia criada para o jogo · fechar ✕', guia: 'GUIA DE MISSÃO' },
+      expos: {
+        pontes: { titulo: 'Quem é Marcos Pontes?', sala: 'Recepção', fatos: [
+          'Foi o primeiro astronauta do Brasil a ir ao espaço, pela Agência Espacial Brasileira.',
+          'Em 3 de abril de 2006 trabalhou no laboratório Destiny da Estação Espacial Internacional, logo depois de chegar.',
+          'Voltou à Terra em 9 de abril de 2006, na nave Soyuz TMA-7, pousando nas estepes do Cazaquistão depois de um pouco mais de uma semana na estação.'] },
+        recepcao: { titulo: 'A entrada do Visitor Complex', sala: 'Recepção', fatos: [
+          'A praça de ingressos é a porta de entrada do Kennedy Space Center Visitor Complex.',
+          'Lá dentro, um centro de orientação tem equipe que atende visitantes em vários idiomas. É a inspiração para esta recepção!'] },
+        jardim: { titulo: 'Rocket Garden · Jardim de Foguetes', sala: 'Museu', fatos: [
+          'O Rocket Garden reúne oito foguetes autênticos do passado, incluindo um Mercury-Atlas.',
+          'Tem réplicas das cápsulas Mercury, Gemini e Apollo em que dá para entrar, além de painéis informativos.'] },
+        sigma7: { titulo: 'Sigma 7 · Projeto Mercury', sala: 'Museu · Heroes and Legends', fatos: [
+          'A cápsula Sigma 7 foi pilotada por Wally Schirra numa missão de seis órbitas em 3 de outubro de 1962.',
+          'No museu ela aparece sobre um foguete Redstone, como o que levou Alan Shepard e Gus Grissom em voos suborbitais em 1961.',
+          'Na vida real, a Sigma 7 foi lançada por um Atlas, mais potente, para conseguir chegar à órbita.'] },
+        controle: { titulo: 'Controle de Missão Mercury', sala: 'Museu · Heroes and Legends', fatos: [
+          'A exposição tem os consoles originais da sala de Controle de Missão do Projeto Mercury.',
+          'No mapa-múndi, a equipe acompanhava o caminho das cápsulas entre as estações de rastreamento.'] },
+        halldafama: { titulo: 'Hall da Fama dos Astronautas', sala: 'Museu · Heroes and Legends', fatos: [
+          'Uma estátua de Alan Shepard, a primeira pessoa dos Estados Unidos a ir ao espaço, fica logo na entrada do U.S. Astronaut Hall of Fame.',
+          'A área Heroes and Legends homenageia os pioneiros dos programas Mercury, Gemini e Apollo.'] },
+        atlantis: { titulo: 'Ônibus espacial Atlantis', sala: 'Museu · Space Shuttle Atlantis', fatos: [
+          'Em 26 anos de carreira, o Atlantis voou 33 missões, passou 307 dias no espaço e percorreu 125.935.769 milhas (cerca de 202,7 milhões de km).',
+          'Em novembro de 2012 viajou 10 milhas (16 km) do Vehicle Assembly Building até o Visitor Complex, e foi recebido com fogos de artifício.',
+          'Fica erguido a 26 pés (7,9 m) do chão e inclinado exatamente 43,21° para o lado, com as portas do compartimento de carga abertas, como no espaço. É o que você vê aqui!',
+          'A exposição tem 90.000 pés² (cerca de 8.400 m²) e abriu em 29 de junho de 2013.'] },
+        saturnv: { titulo: 'Saturn V · Apollo/Saturn V Center', sala: 'Museu · Apollo/Saturn V Center', fatos: [
+          'O Apollo/Saturn V Center exibe um foguete Saturn V da era Apollo, restaurado, com 363 pés de comprimento (cerca de 110 m).',
+          'Ele fica deitado, na horizontal, dentro de um prédio de 100.000 pés² (cerca de 9.300 m²), com artefatos históricos e dois cinemas.',
+          'O centro fica a cerca de 2 milhas (3 km) ao norte do Vehicle Assembly Building.'] },
+        artemis: { titulo: 'Inspiração da nave: Artemis I', sala: 'Hangar', fatos: [
+          'A nave RR-01 do jogo é um modelo original inspirado no foguete SLS com a cápsula Orion.',
+          'Na Artemis I, o SLS e a Orion decolaram em 16 de novembro de 2022, à 1h47 no horário da Flórida (3h47 em Brasília), da plataforma 39B do Kennedy Space Center.',
+          'Foi o primeiro voo de teste integrado dos sistemas de exploração do espaço profundo da NASA: Orion, SLS e sistemas de solo.',
+          'A Orion voltou em 11 de dezembro de 2022, depois de 25,5 dias. Nenhuma nave feita para humanos tinha ido tão longe no espaço profundo.'] }
+      },
+      missoes: { falar: 'Fale com Marcos Pontes', museu: 'Entre no museu do Kennedy Space Center', expo: 'Explore as exposições do museu', expo_cont: 'exposições', hangar: 'Chegue ao hangar da nave', escada: 'Suba a escada da plataforma', elevador: 'Use o elevador até o braço de acesso' },
+      conquistas: { falar: 'Recrutad{o}!', museu: 'Visitante do KSC', expo: 'Historiador{a} Espacial', hangar: 'Dentro do Hangar', escada: 'Fôlego de Astronauta', elevador: 'Pront{o} para Embarcar' },
+      zonas: {
+        recepcao: ['AGÊNCIA ROOKIE ROCKET', 'Recepção'], c1: ['EM TRÂNSITO', 'Corredor para o museu'],
+        museu: ['KENNEDY SPACE CENTER VISITOR COMPLEX', 'Museu'], c2: ['EM TRÂNSITO', 'Corredor de embarque'], hangar: ['SETOR DE LANÇAMENTO', 'Hangar da nave']
+      },
+      prompt: {
+        ver: 'Ver exposição', conversar: 'Conversar', proxima: 'Próxima fala', marcos: 'Marcos Pontes · Guia',
+        embarcar: 'Embarcar', escotilha: 'Escotilha da RR-01', subir: 'Subir', descer: 'Descer', chamar: 'Chamar elevador', elevador: 'Elevador', movendo: 'Em movimento…', tocar: 'Tocar'
+      },
+      msg: {
+        chamado: '👋 Marcos Pontes quer falar com você! Vá até ele e aperte E.',
+        chamado_toque: '👋 Marcos Pontes quer falar com você! Vá até ele e toque no botão.',
+        subindo: '⬆️ Subindo para o braço de acesso…', descendo: '⬇️ Descendo para a plataforma…',
+        embarque: '🚧 Embarque na nave: disponível na próxima versão do jogo no Roblox!',
+        perto: 'Chegue mais perto para interagir! 🚶', capacete_on: '🪖 Capacete colocado!', capacete_off: '😄 Capacete guardado!'
+      },
+      placas: {
+        totem_topo: '★ EXPOSIÇÃO ★', totem_pe: 'Aperte E para ver',
+        recepcao: 'RECEPÇÃO', programa: 'PROGRAMA ESTAGIÁRIO ASTRONAUTA',
+        telao_topo: 'PRIMEIRO DIA · PROGRAMA ESTAGIÁRIO ASTRONAUTA', telao_bemvindo: 'BEM-VIND{O}, ', telao_pe: '↓ Corredor para o museu do Kennedy Space Center',
+        poster1a: 'SEU PRIMEIRO', poster1b: 'DIA NO ESPAÇO', poster2a: 'CURIOSIDADE', poster2b: 'É COMBUSTÍVEL',
+        c1a1: 'PRÓXIMA PARADA', c1a2: 'MUSEU KSC', c1a3: 'Kennedy Space Center · Flórida', c1b1: 'VISITOR', c1b2: 'COMPLEX', c1b3: '→ siga as setas',
+        museu1: 'KENNEDY SPACE CENTER', museu2: 'VISITOR COMPLEX · FLÓRIDA', museu3: 'museu representado no jogo · explore as 6 exposições ★',
+        voltar: '↩ RECEPÇÃO', hangar1: '→ HANGAR DA NAVE', hangar2: 'Corredor de embarque',
+        heroes2: 'Mercury · Gemini · Apollo', sigma2: 'Mercury · 1962',
+        mapa: 'MERCURY CONTROL · MAPA DE RASTREAMENTO (estilizado)',
+        estatua1: 'ESTÁTUA DE ALAN SHEPARD', estatua2: 'representação',
+        atlantis2: 'inclinado 43,21° · portas abertas',
+        c2a1: 'CORREDOR DE EMBARQUE', c2b2: '→ escada e elevador',
+        nave1: 'NAVE DE TREINAMENTO RR-01', nave2: 'modelo original do jogo · inspirado no SLS + Orion',
+        escada1: 'ESCADA ↑', escada2: 'plataforma do elevador',
+        braco1: 'BRAÇO DE ACESSO', braco2: 'EMBARQUE · EM BREVE', elevador: 'ELEVADOR'
+      }
     },
-    recepcao: {
-      titulo: 'A entrada do Visitor Complex',
-      sala: 'Recepção',
-      fatos: [
-        'A praça de ingressos é a porta de entrada do Kennedy Space Center Visitor Complex.',
-        'Lá dentro, um centro de orientação tem equipe que atende visitantes em vários idiomas. É a inspiração para esta recepção!'
+
+    /* =============================== ENGLISH =============================== */
+    en: {
+      codigo: 'en-US',
+      nomePadrao: 'Rookie',
+      ui: {
+        tagline: 'ROOKIE ASTRONAUT PROGRAM',
+        perfil_titulo: 'BUILD YOUR ASTRONAUT',
+        av_h1: 'MAN · WITH HELMET', av_h0: 'MAN · NO HELMET', av_m1: 'WOMAN · WITH HELMET', av_m0: 'WOMAN · NO HELMET',
+        nome_label: 'What is your astronaut name?', nome_ph: 'Type your name',
+        jogar: '▶ PLAY', voltar_idioma: '← Change language',
+        start_texto: 'Your first day at the space agency starts now. Talk to your guide, explore the Kennedy Space Center museum and find your ship in the hangar.',
+        start_nota: 'Local demo of the game being built on Roblox · Facts and photos: NASA Image and Video Library',
+        missoes_titulo: 'MISSIONS', ls_nome: 'Astronaut', ls_expos: 'Exhibits',
+        hint_andar: 'walk', hint_pular: 'jump', hint_interagir: 'interact', hint_capacete: 'helmet', hint_camera: 'drag to turn · wheel = zoom',
+        conquista: 'BADGE UNLOCKED',
+        mapa_tag: 'QUICK TELEPORT', mapa_titulo: 'Base map',
+        tp_recepcao: 'Reception', tp_recepcao_s: 'Agency lobby + Marcos Pontes',
+        tp_museu: 'KSC Museum', tp_museu_s: 'Kennedy Space Center Visitor Complex',
+        tp_hangar: 'Hangar', tp_hangar_s: 'RR-01 ship and stairs',
+        tp_elevador: 'Platform', tp_elevador_s: 'Elevator to the access arm',
+        mapa_nota: 'The reception leads to the museum through a hallway. On the opposite wall of the museum, another hallway leads to the hangar.',
+        cr_tag: 'TRANSPARENCY', cr_titulo: 'Sources and credits',
+        cr_p1: 'This is a <b>local demo</b> of a game in development on Roblox for the NASA Space Apps Challenge 2026 · Space Mission Design Game. It is not an official product of NASA or the Kennedy Space Center Visitor Complex.',
+        cr_p2: 'All exhibit facts and photos come from the <b>NASA Image and Video Library</b> (official API images-api.nasa.gov). Each card shows the record ID, date and credit.',
+        cr_p3: 'Scenery, characters, suits and the RR-01 ship are original block-style creations. The museum is a simplified representation, not an architectural replica.',
+        cr_p4: 'The lines spoken by the Marcos Pontes character are <b>fictional</b>, written for the game. The facts they mention come from NASA records iss012e22280 and 20060409_exp12_11.',
+        cr_p5: '3D engine: three.js r128 (MIT license). Title font: Michroma (SIL Open Font License). Both included in the lib folder.',
+        cr_desafio: 'Challenge page',
+        continuar: 'Keep exploring', fechar: 'Close',
+        btn_mapa: 'Map (M)', btn_creditos: 'Sources and credits', btn_idioma: 'Change language', btn_capacete: 'Helmet (H)',
+        fonte: 'Source', credito: 'Credit', foto: 'Photo', foto_nasa: 'NASA photo'
+      },
+      marcos: [
+        'Hey, {nome}! 👋 Marcos Pontes here, Brazil’s first astronaut in space.',
+        'Big news: you’ve been selected for the Rookie Astronaut Program! Starting today, you’re part of the crew. 🚀',
+        'In 2006 I spent a little over a week aboard the International Space Station. It all started with curiosity, just like yours right now.',
+        'Your first mission: cross the hallway and explore the Kennedy Space Center museum. There are real rockets, a historic capsule and even a space shuttle!',
+        'Then take the hallway on the other side of the museum to the hangar. Your ship is waiting for you. Ready for liftoff, {nome}? 🌎✨'
       ],
-      registros: [
-        { id: 'KSC-03pd2164', data: '2003-07-22', credito: 'NASA', foto: 'nasa/KSC-03pd2164.jpg' }
-      ]
-    },
-    jardim: {
-      titulo: 'Rocket Garden · Jardim de Foguetes',
-      sala: 'Museu',
-      fatos: [
-        'O Rocket Garden reúne oito foguetes autênticos do passado, incluindo um Mercury-Atlas.',
-        'Tem réplicas das cápsulas Mercury, Gemini e Apollo em que dá para entrar, além de painéis informativos.'
-      ],
-      registros: [
-        { id: 'KSC-03pd2174', data: '2003-07-22', credito: 'NASA', foto: 'nasa/KSC-03pd2174.jpg' }
-      ]
-    },
-    sigma7: {
-      titulo: 'Sigma 7 · Projeto Mercury',
-      sala: 'Museu · Heroes and Legends',
-      fatos: [
-        'A cápsula Sigma 7 foi pilotada por Wally Schirra numa missão de seis órbitas em 3 de outubro de 1962.',
-        'No museu ela aparece sobre um foguete Redstone, como o que levou Alan Shepard e Gus Grissom em voos suborbitais em 1961.',
-        'Na vida real, a Sigma 7 foi lançada por um Atlas, mais potente, para conseguir chegar à órbita.'
-      ],
-      registros: [
-        { id: 'KSC-20161107-PH_GEB02_0276', data: '2016-11-07', credito: 'NASA/Glenn Benson', foto: 'nasa/KSC-20161107-PH_GEB02_0276.jpg' }
-      ]
-    },
-    controle: {
-      titulo: 'Controle de Missão Mercury',
-      sala: 'Museu · Heroes and Legends',
-      fatos: [
-        'A exposição tem os consoles originais da sala de Controle de Missão do Projeto Mercury.',
-        'No mapa-múndi, a equipe acompanhava o caminho das cápsulas entre as estações de rastreamento.'
-      ],
-      registros: [
-        { id: 'KSC-20161107-PH_GEB02_0090', data: '2016-11-07', credito: 'NASA/Glenn Benson', foto: 'nasa/KSC-20161107-PH_GEB02_0090.jpg' }
-      ]
-    },
-    halldafama: {
-      titulo: 'Hall da Fama dos Astronautas',
-      sala: 'Museu · Heroes and Legends',
-      fatos: [
-        'Uma estátua de Alan Shepard, a primeira pessoa dos Estados Unidos a ir ao espaço, fica logo na entrada do U.S. Astronaut Hall of Fame.',
-        'A área Heroes and Legends homenageia os pioneiros dos programas Mercury, Gemini e Apollo.'
-      ],
-      registros: [
-        { id: 'KSC-20161107-PH_GEB02_0118', data: '2016-11-07', credito: 'NASA/Glenn Benson', foto: 'nasa/KSC-20161107-PH_GEB02_0118.jpg' }
-      ]
-    },
-    atlantis: {
-      titulo: 'Ônibus espacial Atlantis',
-      sala: 'Museu · Space Shuttle Atlantis',
-      fatos: [
-        'Em 26 anos de carreira, o Atlantis voou 33 missões, passou 307 dias no espaço e percorreu 125.935.769 milhas (cerca de 202,7 milhões de km).',
-        'Em novembro de 2012 viajou 10 milhas (16 km) do Vehicle Assembly Building até o Visitor Complex, e foi recebido com fogos de artifício.',
-        'Fica erguido a 26 pés (7,9 m) do chão e inclinado exatamente 43,21° para o lado, com as portas do compartimento de carga abertas, como no espaço. É o que você vê aqui!',
-        'A exposição tem 90.000 pés² (cerca de 8.400 m²) e abriu em 29 de junho de 2013.'
-      ],
-      registros: [
-        { id: 'KSC-2012-6136', data: '2012-11-02', credito: 'NASA/Jim Grossmann', foto: 'nasa/KSC-2012-6136.jpg' },
-        { id: 'KSC-2012-6362', data: '2012-11-29', credito: 'NASA/Dimitri Gerondidakis', foto: 'nasa/KSC-2012-6362.jpg' },
-        { id: '2013-2311', data: '2013-05-10', credito: 'NASA/Kim Shiflett', foto: 'nasa/2013-2311.jpg' }
-      ]
-    },
-    saturnv: {
-      titulo: 'Saturn V · Apollo/Saturn V Center',
-      sala: 'Museu · Apollo/Saturn V Center',
-      fatos: [
-        'O Apollo/Saturn V Center exibe um foguete Saturn V da era Apollo, restaurado, com 363 pés de comprimento (cerca de 110 m).',
-        'Ele fica deitado, na horizontal, dentro de um prédio de 100.000 pés² (cerca de 9.300 m²), com artefatos históricos e dois cinemas.',
-        'O centro fica a cerca de 2 milhas (3 km) ao norte do Vehicle Assembly Building.'
-      ],
-      registros: [
-        { id: 'KSC-98pc1004', data: '1998-08-07', credito: 'NASA', foto: 'nasa/KSC-98pc1004.jpg' }
-      ]
-    },
-    artemis: {
-      titulo: 'Inspiração da nave: Artemis I',
-      sala: 'Hangar',
-      fatos: [
-        'A nave RR-01 do jogo é um modelo original inspirado no foguete SLS com a cápsula Orion.',
-        'Na Artemis I, o SLS e a Orion decolaram em 16 de novembro de 2022, à 1h47 no horário da Flórida (3h47 em Brasília), da plataforma 39B do Kennedy Space Center.',
-        'Foi o primeiro voo de teste integrado dos sistemas de exploração do espaço profundo da NASA: Orion, SLS e sistemas de solo.',
-        'A Orion voltou em 11 de dezembro de 2022, depois de 25,5 dias. Nenhuma nave feita para humanos tinha ido tão longe no espaço profundo.'
-      ],
-      registros: [
-        { id: 'NHQ202211160030', data: '2022-11-16', credito: 'NASA/Joel Kowsky', foto: 'nasa/NHQ202211160030.jpg' },
-        { id: 'MAF_20221211_Splashdown02', data: '2022-12-11', credito: 'NASA/Michael DeMocker', foto: 'nasa/MAF_20221211_Splashdown02.jpg' }
-      ]
+      balao: { quem: 'MARCOS PONTES', proximo: 'click or E ▶', fim: 'fictional line written for the game · close ✕', guia: 'MISSION GUIDE' },
+      expos: {
+        pontes: { titulo: 'Who is Marcos Pontes?', sala: 'Reception', fatos: [
+          'Brazil’s first astronaut in space, flying for the Brazilian Space Agency.',
+          'On April 3, 2006, he worked in the Destiny laboratory of the International Space Station soon after his arrival.',
+          'He returned to Earth on April 9, 2006, aboard the Soyuz TMA-7 spacecraft, landing on the steppes of Kazakhstan after a little over a week on the station.'] },
+        recepcao: { titulo: 'The Visitor Complex entrance', sala: 'Reception', fatos: [
+          'The ticket plaza is the entrance to the Kennedy Space Center Visitor Complex.',
+          'Inside, an orientation center has a multilingual guest service staff to greet guests. It inspired this reception!'] },
+        jardim: { titulo: 'Rocket Garden', sala: 'Museum', fatos: [
+          'The Rocket Garden features eight authentic rockets from the past, including a Mercury-Atlas rocket.',
+          'It also has climb-in Mercury, Gemini and Apollo capsule replicas, seating pods and informative graphics.'] },
+        sigma7: { titulo: 'Sigma 7 · Project Mercury', sala: 'Museum · Heroes and Legends', fatos: [
+          'The Sigma 7 Mercury spacecraft was piloted by astronaut Wally Schirra during his six-orbit mission on Oct. 3, 1962.',
+          'For display, it sits on a Redstone launch vehicle like the one that boosted Alan Shepard and Gus Grissom on sub-orbital flights in 1961.',
+          'In real life, Sigma 7 was launched by the more powerful Atlas rocket in order to reach orbit.'] },
+        controle: { titulo: 'Mercury Mission Control', sala: 'Museum · Heroes and Legends', fatos: [
+          'The exhibit includes the original consoles of the Mercury Mission Control room.',
+          'On the world map, the team followed the capsules’ paths between tracking stations.'] },
+        halldafama: { titulo: 'Astronaut Hall of Fame', sala: 'Museum · Heroes and Legends', fatos: [
+          'A statue of Alan Shepard, America’s first person in space, stands just inside the doors to the U.S. Astronaut Hall of Fame.',
+          'Heroes and Legends honors the pioneering efforts of Mercury, Gemini and Apollo.'] },
+        atlantis: { titulo: 'Space Shuttle Atlantis', sala: 'Museum · Space Shuttle Atlantis', fatos: [
+          'Over its 26-year career, Atlantis flew 33 missions, spent 307 days in space and traveled 125,935,769 miles.',
+          'In November 2012 it made the 10-mile trip from the Vehicle Assembly Building to the Visitor Complex, celebrated with fireworks.',
+          'It is lifted 26 feet off the ground and tilted exactly 43.21 degrees to its port side, with its payload bay doors open, just like in space. That’s what you see here!',
+          'The 90,000-square-foot exhibit opened on June 29, 2013.'] },
+        saturnv: { titulo: 'Saturn V · Apollo/Saturn V Center', sala: 'Museum · Apollo/Saturn V Center', fatos: [
+          'The Apollo/Saturn V Center displays a refurbished 363-foot-long Apollo-era Saturn V rocket.',
+          'It lies horizontally inside a 100,000-square-foot building with artifacts, historical displays and two film theaters.',
+          'The center is about 2 miles north of the Vehicle Assembly Building.'] },
+        artemis: { titulo: 'Ship inspiration: Artemis I', sala: 'Hangar', fatos: [
+          'The game’s RR-01 ship is an original model inspired by the SLS rocket with the Orion spacecraft.',
+          'On Artemis I, SLS and Orion launched on Nov. 16, 2022, at 1:47 a.m. EST from Launch Pad 39B at Kennedy Space Center.',
+          'It was the first integrated flight test of NASA’s deep space exploration systems: Orion, SLS and ground systems.',
+          'Orion splashed down on Dec. 11, 2022, after a 25.5-day mission that took it farther into deep space than any human-rated spacecraft had ever flown.'] }
+      },
+      missoes: { falar: 'Talk to Marcos Pontes', museu: 'Enter the Kennedy Space Center museum', expo: 'Explore the museum exhibits', expo_cont: 'exhibits', hangar: 'Reach the ship hangar', escada: 'Climb the platform stairs', elevador: 'Ride the elevator to the access arm' },
+      conquistas: { falar: 'Recruited!', museu: 'KSC Visitor', expo: 'Space Historian', hangar: 'Inside the Hangar', escada: 'Astronaut Stamina', elevador: 'Ready to Board' },
+      zonas: {
+        recepcao: ['ROOKIE ROCKET AGENCY', 'Reception'], c1: ['IN TRANSIT', 'Hallway to the museum'],
+        museu: ['KENNEDY SPACE CENTER VISITOR COMPLEX', 'Museum'], c2: ['IN TRANSIT', 'Boarding hallway'], hangar: ['LAUNCH SECTOR', 'Ship hangar']
+      },
+      prompt: {
+        ver: 'View exhibit', conversar: 'Talk', proxima: 'Next line', marcos: 'Marcos Pontes · Guide',
+        embarcar: 'Board', escotilha: 'RR-01 hatch', subir: 'Go up', descer: 'Go down', chamar: 'Call elevator', elevador: 'Elevator', movendo: 'Moving…', tocar: 'Tap'
+      },
+      msg: {
+        chamado: '👋 Marcos Pontes wants to talk to you! Walk up to him and press E.',
+        chamado_toque: '👋 Marcos Pontes wants to talk to you! Walk up to him and tap the button.',
+        subindo: '⬆️ Going up to the access arm…', descendo: '⬇️ Going down to the platform…',
+        embarque: '🚧 Boarding the ship: coming in the next version of the Roblox game!',
+        perto: 'Get closer to interact! 🚶', capacete_on: '🪖 Helmet on!', capacete_off: '😄 Helmet off!'
+      },
+      placas: {
+        totem_topo: '★ EXHIBIT ★', totem_pe: 'Press E to view',
+        recepcao: 'RECEPTION', programa: 'ROOKIE ASTRONAUT PROGRAM',
+        telao_topo: 'DAY ONE · ROOKIE ASTRONAUT PROGRAM', telao_bemvindo: 'WELCOME ABOARD, ', telao_pe: '↓ Hallway to the Kennedy Space Center museum',
+        poster1a: 'YOUR FIRST', poster1b: 'DAY IN SPACE', poster2a: 'CURIOSITY', poster2b: 'IS YOUR FUEL',
+        c1a1: 'NEXT STOP', c1a2: 'KSC MUSEUM', c1a3: 'Kennedy Space Center · Florida', c1b1: 'VISITOR', c1b2: 'COMPLEX', c1b3: '→ follow the arrows',
+        museu1: 'KENNEDY SPACE CENTER', museu2: 'VISITOR COMPLEX · FLORIDA', museu3: 'museum as represented in the game · explore all 6 exhibits ★',
+        voltar: '↩ RECEPTION', hangar1: '→ SHIP HANGAR', hangar2: 'Boarding hallway',
+        heroes2: 'Mercury · Gemini · Apollo', sigma2: 'Mercury · 1962',
+        mapa: 'MERCURY CONTROL · TRACKING MAP (stylized)',
+        estatua1: 'ALAN SHEPARD STATUE', estatua2: 'representation',
+        atlantis2: 'tilted 43.21° · payload bay doors open',
+        c2a1: 'BOARDING HALLWAY', c2b2: '→ stairs and elevator',
+        nave1: 'RR-01 TRAINING SHIP', nave2: 'original game model · inspired by SLS + Orion',
+        escada1: 'STAIRS ↑', escada2: 'elevator platform',
+        braco1: 'ACCESS ARM', braco2: 'BOARDING · COMING SOON', elevador: 'ELEVATOR'
+      }
     }
-  },
-
-  // Lista de tarefas do estagiário (painel de missões)
-  missoes: [
-    { id: 'falar', texto: 'Fale com Marcos Pontes' },
-    { id: 'museu', texto: 'Entre no museu do Kennedy Space Center' },
-    { id: 'expo', texto: 'Explore as exposições do museu', meta: 6 },
-    { id: 'hangar', texto: 'Chegue ao hangar da nave' },
-    { id: 'escada', texto: 'Suba a escada da plataforma' },
-    { id: 'elevador', texto: 'Use o elevador até o braço de acesso' }
-  ],
-
-  conquistas: {
-    falar: 'Recrutado(a)!',
-    museu: 'Visitante do KSC',
-    expo: 'Historiador(a) Espacial',
-    hangar: 'Dentro do Hangar',
-    escada: 'Fôlego de Astronauta',
-    elevador: 'Pronto(a) para Embarcar'
   }
 };
