@@ -164,7 +164,12 @@ const DADOS = {
         dica_toque: 'Arraste a tela: leve o + até um ponto vermelho e segure 2 s',
         segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO',
         sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'Novo card no seu Álbum Espacial',
-        voltar: 'Voltar a explorar', proxima: 'Próxima fase'
+        voltar: 'Voltar a explorar', proxima: 'Próxima fase',
+        // estrelas: 3 ≤ 13 s · 2 ≤ 25 s · 1 ≤ 40 s · 0 = falhou
+        falhou_titulo: 'MISSÃO FALHOU', falhou_txt: 'O tempo passou de 40 segundos e a nave ficou fora de controle.',
+        tentar: 'Tentar novamente', sair_mapa: 'Sair para o mapa',
+        estrelas_txt: '{n} de 3 estrelas · {t}',
+        escolha_titulo: 'Fase 1 concluída!', escolha_txt: 'Seu melhor resultado:', refazer: 'Refazer fase 1'
       },
       // Cards das missões reais (álbum). Fase 1: foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório NTRS 20040110111.
       cards: {
@@ -296,7 +301,12 @@ const DADOS = {
         dica_toque: 'Drag the screen: put the + on a red dot and hold for 2 s',
         segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME',
         sucesso_titulo: 'Mission accomplished!', novo_card: 'New card in your Space Album',
-        voltar: 'Keep exploring', proxima: 'Next phase'
+        voltar: 'Keep exploring', proxima: 'Next phase',
+        // stars: 3 ≤ 13 s · 2 ≤ 25 s · 1 ≤ 40 s · 0 = failed
+        falhou_titulo: 'MISSION FAILED', falhou_txt: 'Time went past 40 seconds and the spacecraft went out of control.',
+        tentar: 'Try again', sair_mapa: 'Back to the map',
+        estrelas_txt: '{n} of 3 stars · {t}',
+        escolha_titulo: 'Phase 1 complete!', escolha_txt: 'Your best result:', refazer: 'Replay Phase 1'
       },
       // Real mission cards (album). Phase 1: photo and goal from NASA record 9248362; "what happened" from NTRS report 20040110111.
       cards: {

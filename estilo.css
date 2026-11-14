@@ -54,7 +54,7 @@ body.inicio .hud,body.em-missao .hud,body.em-missao #world-ui,body.em-missao .zo
 .missions li.now i{border-color:var(--vermelho);box-shadow:0 0 0 3px rgba(227,38,43,.2)}
 .missions li small{display:block;color:var(--vermelho);font-weight:700;text-decoration:none}
 
-.zone-banner{position:fixed;top:74px;left:50%;transform:translate(-50%,-20px);opacity:0;transition:.45s;text-align:center;pointer-events:none;z-index:4}
+.zone-banner{position:fixed;top:100px;left:50%;transform:translate(-50%,-20px);opacity:0;transition:.45s;text-align:center;pointer-events:none;z-index:4}
 .zone-banner.show{opacity:1;transform:translate(-50%,0)}
 .zone-banner small{display:inline-block;font-size:12px;font-weight:700;letter-spacing:2px;color:#fff;background:var(--vermelho);padding:4px 10px;border-radius:5px}
 .zone-banner strong{display:block;margin-top:6px;font-size:36px;font-weight:800;color:#fff;text-shadow:0 3px 0 var(--marinho),0 6px 18px rgba(0,0,0,.6)}
@@ -72,8 +72,8 @@ body.inicio .hud,body.em-missao .hud,body.em-missao #world-ui,body.em-missao .zo
 .prompt .key{width:34px;height:34px;border-radius:8px;background:var(--osso);color:var(--marinho);display:grid;place-items:center;font-weight:800;font-size:16px;box-shadow:0 3px 0 #8d93a1}
 .prompt b{display:block;font-size:15px;font-weight:700}
 .prompt small{display:block;font-size:12px;color:#c9d3ea;font-weight:500}
-.badge-toast{position:fixed;right:12px;bottom:60px;display:flex;gap:12px;align-items:center;background:var(--osso);color:var(--tinta);border-radius:14px;padding:12px 18px 12px 12px;z-index:9;border-left:6px solid var(--vermelho);box-shadow:0 10px 30px rgba(0,0,0,.35);transform:translateX(130%);transition:transform .45s cubic-bezier(.3,1.4,.6,1)}
-.badge-toast.show{transform:none}
+.badge-toast{position:fixed;left:50%;top:12px;display:flex;gap:12px;align-items:center;background:var(--osso);color:var(--tinta);border-radius:14px;padding:12px 18px 12px 12px;z-index:9;border-left:6px solid var(--vermelho);box-shadow:0 10px 30px rgba(0,0,0,.35);transform:translate(-50%,-160%);transition:transform .45s cubic-bezier(.3,1.4,.6,1)}
+.badge-toast.show{transform:translate(-50%,0)}
 .badge-icon{width:50px;height:50px;border-radius:12px;background:var(--marinho);display:grid;place-items:center}
 .badge-icon .logo{width:30px;height:30px}
 .badge-toast small{display:block;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--vermelho)}
@@ -82,12 +82,12 @@ body.inicio .hud,body.em-missao .hud,body.em-missao #world-ui,body.em-missao .zo
 /* ---------- tela inicial ---------- */
 .overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:linear-gradient(180deg,#c9ccd3,#a9adb6);overflow:auto}
 .overlay.hide{display:none}
-.start-card{width:min(820px,100%);background:linear-gradient(180deg,#dcdfe4,#c3c6cd);border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(22,40,79,.35);color:var(--tinta)}
+.start-card{width:min(520px,100%);background:linear-gradient(180deg,#dcdfe4,#c3c6cd);border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(22,40,79,.35);color:var(--tinta)}
 .sb-head{background:var(--marinho);padding:16px 22px;display:flex;align-items:center;gap:16px;border-bottom:4px solid var(--vermelho)}
 .sb-logo{width:58px;height:58px;flex:none}
 .sb-title{font:clamp(20px,3.6vw,32px) var(--marca);letter-spacing:2px;color:#fff;line-height:1.1}
 .sb-sub{font-size:clamp(11px,1.5vw,13px);font-weight:500;letter-spacing:2.5px;color:#c9d3ea;margin-top:6px}
-.sb-body{display:grid;grid-template-columns:260px 1fr;align-items:stretch}
+.sb-body{display:block}
 .sb-preview{position:relative;display:flex;align-items:flex-end;justify-content:center;padding:22px 10px 26px;background:radial-gradient(ellipse at 50% 40%,#f1f2f4,#cdd0d6 70%);border-right:1px solid rgba(22,40,79,.12)}
 #av-preview{position:relative;z-index:1;width:100%;max-width:210px}
 #av-preview svg{width:100%;height:auto;display:block}
@@ -163,6 +163,20 @@ dialog p{color:var(--tinta2);line-height:1.6;font-size:16px}
 .banner-corpo{padding:18px 22px 22px;max-height:calc(100vh - 150px);overflow:auto}
 .banner-corpo.centro{text-align:center}
 .banner-corpo.centro p{font-size:17px;margin:4px 0 16px}
+/* estrelas da Fase 1 */
+.m-estrelas{display:flex;justify-content:center;gap:14px;margin:4px 0 2px}
+.m-estrelas:empty{display:none}
+.estrela{font-size:52px;line-height:1;transition:transform .3s}
+.estrela.ativa{color:#ffc928;transform:scale(1.15);text-shadow:0 0 14px rgba(255,201,40,.85),0 3px 0 #b8860b;animation:brilhoEstrela .5s ease-out backwards}
+.estrela.ativa:nth-child(2){animation-delay:.15s}
+.estrela.ativa:nth-child(3){animation-delay:.3s}
+.estrela.inativa{color:#4b5160;opacity:.35}
+@keyframes brilhoEstrela{from{transform:scale(.2) rotate(-40deg);opacity:0}}
+.m-estrelas-txt{text-align:center;font-weight:700;color:var(--marinho)!important;margin:6px 0 12px!important}
+.m-estrelas-txt:empty{display:none}
+.banner-topo.falha{border-bottom-color:var(--vermelho)}
+.banner-topo.falha h2{color:#ff5a5f}
+.banner-topo.falha .selo{background:var(--vermelho)}
 .novo-card{display:block;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--vermelho);margin-bottom:8px}
 .banner-botoes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
 .card-missao{display:grid;grid-template-columns:200px 1fr;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 0 #d5d8de;border:2px solid var(--marinho)}
@@ -242,17 +256,10 @@ body.touch .hint-bar{display:none}
   .ls-head,.ls-row{grid-template-columns:110px 70px;padding:5px 10px}
   .zone-banner strong{font-size:24px}
   .hint-bar{display:none}
-  .sb-body{grid-template-columns:150px 1fr}
   .sb-form{padding:16px}
-  #btn-album b{display:none}
-  #btn-album{width:44px;padding:0;justify-content:center}
 }
 @media (max-width:560px){
   .missions{width:210px}
-  .sb-body{grid-template-columns:1fr}
-  .sb-preview{padding:12px 10px 14px;border-right:0;border-bottom:1px solid rgba(22,40,79,.12)}
-  #av-preview{max-width:96px}
-  .sb-pedestal{bottom:8px;width:90px;margin-left:-45px;height:14px}
   .sb-head{padding:12px 14px;gap:10px}
   .sb-logo{width:42px;height:42px}
   .opt{padding:9px 10px;font-size:15px}

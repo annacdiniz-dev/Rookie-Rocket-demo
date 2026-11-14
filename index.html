@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css?v=5">
+<link rel="stylesheet" href="estilo.css?v=6">
 </head>
 <body class="inicio">
 
@@ -24,18 +24,8 @@
 <div class="hud hud-top-left">
   <button class="hud-btn" id="btn-lang" data-i18n-title="btn_idioma"><span class="ico">🌐</span><b id="btn-lang-txt">EN</b></button>
   <button class="hud-btn so-ico" id="btn-credits" data-i18n-title="btn_creditos"><span class="ico-i">i</span></button>
-  <button class="hud-btn" id="btn-album" data-i18n-title="btn_album"><span class="ico">📖</span><b data-i18n="btn_album">Álbum espacial</b></button>
+  <button class="hud-btn so-ico" id="btn-album" data-i18n-title="btn_album"><span class="ico">📖</span></button>
 </div>
-
-<div class="hud leaderstats">
-  <div class="ls-head"><span data-i18n="ls_nome">Astronauta</span><span data-i18n="ls_miss">Missões</span></div>
-  <div class="ls-row"><span id="ls-name">—</span><span id="ls-miss">0/2</span></div>
-</div>
-
-<aside class="hud missions" id="missions">
-  <button class="missions-head" id="missions-toggle" aria-expanded="true"><span><svg class="logo"><use href="#logo"/></svg> <span data-i18n="missoes_titulo">OBJETIVOS</span></span> <i>▾</i></button>
-  <ol id="mission-list"></ol>
-</aside>
 
 <div class="zone-banner" id="zone-banner"><small id="zone-sub"></small><strong id="zone-title"></strong></div>
 
@@ -73,11 +63,24 @@
 
 <!-- Banner: missão concluída + card da missão real -->
 <dialog id="m-fim" class="banner">
-  <div class="banner-topo ok"><span class="selo">✔</span><h2 id="mf-titulo"></h2></div>
+  <div class="banner-topo ok" id="mf-topo"><span class="selo" id="mf-selo">✔</span><h2 id="mf-titulo"></h2></div>
   <div class="banner-corpo">
+    <div class="m-estrelas" id="m-estrelas" aria-hidden="true"></div>
+    <p class="m-estrelas-txt" id="m-estrelas-txt"></p>
     <small class="novo-card" id="mf-novo"></small>
     <div id="mf-card"></div>
     <div class="banner-botoes"><button class="big-btn alt" id="mf-voltar"></button><button class="big-btn" id="mf-proxima"></button></div>
+  </div>
+</dialog>
+
+<!-- Banner: reembarcar depois de concluir a Fase 1 -->
+<dialog id="m-escolha" class="banner pequeno">
+  <button class="close" data-close data-i18n-label="fechar">✕</button>
+  <div class="banner-topo ok"><span class="selo">✔</span><h2 id="me-titulo"></h2></div>
+  <div class="banner-corpo centro">
+    <p id="me-txt"></p>
+    <div class="m-estrelas" id="me-estrelas" aria-hidden="true"></div>
+    <div class="banner-botoes"><button class="big-btn alt" id="me-refazer"></button><button class="big-btn" id="me-proxima"></button></div>
   </div>
 </dialog>
 
@@ -109,7 +112,6 @@
       </div>
     </header>
     <div class="sb-body">
-      <div class="sb-preview" aria-hidden="true"><div id="av-preview"></div><span class="sb-pedestal"></span></div>
       <form class="sb-form" id="start-form" novalidate>
         <div class="field">
           <div class="legend" id="lg-idioma">IDIOMA · LANGUAGE</div>
@@ -180,7 +182,7 @@
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js?v=5"></script>
-<script src="jogo.js?v=5"></script>
+<script src="dados.js?v=6"></script>
+<script src="jogo.js?v=6"></script>
 </body>
 </html>

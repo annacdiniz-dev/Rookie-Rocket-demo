@@ -19,13 +19,14 @@ if (toque) document.body.classList.add('touch');
 
 /* ---------------- salvamento ---------------- */
 const SAVE = 'rookie-rocket-v4';
-const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [] };
+const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [], estrelas: 0 };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE) || '{}');
   if (s.lang === 'pt' || s.lang === 'en') estado.lang = s.lang;
   if (typeof s.nome === 'string') estado.nome = s.nome.slice(0, 20);
   if (s.av && (s.av.g === 'h' || s.av.g === 'm')) estado.av = { g: s.av.g };
   estado.capacete = s.capacete === true;
+  if ([1, 2, 3].includes(s.estrelas)) estado.estrelas = s.estrelas; // melhor resultado da Fase 1
   if (Array.isArray(s.feitas)) estado.feitas = s.feitas.filter(x => typeof x === 'string');
   if (Array.isArray(s.expos)) estado.expos = s.expos.filter(x => typeof x === 'string' && DADOS.registros[x]);
 } catch (e) { /* segue sem salvar */ }
@@ -74,39 +75,6 @@ function aplicarTextos() {
 
 /* ---------------- tela inicial ---------------- */
 const PELE = '#c98e63';
-function svgAvatar(g, cap) {
-  const f = g === 'm', clip = 'v' + g + (cap ? 1 : 0);
-  const cabelo = f // feminino: liso e curto (chanel) · masculino: liso padrão
-    ? `<path d="M41 34 Q41 15 60 15 Q79 15 79 34 L79 55 Q76 58 72 56 L72 31 L48 31 L48 56 Q44 58 41 55Z" fill="#3a2216"/><path d="M47 31 Q60 23 73 31 L73 27 L47 27Z" fill="#3a2216"/>`
-    : `<path d="M43 35 Q43 17 60 17 Q77 17 77 35 L73 35 L73 30 Q60 25 47 30 L47 35Z" fill="#2b1a12"/>`;
-  const olhos = `<ellipse cx="53" cy="41" rx="2.6" ry="3.6" fill="#1b1b1b"/><ellipse cx="67" cy="41" rx="2.6" ry="3.6" fill="#1b1b1b"/>` +
-    `<path d="M49 35 h8 M63 35 h8" stroke="#1b1b1b" stroke-width="${f ? 1.6 : 2.2}"/>`;
-  const cabeca = `<rect x="44" y="24" width="32" height="34" rx="7" fill="${PELE}"/>${olhos}<path d="M53 49 Q60 55 67 49" stroke="#1b1b1b" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-  const capacete = cap
-    ? `<circle cx="60" cy="40" r="30" fill="#f4f3ef" stroke="#b8bcc4" stroke-width="2"/><circle cx="29" cy="40" r="6" fill="#b8bcc4"/><circle cx="91" cy="40" r="6" fill="#b8bcc4"/>`
-    : '';
-  const viseira = cap ? `<ellipse cx="60" cy="41" rx="23" ry="21" fill="rgba(127,167,214,.28)" stroke="#16284f" stroke-width="2"/><rect x="50" y="64" width="20" height="3" rx="1.5" fill="#e3262b"/>` : '';
-  return `<svg viewBox="0 0 120 170" aria-hidden="true">
-    <ellipse cx="60" cy="164" rx="34" ry="5" fill="rgba(0,0,0,.15)"/>
-    <rect x="38" y="104" width="21" height="48" fill="#ece9e2" stroke="#c9c6be"/><rect x="61" y="104" width="21" height="48" fill="#ece9e2" stroke="#c9c6be"/>
-    <rect x="41" y="128" width="14" height="10" rx="2" fill="#5f6470"/><rect x="65" y="128" width="14" height="10" rx="2" fill="#5f6470"/>
-    <rect x="38" y="142" width="21" height="3" fill="#16284f"/><rect x="61" y="142" width="21" height="3" fill="#16284f"/>
-    <rect x="36" y="150" width="24" height="10" rx="2" fill="#f3f2ee" stroke="#c9c6be"/><rect x="60" y="150" width="24" height="10" rx="2" fill="#f3f2ee" stroke="#c9c6be"/>
-    <rect x="36" y="158" width="24" height="4" fill="#4a4f5a"/><rect x="60" y="158" width="24" height="4" fill="#4a4f5a"/>
-    <rect x="16" y="64" width="17" height="38" fill="#ece9e2" stroke="#c9c6be"/><rect x="87" y="64" width="17" height="38" fill="#ece9e2" stroke="#c9c6be"/>
-    <rect x="16" y="73" width="17" height="2.5" fill="#e3262b"/><rect x="16" y="77" width="17" height="3" fill="#16284f"/><rect x="87" y="73" width="17" height="2.5" fill="#e3262b"/><rect x="87" y="77" width="17" height="3" fill="#16284f"/>
-    <rect x="16" y="96" width="17" height="5" fill="#16284f"/><rect x="87" y="96" width="17" height="5" fill="#16284f"/>
-    <rect x="17" y="101" width="15" height="10" rx="3" fill="${PELE}"/><rect x="88" y="101" width="15" height="10" rx="3" fill="${PELE}"/>
-    <rect x="33" y="62" width="54" height="44" fill="#ece9e2" stroke="#c9c6be"/>
-    <rect x="40" y="62" width="6" height="44" fill="#8a8f99"/><rect x="74" y="62" width="6" height="44" fill="#8a8f99"/>
-    <use href="#logo" x="64" y="64" width="13" height="13"/>
-    <rect x="52" y="78" width="16" height="12" fill="#c9ccd2" stroke="#8a8f99"/><rect x="57" y="85" width="5" height="3" fill="#2a5bd7"/>
-    <circle cx="51" cy="96" r="3.5" fill="#2a5bd7"/><circle cx="69" cy="98" r="3.5" fill="#d3262b"/>
-    <rect x="44" y="57" width="32" height="7" rx="2" fill="#16284f"/>
-    ${cap ? `<clipPath id="${clip}"><ellipse cx="60" cy="41" rx="23" ry="21"/></clipPath>` : ''}
-    ${capacete}<g ${cap ? `clip-path="url(#${clip})"` : ''}>${cabeca}${cabelo}</g>${viseira}
-  </svg>`;
-}
 /* Card inicial: idioma → nome → gênero → JOGAR.
    Trocar idioma aqui é instantâneo: o mundo 3D só é montado ao clicar em JOGAR. */
 let mundo = null;
@@ -114,7 +82,6 @@ const HINT_BILINGUE = 'Escolha um idioma para começar · Choose a language to s
 function atualizarStart() {
   document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.lang === estado.lang)));
   document.querySelectorAll('[data-g]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.g === estado.av.g)));
-  $('av-preview').innerHTML = svgAvatar(estado.av.g || 'h', !estado.av.g); // sem gênero escolhido: astronauta de capacete
   $('form-rest').classList.toggle('off', !L);
   $('start-hint').textContent = L ? '' : HINT_BILINGUE;
 }
@@ -982,8 +949,16 @@ const prompt = document.createElement('button'); prompt.className = 'prompt'; pr
 const seta = el('nametag'); seta.style.cssText = 'font-size:34px;color:#e3262b;text-shadow:0 0 4px #fff,0 0 8px #fff'; seta.textContent = '▼';
 
 const v3 = new THREE.Vector3();
-function naTela(e, pos, dy = 0) {
-  v3.copy(pos); v3.y += dy; v3.project(camera);
+const rayOc = new THREE.Raycaster(), pOc = new THREE.Vector3(), dOc = new THREE.Vector3();
+function atrasDeParede(p) { // true se houver parede/teto/piso entre a câmera e o ponto
+  dOc.subVectors(p, camera.position); const dist = dOc.length();
+  rayOc.set(camera.position, dOc.divideScalar(dist)); rayOc.far = Math.max(0, dist - 0.6);
+  return rayOc.intersectObjects(bloqueiaCam, false).length > 0;
+}
+function naTela(e, pos, dy = 0, ocluir = false) {
+  pOc.copy(pos); pOc.y += dy;
+  if (ocluir && atrasDeParede(pOc)) { e.style.visibility = 'hidden'; return false; }
+  v3.copy(pOc); v3.project(camera);
   if (v3.z > 1 || v3.x < -1.2 || v3.x > 1.2 || v3.y < -1.2 || v3.y > 1.2) { e.style.visibility = 'hidden'; return false; }
   e.style.visibility = 'visible';
   let px = (v3.x + 1) / 2 * innerWidth;
@@ -1062,7 +1037,8 @@ function alvoObjetivo() {
    ================================================================ */
 const contExpos = () => estado.expos.filter(e => DADOS.exposMuseu.includes(e)).length;
 function renderMissoes() {
-  const ol = $('mission-list'); ol.innerHTML = '';
+  const ol = $('mission-list'); if (!ol) return; // painel de objetivos removido do HUD; a seta vermelha continua guiando
+  ol.innerHTML = '';
   let marcouAtual = false;
   for (const m of DADOS.missoes) {
     const li = document.createElement('li');
@@ -1073,8 +1049,6 @@ function renderMissoes() {
     if (m.meta) { const s = document.createElement('small'); s.textContent = `${Math.min(contExpos(), m.meta)}/${m.meta} ${L.missoes.expo_cont}`; t.appendChild(s); }
     li.append(i, t); ol.appendChild(li);
   }
-  $('ls-name').textContent = nomeJogador();
-  $('ls-miss').textContent = `${DADOS.album.filter(c => estado.feitas.includes(c.id)).length}/${DADOS.album.length}`;
 }
 const filaBadge = []; let badgeAtivo = false;
 function concluir(id) {
@@ -1243,13 +1217,42 @@ function embarcar() {
   if (M.ativa) return;
   const primeira = !estado.capacete;
   if (primeira) { estado.capacete = true; salvar(); falarSistema(L.msg.capacete); bip(660, 0.15, 'sine', 0.06); } // capacete aparece sozinho
-  if (missaoFeita()) abrirRoblox();          // fase 1 já concluída: as próximas fases são no Roblox
+  if (missaoFeita()) abrirEscolha();         // fase 1 já concluída: refazer ou ir para a próxima (Roblox)
   else setTimeout(comecarMissao, primeira ? 1100 : 0);
 }
+// Estrelas pelo tempo (M.t) até estabilizar a nave
+const LIMITE_ESTRELAS = [13.0, 25.0, 40.0]; // ≤13 s = 3 · ≤25 s = 2 · ≤40 s = 1 · acima = 0 (falhou)
+function calcularEstrelas(tempo) {
+  const t = Math.round(tempo * 10) / 10; // mesma precisão do cronômetro da tela
+  if (t <= LIMITE_ESTRELAS[0]) return 3;
+  if (t <= LIMITE_ESTRELAS[1]) return 2;
+  if (t <= LIMITE_ESTRELAS[2]) return 1;
+  return 0;
+}
+function desenharEstrelas(alvoId, n) {
+  const box = $(alvoId); box.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'estrela ' + (i < n ? 'ativa' : 'inativa'); s.textContent = '★';
+    box.appendChild(s);
+  }
+}
+const tempoTxt = s => s.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
+function abrirEscolha() {
+  const t = LM();
+  $('me-titulo').textContent = t.escolha_titulo; $('me-txt').textContent = t.escolha_txt;
+  desenharEstrelas('me-estrelas', estado.estrelas);
+  $('me-refazer').textContent = '↻ ' + t.refazer; $('me-proxima').textContent = t.proxima + ' ▶';
+  limparTeclas(); $('m-escolha').showModal();
+}
+$('me-refazer').onclick = () => { $('m-escolha').close(); comecarMissao(); };
+$('me-proxima').onclick = () => { $('m-escolha').close(); abrirRoblox(); };
 function dica(txt) { $('m-dica').textContent = txt; }
 function comecarMissao() {
   const t = LM();
+  // zera o cronômetro (M.t) e o resto do estado: "Tentar novamente" sempre começa do zero
   Object.assign(M, { ativa: true, fase: 'intro', t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null });
+  $('m-tempo').textContent = tempoTxt(0);
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
   M.pontos.forEach(p => { p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
   document.body.classList.add('em-missao'); $('missao').hidden = false;
@@ -1266,12 +1269,28 @@ function comecarMissao() {
 function fimMissao() {
   M.fase = 'fim';
   const t = LM();
-  $('mf-titulo').textContent = t.sucesso_titulo;
-  $('mf-novo').textContent = t.novo_card;
-  const box = $('mf-card'); box.innerHTML = ''; box.appendChild(cardMissao(DADOS.album[0], true));
-  $('mf-voltar').textContent = t.voltar; $('mf-proxima').textContent = t.proxima + ' ▶';
+  const estrelas = calcularEstrelas(M.t);
+  desenharEstrelas('m-estrelas', estrelas);
+  $('m-estrelas-txt').textContent = t.estrelas_txt.replace('{n}', estrelas).replace('{t}', tempoTxt(M.t));
+  const card = $('mf-card'); card.innerHTML = '';
+  if (estrelas > 0) { // passou de fase: card da NASA, selo e Próxima fase → Roblox
+    $('mf-topo').className = 'banner-topo ok'; $('mf-selo').textContent = '✔';
+    $('mf-titulo').textContent = t.sucesso_titulo;
+    $('mf-novo').textContent = t.novo_card; card.hidden = false;
+    card.appendChild(cardMissao(DADOS.album[0], true));
+    $('mf-voltar').textContent = t.voltar; $('mf-voltar').onclick = sairMissao;
+    $('mf-proxima').textContent = t.proxima + ' ▶'; $('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
+    estado.estrelas = Math.max(estado.estrelas, estrelas); salvar(); // guarda o melhor resultado
+    concluir('missao1');
+  } else { // 0 estrelas: missão falhou, sem card e sem selo
+    $('mf-topo').className = 'banner-topo falha'; $('mf-selo').textContent = '✕';
+    $('mf-titulo').textContent = t.falhou_titulo;
+    $('mf-novo').textContent = t.falhou_txt; card.hidden = true;
+    $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = sairMissao;
+    $('mf-proxima').textContent = '↻ ' + t.tentar; $('mf-proxima').onclick = () => { $('m-fim').close(); comecarMissao(); };
+    bip(160, 0.6, 'sawtooth', 0.06);
+  }
   $('m-fim').showModal();
-  concluir('missao1');
 }
 function sairMissao() {
   M.ativa = false; M.fase = '';
@@ -1281,12 +1300,13 @@ function sairMissao() {
   teleportar('braco');
 }
 $('m-sair').onclick = sairMissao;
-$('mf-voltar').onclick = sairMissao;
-$('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
+// os botões do banner de fim (mf-voltar / mf-proxima) são configurados em fimMissao(), conforme as estrelas
 // fechar o banner de resultado de qualquer jeito (Esc, clique fora) volta ao mapa
 $('m-fim').addEventListener('close', () => setTimeout(() => { if (M.ativa && M.fase === 'fim') sairMissao(); }, 0));
 
 function atualizarMissao(dt) {
+  // segurança: passou de 40 s na mira = 0 estrelas, mostra a tela de falha na hora
+  if (M.fase === 'mira' && calcularEstrelas(M.t) === 0) { fimMissao(); return; }
   if (Math.abs(cam2.aspect - innerWidth / innerHeight) > 0.001) { cam2.aspect = innerWidth / innerHeight; cam2.updateProjectionMatrix(); }
   const t = LM(); M.tFase += dt;
   if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(toque ? t.dica_toque : t.dica); }
@@ -1467,8 +1487,6 @@ $('btn-lang').onclick = () => { // troca de idioma: salva posição e recarrega 
   sessao.set('rr-abrir', 'jogo'); sessao.set('rr-pos', JSON.stringify([P.pos.x, P.pos.y, P.pos.z, cam.yaw]));
   location.reload();
 };
-$('missions-toggle').onclick = () => { const m = $('missions'); m.classList.toggle('closed'); $('missions-toggle').setAttribute('aria-expanded', !m.classList.contains('closed')); };
-if (innerWidth < 560) { $('missions').classList.add('closed'); $('missions-toggle').setAttribute('aria-expanded', 'false'); }
 
 function jogar(retorno) {
   salvar();
@@ -1509,15 +1527,16 @@ function quadro(t) {
   totens.forEach(tt => tt.anel.material = mat(estado.expos.includes(tt.chave) ? '#2fbf71' : VERMELHO, { neon: true }));
   renderer.render(scene, camera);
   naTela(tagJogador, P.pos, 7.4);
-  naTela(tagMarcos, marcos.position, 7.6);
-  exclamacao.style.display = estado.feitas.includes('falar') || fala >= 0 ? 'none' : 'block';
-  if (exclamacao.style.display === 'block') naTela(exclamacao, marcos.position, 10.4 + (reduz ? 0 : Math.sin(tempo * 4) * 0.4));
-  if (balao.style.display === 'block') naTela(balao, marcos.position, 8.6);
+  const marcosPerto = dm < 45; // longe demais: não mostra nome nem "!"
+  if (marcosPerto) naTela(tagMarcos, marcos.position, 7.6, true); else tagMarcos.style.visibility = 'hidden';
+  exclamacao.style.display = estado.feitas.includes('falar') || fala >= 0 || !marcosPerto ? 'none' : 'block';
+  if (exclamacao.style.display === 'block') naTela(exclamacao, marcos.position, 10.4 + (reduz ? 0 : Math.sin(tempo * 4) * 0.4), true);
+  if (balao.style.display === 'block') naTela(balao, marcos.position, 8.6, true);
   if (balaoJog.style.display === 'block') naTela(balaoJog, P.pos, 8.8);
   const alvo = jogando() ? alvoObjetivo() : null;
   const mostraSeta = alvo && alvo.distanceTo(P.pos) >= 9 && fala < 0;
   seta.style.display = mostraSeta ? 'block' : 'none';
-  if (mostraSeta) naTela(seta, alvo, reduz ? 0 : Math.sin(tempo * 4) * 0.6);
+  if (mostraSeta) naTela(seta, alvo, reduz ? 0 : Math.sin(tempo * 4) * 0.6, true);
   atualizarPrompt();
   requestAnimationFrame(quadro);
 }
@@ -1530,7 +1549,8 @@ if (PONTOS[h.get('tp')]) teleportar(h.get('tp'));
 if (h.has('missao')) setTimeout(() => { // #missao abre a fase 1 · #missao=fim mostra o banner de conclusão
   estado.capacete = true; teleportar('braco'); comecarMissao();
   if (h.get('missao') === 'mira') { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(L.missao.dica); M.alvo.x = PONTOS_M[0][0] + 0.03; M.alvo.y = PONTOS_M[0][1]; M.pontos[1].prog = 2; }
-  if (h.get('missao') === 'fim') fimMissao();
+  if (h.get('missao') === 'fim') { M.t = parseFloat(h.get('t')) || 11.4; fimMissao(); } // ex.: #missao=fim&t=30 (1 estrela) · &t=41 (falha)
+  if (h.get('missao') === 'escolha') { sairMissao(); if (!estado.estrelas) estado.estrelas = 2; if (!missaoFeita()) estado.feitas.push('missao1'); abrirEscolha(); }
 }, 300);
 if (h.has('album')) setTimeout(abrirAlbum, 300);
 if (h.has('roblox')) setTimeout(abrirRoblox, 300);

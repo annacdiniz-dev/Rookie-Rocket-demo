@@ -18,8 +18,8 @@ No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa.
 
 ## HUD
 
-- **Esquerda:** idioma (🌐 PT/EN), **i** (fontes, créditos e a equipe em destaque) e **Álbum espacial**.
-- **Direita:** nome do astronauta e **Missões 0/2** (vira 1/2 ao concluir a Fase 1).
+- **Canto esquerdo:** idioma (🌐 PT/EN), **i** (fontes, créditos e a equipe em destaque) e 📖 (**Álbum espacial**). O canto direito fica livre.
+- O nome do Marcos, o "!" e a seta vermelha de objetivo somem quando há parede entre a câmera e eles.
 
 **Equipe:** Anna Clara Diniz, Hurias Felipe Silveira, Luis Renato Fernandes, Nando Nogueira, Túlio Amaral e Valter Cauã Alves.
 
@@ -31,8 +31,20 @@ Ao embarcar pela escotilha, o **capacete aparece sozinho** e a cabine abre **em 
 2. Há um **+** no centro da visão e **4 pontos vermelhos no espaço**, fora da nave.
 3. O jogador move a câmera (mouse, setas/WASD ou arrastar no celular) até o + ficar sobre um ponto e **segura 2 s**. Um **círculo branco** em volta do ponto mostra o tempo.
 4. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
-5. Aparece o banner **Missão concluída com sucesso!** com o **card da missão real** (Friendship 7, 1962: objetivo, o que aconteceu e foto oficial da NASA). O card entra no **Álbum espacial**.
-6. **Voltar a explorar** volta ao mapa. **Próxima fase** abre o banner **A aventura continua no Roblox!**. Embarcar de novo depois da Fase 1 também abre esse banner.
+5. A nota vem em **estrelas**, pelo tempo para estabilizar a nave (cronômetro `M.t`):
+
+   | Tempo | Estrelas |
+   |-------|----------|
+   | até 13,0 s | ⭐⭐⭐ |
+   | 13,1 a 25,0 s | ⭐⭐ |
+   | 25,1 a 40,0 s | ⭐ |
+   | mais de 40,0 s | nenhuma: a missão falha na hora |
+
+6. **Com 1 a 3 estrelas:** banner **Missão concluída com sucesso!**, estrelas douradas, **card da missão real** (Friendship 7, 1962: objetivo, o que aconteceu e foto oficial da NASA) e selo. O card entra no **Álbum espacial**. **Voltar a explorar** volta ao mapa e **Próxima fase** abre o banner **A aventura continua no Roblox!**.
+7. **Com 0 estrelas:** **MISSÃO FALHOU** em vermelho, estrelas apagadas, sem card e sem selo. **Tentar novamente** reinicia a fase com o tempo zerado; **Sair para o mapa** volta ao hangar.
+8. Embarcar de novo depois de concluir a Fase 1 mostra o melhor resultado em estrelas e as opções **Refazer fase 1** e **Próxima fase** (Roblox).
+
+Os limites das estrelas ficam em `LIMITE_ESTRELAS`, no [jogo.js](jogo.js).
 
 O capacete sai da cabeça quando o jogador desce da plataforma de cima (pulando ou de elevador) e volta quando ele sobe de novo.
 
@@ -64,7 +76,7 @@ O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 **Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
 - `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`, `braco`)
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
-- `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 (`missao=fim` mostra o banner de conclusão)
+- `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 · `missao=fim&t=18` mostra o banner com o tempo informado (`t=41` mostra a falha) · `missao=escolha` mostra a escolha ao reembarcar
 - `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
 
 ## Regra de dados: só NASA
