@@ -8,11 +8,27 @@ Demo navegável do jogo que está sendo criado no Roblox para o **NASA Space App
 
 ## Início do jogo
 
-1. **Idioma:** Português ou English. O site inteiro muda: interface, falas do Marcos, exposições, placas 3D, missões e conquistas.
-2. **Monte seu astronauta:** as 4 opções do storyboard (homem ou mulher, com ou sem capacete).
-3. **Nome:** aparece sobre o personagem, no telão e nas falas. Em português, as palavras com gênero acompanham o avatar (Estagiário/Estagiária, selecionado/selecionada).
+Um único card, nesta ordem:
 
-No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa, e **H** (ou 🪖) põe e tira o capacete.
+1. **Idioma** (Português ou English, com caixa de seleção). A troca é instantânea: interface, falas do Marcos, exposições, placas 3D, missões e conquistas mudam de idioma.
+2. **Nome de astronauta:** aparece sobre o personagem, no telão e nas falas.
+3. **Personagem:** Feminino ou Masculino. O personagem começa **sem capacete**. Em português, as palavras com gênero acompanham a escolha (Estagiário/Estagiária, selecionado/selecionada).
+
+No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa.
+
+## Fase 1 · Projeto Mercury · Task 1: O Colapso do Piloto Automático
+
+Ao embarcar pela escotilha no braço de acesso, o **capacete aparece automaticamente** e abre o briefing da missão. A cabine é **em primeira pessoa**, vista através da viseira:
+
+1. A tela treme, fica vermelha e pisca o alerta laranja **FALHA NO SISTEMA AUTOMÁTICO**.
+2. O jogador clica no botão vermelho **DESLIGAR AUTOPILOTO** (ou aperta Enter/Espaço).
+3. A cruz do mostrador de atitude começa a deslizar sozinha. Com **← e →** (ou os botões na tela), o jogador leva a cruz até o **alvo verde** e segura ali. São **4 alvos**.
+4. Cada toque gasta **combustível RCS** (40 toques no tanque). Segurar a tecla não dispara mais propulsores: cada toque conta. Em pânico, o combustível acaba em cerca de 10 s e a missão falha.
+5. Com 4 alvos travados, o piloto automático volta, tudo se normaliza e a conquista **Piloto do Projeto Mercury** é liberada.
+
+Testes automáticos com um "jogador calmo" venceram as 5 rodadas (27 a 34 s, sobrando de 28% a 50% de RCS). Com o "jogador em pânico", o combustível acabou em 10,2 s. Os ajustes de dificuldade ficam no topo do bloco da missão em `jogo.js` (`const AJ`).
+
+**Base histórica (NASA):** Friendship 7 (9248362), Aurora 7 (62PC-52), treino de controle manual no ALFA (s62-01145) e o simulador MASTIF (GRC-1959-C-52235). A API da NASA **não** tem registros que descrevam a pane de piloto automático desses voos, então o briefing avisa que a pane é uma simulação do jogo, inspirada nessas missões e nesse treinamento.
 
 ## O que tem no mapa
 
@@ -22,11 +38,11 @@ No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa, e **H** (
 | → | Corredor 1 | Setas neon e placas "Museu KSC" |
 | 02 | **Museu: Kennedy Space Center Visitor Complex** | 6 exposições: Rocket Garden, Sigma 7 sobre Redstone, Controle de Missão Mercury, Hall da Fama com estátua, **Atlantis erguido e inclinado 43,21° com as portas abertas**, **Saturn V suspenso na horizontal** |
 | → | Corredor 2 (na parede **oposta** à entrada) | "Corredor de embarque" |
-| 03 | **Hangar** | Nave RR-01, **escada à direita da nave** até a plataforma, **elevador** até o braço de acesso e a escotilha ("embarque em breve") |
+| 03 | **Hangar** | Nave RR-01, **escada à direita da nave** até a plataforma, **elevador** até o braço de acesso e a escotilha, que leva à **Fase 1** |
 
 ## Controles
 
-- **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo. **H**: capacete.
+- **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo.
 - **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom.
 - **Clique** em personagens, totens, Atlantis, Saturn V ou na nave para abrir as informações.
 - **M** ou 🗺️: mapa com teleporte rápido.
@@ -34,7 +50,10 @@ No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa, e **H** (
 
 O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 
-**Atalhos para apresentar** (pulam a tela inicial): `index.html#lang=pt&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`), `index.html#lang=en&jogar&expo=atlantis` e `index.html#lang=en&av=m1&jogar` (avatar `h1`, `h0`, `m1` ou `m0`).
+**Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
+- `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`, `braco`)
+- `index.html#lang=en&g=h&jogar&expo=atlantis`
+- `index.html#lang=pt&g=m&jogar&missao`: abre o briefing da Fase 1 (`missao=direto` pula o briefing)
 
 ## Regra de dados: só NASA
 

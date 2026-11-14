@@ -18,13 +18,14 @@ const toque = matchMedia('(pointer: coarse)').matches;
 if (toque) document.body.classList.add('touch');
 
 /* ---------------- salvamento ---------------- */
-const SAVE = 'rookie-rocket-v3';
-const estado = { lang: '', nome: '', av: { g: 'h', cap: true }, feitas: [], expos: [] };
+const SAVE = 'rookie-rocket-v4';
+const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [] };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE) || '{}');
   if (s.lang === 'pt' || s.lang === 'en') estado.lang = s.lang;
   if (typeof s.nome === 'string') estado.nome = s.nome.slice(0, 20);
-  if (s.av && (s.av.g === 'h' || s.av.g === 'm')) estado.av = { g: s.av.g, cap: !!s.av.cap };
+  if (s.av && (s.av.g === 'h' || s.av.g === 'm')) estado.av = { g: s.av.g };
+  estado.capacete = s.capacete === true;
   if (Array.isArray(s.feitas)) estado.feitas = s.feitas.filter(x => typeof x === 'string');
   if (Array.isArray(s.expos)) estado.expos = s.expos.filter(x => typeof x === 'string' && DADOS.registros[x]);
 } catch (e) { /* segue sem salvar */ }
@@ -55,12 +56,14 @@ function aplicarTextos() {
   const a0 = document.createElement('a'); a0.href = DADOS.desafio.url; a0.target = '_blank'; a0.rel = 'noopener noreferrer'; a0.textContent = L.ui.cr_desafio;
   const d0 = document.createElement('div'); d0.append(a0); box.appendChild(d0);
   const vistos = new Set();
-  Object.entries(DADOS.registros).forEach(([k, regs]) => regs.forEach(r => {
+  const linha = (r, titulo) => {
     if (vistos.has(r.id)) return; vistos.add(r.id);
     const d = document.createElement('div');
     const a = document.createElement('a'); a.href = 'https://images.nasa.gov/details/' + encodeURIComponent(r.id); a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = r.id;
-    d.append(a, ` · ${r.credito} · ${L.expos[k].titulo}`); box.appendChild(d);
-  }));
+    d.append(a, ` · ${r.credito} · ${titulo}`); box.appendChild(d);
+  };
+  Object.entries(DADOS.registros).forEach(([k, regs]) => regs.forEach(r => linha(r, L.expos[k].titulo)));
+  DADOS.missao1.forEach(r => linha(r, L.missao.fase));
 }
 
 /* ---------------- tela inicial ---------------- */
@@ -90,7 +93,7 @@ function svgAvatar(g, cap) {
     <rect x="17" y="101" width="15" height="10" rx="3" fill="${PELE}"/><rect x="88" y="101" width="15" height="10" rx="3" fill="${PELE}"/>
     <rect x="33" y="62" width="54" height="44" fill="#ece9e2" stroke="#c9c6be"/>
     <rect x="40" y="62" width="6" height="44" fill="#8a8f99"/><rect x="74" y="62" width="6" height="44" fill="#8a8f99"/>
-    <path d="M62 76 L72 66 L75 66 L66 76Z" fill="#e3262b"/>
+    <use href="#logo" x="64" y="64" width="13" height="13"/>
     <rect x="52" y="78" width="16" height="12" fill="#c9ccd2" stroke="#8a8f99"/><rect x="57" y="85" width="5" height="3" fill="#2a5bd7"/>
     <circle cx="51" cy="96" r="3.5" fill="#2a5bd7"/><circle cx="69" cy="98" r="3.5" fill="#d3262b"/>
     <rect x="44" y="57" width="32" height="7" rx="2" fill="#16284f"/>
@@ -98,45 +101,51 @@ function svgAvatar(g, cap) {
     ${capacete}<g ${cap ? `clip-path="url(#${clip})"` : ''}>${cabeca}${cabelo}</g>${viseira}
   </svg>`;
 }
-function montarAvatares() {
-  const grid = $('avatar-grid'); grid.innerHTML = '';
-  for (const [g, cap] of [['h', true], ['h', false], ['m', true], ['m', false]]) {
-    const b = document.createElement('button');
-    b.className = 'av-card'; b.setAttribute('role', 'radio');
-    const sel = estado.av.g === g && estado.av.cap === cap;
-    b.setAttribute('aria-checked', sel); b.tabIndex = sel ? 0 : -1;
-    b.innerHTML = svgAvatar(g, cap);
-    const lb = document.createElement('b'); lb.textContent = L.ui['av_' + g + (cap ? 1 : 0)]; b.appendChild(lb);
-    b.onclick = () => {
-      estado.av = { g, cap }; salvar(); montarAvatares(); aplicarTextos();
-      if (mundo) mundo.trocarAvatar();
-      grid.querySelector('[aria-checked="true"]').focus();
-    };
-    grid.appendChild(b);
-  }
-}
-
+/* Card inicial: idioma → nome → gênero → JOGAR.
+   Trocar idioma aqui é instantâneo: o mundo 3D só é montado ao clicar em JOGAR. */
 let mundo = null;
+const HINT_BILINGUE = 'Escolha um idioma para começar · Choose a language to start';
+function atualizarStart() {
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.lang === estado.lang)));
+  document.querySelectorAll('[data-g]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.g === estado.av.g)));
+  $('av-preview').innerHTML = svgAvatar(estado.av.g || 'h', !estado.av.g); // sem gênero escolhido: astronauta de capacete
+  $('form-rest').classList.toggle('off', !L);
+  $('start-hint').textContent = L ? '' : HINT_BILINGUE;
+}
 function escolherIdioma(lang) {
-  if (mundo && L && estado.lang !== lang) { // mundo já montado em outro idioma: recarrega
-    estado.lang = lang; salvar(); sessao.set('rr-abrir', 'perfil'); location.reload(); return;
+  if (mundo && estado.lang !== lang) { // jogo já montado: recarrega no novo idioma
+    estado.lang = lang; salvar(); sessao.set('rr-abrir', 'jogo'); location.reload(); return;
   }
   estado.lang = lang; salvar();
   L = DADOS.idiomas[lang];
-  aplicarTextos(); montarAvatares();
-  $('step-lang').hidden = true; $('step-perfil').hidden = false;
-  $('name-input').value = estado.nome;
-  setTimeout(() => $('name-input').focus(), 50);
-  if (!mundo) carregarFonte().then(() => { mundo = criarMundo(); if (sessao.get('rr-abrir') === 'jogo') { sessao.del('rr-abrir'); mundo.jogar(true); } else sessao.del('rr-abrir'); });
+  aplicarTextos(); atualizarStart();
 }
-document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => escolherIdioma(b.dataset.lang));
-$('back-lang').onclick = () => { $('step-perfil').hidden = true; $('step-lang').hidden = false; };
+document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { escolherIdioma(b.dataset.lang); $('name-input').focus(); });
+document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { estado.av.g = b.dataset.g; salvar(); if (L) aplicarTextos(); atualizarStart(); });
+$('name-input').value = estado.nome;
+$('name-input').addEventListener('input', () => { estado.nome = $('name-input').value.trim().slice(0, 20); });
+$('start-form').addEventListener('submit', e => { e.preventDefault(); iniciarJogo(false); });
 function carregarFonte() {
   if (!document.fonts || !document.fonts.load) return Promise.resolve();
   return Promise.race([document.fonts.load('40px Michroma').catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
 }
-// voltando de uma troca de idioma
-if (estado.lang && sessao.get('rr-abrir')) escolherIdioma(estado.lang);
+carregarFonte(); // já começa a baixar a fonte
+function iniciarJogo(retorno) {
+  if (!L) { $('start-hint').textContent = HINT_BILINGUE; return; }
+  if (!estado.av.g) { $('start-hint').textContent = L.ui.escolha_genero; return; }
+  estado.nome = $('name-input').value.trim().slice(0, 20); salvar();
+  const btn = $('play-btn'); btn.disabled = true; btn.textContent = L.ui.carregando;
+  // deixa o navegador pintar o "Carregando…" antes de montar o mundo
+  setTimeout(() => carregarFonte().then(() => {
+    try {
+      if (!mundo) mundo = criarMundo();
+      mundo.jogar(retorno);
+    } catch (err) { console.error(err); $('start-hint').textContent = String(err && err.message || err); }
+    btn.disabled = false; btn.textContent = L.ui.jogar;
+  }), 60);
+}
+if (estado.lang) { L = DADOS.idiomas[estado.lang]; aplicarTextos(); }
+atualizarStart();
 
 /* ================================================================
    MUNDO 3D (montado depois da escolha do idioma)
@@ -241,10 +250,11 @@ function canvasPlaca(w, h, desenhar) {
   desenhar(c.getContext('2d'), cw, ch); return c;
 }
 const fonte = (l, tam) => (l.peso && l.peso < 900) ? `${l.peso} ${tam}px ${TXT}` : `${tam}px ${TIT}`;
-function logoCanvas(g, x, y, s) { // rastro vermelho do logotipo
+function logoCanvas(g, x, y, s) { // logotipo: duas faixas vermelhas inclinadas (mesmo desenho do SVG)
+  const k = s / 100, P = (a, b) => [x + a * k, y + b * k];
   g.fillStyle = VERMELHO;
-  g.beginPath(); g.moveTo(x, y + s); g.lineTo(x + s * 0.8, y); g.lineTo(x + s * 0.95, y); g.lineTo(x + s * 0.3, y + s); g.fill();
-  g.beginPath(); g.moveTo(x + s * 0.35, y + s); g.lineTo(x + s * 0.9, y + s * 0.25); g.lineTo(x + s * 0.95, y + s * 0.35); g.lineTo(x + s * 0.52, y + s); g.fill();
+  g.beginPath(); g.moveTo(...P(4, 96)); g.lineTo(...P(64, 22)); g.quadraticCurveTo(...P(80, 8), ...P(99, 3)); g.lineTo(...P(37, 96)); g.fill();
+  g.beginPath(); g.moveTo(...P(46, 96)); g.lineTo(...P(87, 34)); g.quadraticCurveTo(...P(92, 24), ...P(97, 17)); g.lineTo(...P(73, 96)); g.fill();
 }
 function placa(linhas, w, h, o = {}) {
   const c = canvasPlaca(w, h, (g, cw, ch) => {
@@ -315,16 +325,16 @@ const TRAJE = (() => {
     perna: (() => { const l = matTex(pernaLado); return [l, l, osso, osso, matTex(pernaFrente), l]; })()
   };
 })();
-function rosto(pele, f) {
+function rosto(pele, f, sobr = '#1b1b1b') {
   const c = cv(384, 128, (g) => {
     g.fillStyle = pele; g.fillRect(0, 0, 384, 128);
     g.fillStyle = '#1b1b1b';
     g.beginPath(); g.ellipse(176, 56, 7, 12, 0, 0, 7); g.fill();
     g.beginPath(); g.ellipse(208, 56, 7, 12, 0, 0, 7); g.fill();
-    g.strokeStyle = '#1b1b1b'; g.lineCap = 'round';
+    g.strokeStyle = sobr; g.lineCap = 'round';
     if (f) { g.lineWidth = 3; for (const [x, s] of [[170, -1], [182, 1], [202, -1], [214, 1]]) { g.beginPath(); g.moveTo(x, 46); g.lineTo(x + s * 5, 40); g.stroke(); } g.lineWidth = 3; g.beginPath(); g.moveTo(166, 36); g.lineTo(184, 33); g.moveTo(200, 33); g.lineTo(218, 36); g.stroke(); }
     else { g.lineWidth = 6; g.beginPath(); g.moveTo(164, 36); g.lineTo(186, 34); g.moveTo(198, 34); g.lineTo(220, 36); g.stroke(); }
-    g.lineWidth = 6; g.beginPath(); g.arc(192, 70, 20, 0.22 * Math.PI, 0.78 * Math.PI); g.stroke();
+    g.strokeStyle = '#1b1b1b'; g.lineWidth = 6; g.beginPath(); g.arc(192, 70, 20, 0.22 * Math.PI, 0.78 * Math.PI); g.stroke();
   });
   return new THREE.CanvasTexture(c);
 }
@@ -357,7 +367,7 @@ function astronauta(cfg) {
   if (!cfg.estatua) { const gola = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.85, 0.3, 24), mat(MARINHO)); gola.position.y = 4.08; g.add(gola); }
   // cabeça
   const cabeca = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 1.2, 24, 1, false, Math.PI, Math.PI * 2),
-    cfg.estatua ? mat('#9aa1ad') : [new THREE.MeshLambertMaterial({ map: rosto(pele, f) }), mat(pele), mat(pele)]);
+    cfg.estatua ? mat('#9aa1ad') : [new THREE.MeshLambertMaterial({ map: rosto(pele, f, cfg.sobrancelha) }), mat(pele), mat(pele)]);
   cabeca.position.set(0, 4.82, 0); cabeca.castShadow = true; g.add(cabeca);
   // cabelo
   const cabeloLongo = new THREE.Group(); g.add(cabeloLongo);
@@ -376,8 +386,12 @@ function astronauta(cfg) {
     caixa(1.3, 0.8, 0.28, m, cabeloLongo, 0, 5.05, -0.55);
     caixa(1.4, 1.4, 0.32, m, cabeloLongo, 0, 4.4, -0.62);
     const coque = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), m); coque.position.set(-0.45, 4.6, -0.78); cabeloLongo.add(coque);
-  } else if (cfg.cabelo === 'curto') {
-    caixa(1.32, 0.3, 1.32, mat('#2a2a2a'), g, 0, 5.5, -0.02); caixa(1.32, 0.7, 0.28, mat('#2a2a2a'), g, 0, 5.15, -0.54);
+  } else if (cfg.cabelo === 'grisalho') { // cabelo curto grisalho, mais claro em cima
+    const claro = mat('#d3d3cf'), medio = mat('#a9aaa6');
+    const topo = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.66, 0.26, 20), claro); topo.position.set(0, 5.47, -0.04); topo.castShadow = true; g.add(topo);
+    caixa(1.3, 0.62, 0.26, medio, g, 0, 5.08, -0.55);
+    caixa(0.2, 0.52, 0.86, medio, g, -0.63, 5.12, -0.12); caixa(0.2, 0.52, 0.86, medio, g, 0.63, 5.12, -0.12);
+    caixa(0.9, 0.14, 0.2, claro, g, 0, 5.38, 0.5); // franja curta
   }
   // capacete
   const capacete = new THREE.Group(); capacete.position.y = 4.85; g.add(capacete);
@@ -803,7 +817,7 @@ placa([{ t: P_.braco1, tam: 44 }, { t: P_.braco2, tam: 34, cor: '#ffcf3f' }], 6,
 const escotilha = bloco(-3.9, -3.6, 41, 45, -212, -208, '#2a2d33', { solido: false });
 const luzEscotilha = bloco(-3.6, -3.5, 44.4, 44.8, -211.5, -208.5, '#3ad07a', { neon: true, solido: false });
 colisor(-4.5, -3.5, 41, 46, -213, -207);
-interativo({ pos: new THREE.Vector3(-2.5, 43, -210), raio: 6, rotulo: L.prompt.embarcar, objeto: L.prompt.escotilha, acao: () => falarSistema(L.msg.embarque), alvos: [escotilha] });
+interativo({ pos: new THREE.Vector3(-2.5, 43, -210), raio: 6, rotulo: L.prompt.embarcar, objeto: L.prompt.escotilha, acao: () => embarcar(), alvos: [escotilha] });
 
 // Elevador
 const ELEV = { x0: 24, x1: 32, z0: -230, z1: -222, baixo: 14, cima: 41, h: 14, alvo: 14, mov: false };
@@ -864,12 +878,11 @@ let jogador = null;
 function criarJogador() {
   const pos = jogador ? jogador.position.clone() : null, rot = jogador ? jogador.rotation.y : 0;
   if (jogador) scene.remove(jogador);
-  jogador = astronauta({ g: estado.av.g, cap: estado.av.cap, cabelo: estado.av.g === 'm' ? 'longo' : 'cacheado' });
+  jogador = astronauta({ g: estado.av.g, cap: estado.capacete, cabelo: estado.av.g === 'm' ? 'longo' : 'cacheado' });
   if (pos) { jogador.position.copy(pos); jogador.rotation.y = rot; }
-  $('btn-helmet').classList.toggle('off', !estado.av.cap);
 }
 criarJogador();
-const marcos = astronauta({ g: 'h', cap: false, cabelo: 'curto', bandeira: true, pele: '#d9a37c' });
+const marcos = astronauta({ g: 'h', cap: false, cabelo: 'grisalho', sobrancelha: '#8d8d88', bandeira: true, pele: '#d8a47f' });
 marcos.position.set(0, 0, -4.5);
 const itMarcos = interativo({ pos: new THREE.Vector3(0, 6.6, -4.5), raio: 10, rotulo: L.prompt.conversar, objeto: L.prompt.marcos, acao: conversar, alvos: [marcos] });
 
@@ -1026,6 +1039,7 @@ function alvoObjetivo() {
     case 'hangar': return new THREE.Vector3(0, 6, -160);
     case 'escada': return new THREE.Vector3(14, 6, -183);
     case 'elevador': return new THREE.Vector3(28, ELEV.h + 10, -226);
+    case 'missao1': return new THREE.Vector3(-2.5, 49, -210);
   }
   return null;
 }
@@ -1112,16 +1126,255 @@ function abrirExpo(chave) {
 }
 
 /* ---------------- teleporte ---------------- */
-const PONTOS = { recepcao: [0, 0, 16, 0], museu: [0, 0, -84, 0], hangar: [2, 0, -192, 0.35], elevador: [16, 14, -220, -Math.PI / 2] };
+const PONTOS = { recepcao: [0, 0, 16, 0], museu: [0, 0, -84, 0], hangar: [2, 0, -192, 0.35], elevador: [16, 14, -220, -Math.PI / 2], braco: [3, 41, -210, Math.PI / 2] };
 function teleportar(k) { const [x, y, z, yaw] = PONTOS[k]; P.pos.set(x, y, z); P.vy = 0; cam.yaw = yaw; P.rot = yaw + Math.PI; }
 
-/* ---------------- capacete ---------------- */
-function alternarCapacete() {
-  estado.av.cap = !estado.av.cap; salvar();
-  definirCapacete(jogador, estado.av.cap);
-  $('btn-helmet').classList.toggle('off', !estado.av.cap);
-  falarSistema(estado.av.cap ? L.msg.capacete_on : L.msg.capacete_off);
+/* ================================================================
+   FASE 1 · PROJETO MERCURY · TASK 1: O COLAPSO DO PILOTO AUTOMÁTICO
+   Cabine em primeira pessoa (cena própria). Fluxo:
+   alarme (tela treme, alerta laranja) → botão DESLIGAR AUTOPILOTO →
+   controle manual com ← → (cada toque gasta RCS) → 4 alvos travados →
+   piloto automático restaurado.  RCS zerado = fim de jogo.
+   ================================================================ */
+// Ajuste de dificuldade: 40 toques de RCS no tanque (2,5% cada). Em pânico (~4 toques/s) acaba em ~10 s.
+const AJ = { impulso: 6, custo: 2.5, raioAlvo: 5, segurar: 1.2, limite: 50, empurrao: 6, vies: 2.5, amortecer: 0.3 };
+const ALVOS = [22, -26, 34, -8];
+const M = { ativa: false, fase: '', a: 0, w: 0, tq: 0, tqT: 0, fuel: 100, alvoI: 0, hold: 0, t: 0, toques: [], avisoT: 0, look: { x: 0, y: 0 }, fimT: 0 };
+const cena2 = new THREE.Scene(); cena2.background = new THREE.Color('#02040a');
+const cam2 = new THREE.PerspectiveCamera(72, 1, 0.05, 600);
+const exterior = new THREE.Group(); cena2.add(exterior); // gira com a nave (roll)
+{
+  const pts = [];
+  for (let i = 0; i < 900; i++) { const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, r = 300, s = Math.sqrt(1 - u * u); pts.push(r * s * Math.cos(th), r * u, r * s * Math.sin(th)); }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  exterior.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.2, sizeAttenuation: false })));
+  const tex = new THREE.CanvasTexture(cv(512, 256, (g, w, h) => {
+    g.fillStyle = '#1d5fb4'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#3f8f4f'; for (let i = 0; i < 26; i++) { g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 20 + Math.random() * 50, 10 + Math.random() * 30, Math.random() * 3, 0, 7); g.fill(); }
+    g.fillStyle = 'rgba(255,255,255,.75)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 3 + Math.random() * 8, 0, 0, 7); g.fill(); }
+  }));
+  const terra = new THREE.Mesh(new THREE.SphereGeometry(80, 48, 32), new THREE.MeshLambertMaterial({ map: tex }));
+  terra.position.set(0, -58, -105); exterior.add(terra); exterior.userData.terra = terra;
+  const atm = new THREE.Mesh(new THREE.SphereGeometry(82.5, 48, 32), new THREE.MeshBasicMaterial({ color: '#7fc3ff', transparent: true, opacity: 0.25, side: THREE.BackSide }));
+  atm.position.copy(terra.position); exterior.add(atm);
+  const solM = new THREE.DirectionalLight(0xffffff, 1.1); solM.position.set(60, 40, 20); cena2.add(solM);
 }
+const luzAmb = new THREE.AmbientLight(0xffffff, 0.45); cena2.add(luzAmb);
+const luzCabine = new THREE.PointLight(0xffffff, 1, 6); luzCabine.position.set(0, 0.6, -0.4); cena2.add(luzCabine);
+const cabineM = new THREE.Group(); cena2.add(cabineM);
+const cx = (w, h, d, cor, x, y, z, rx = 0, pai = cabineM) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof cor === 'string' ? mat(cor) : cor); m.position.set(x, y, z); m.rotation.x = rx; pai.add(m); return m; };
+let mostrador, texMostrador, luzesAlarme = [];
+{
+  // moldura da janela + paredes da cápsula (o vão central mostra o espaço)
+  cx(4, 0.5, 0.2, '#262a33', 0, 1.25, -1.9); cx(1.1, 1.6, 0.2, '#262a33', -1.45, 0.55, -1.9); cx(1.1, 1.6, 0.2, '#262a33', 1.45, 0.55, -1.9);
+  cx(0.12, 1.2, 0.25, '#3a3f4a', -0.88, 0.55, -1.85); cx(0.12, 1.2, 0.25, '#3a3f4a', 0.88, 0.55, -1.85); cx(1.9, 0.12, 0.25, '#3a3f4a', 0, 1.1, -1.85);
+  cx(0.3, 3, 3, '#1c1f26', -2, 0, -0.8); cx(0.3, 3, 3, '#1c1f26', 2, 0, -0.8); cx(4.3, 0.3, 3, '#1c1f26', 0, 1.6, -0.8);
+  // painel principal inclinado
+  const painel = new THREE.Group(); painel.position.set(0, -0.5, -1.75); painel.rotation.x = -0.3; cabineM.add(painel);
+  cx(3.6, 1.35, 0.14, '#2f343e', 0, 0, 0, 0, painel);
+  cx(3.7, 0.08, 0.2, VERMELHO, 0, 0.7, 0.02, 0, painel);
+  texMostrador = new THREE.CanvasTexture(cv(512, 512, () => {}));
+  mostrador = new THREE.Mesh(new THREE.CircleGeometry(0.48, 48), new THREE.MeshBasicMaterial({ map: texMostrador }));
+  mostrador.position.set(0, 0.02, 0.08); painel.add(mostrador);
+  const aro = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.035, 10, 48), mat('#b8bcc4')); aro.position.set(0, 0.02, 0.09); painel.add(aro);
+  // instrumentos e chaves decorativos
+  const gauge = (x, y, rot) => {
+    const t = new THREE.CanvasTexture(cv(128, 128, g => { g.fillStyle = '#0b0d12'; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.strokeStyle = '#e8e6df'; g.lineWidth = 3; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.moveTo(64 + Math.cos(a) * 48, 64 + Math.sin(a) * 48); g.lineTo(64 + Math.cos(a) * 58, 64 + Math.sin(a) * 58); g.stroke(); } g.strokeStyle = '#ff7a1a'; g.lineWidth = 5; g.beginPath(); g.moveTo(64, 64); g.lineTo(64 + Math.cos(rot) * 44, 64 + Math.sin(rot) * 44); g.stroke(); }));
+    const m = new THREE.Mesh(new THREE.CircleGeometry(0.17, 28), new THREE.MeshBasicMaterial({ map: t })); m.position.set(x, y, 0.08); painel.add(m);
+  };
+  gauge(-1.05, 0.25, 0.6); gauge(-1.05, -0.2, 2.2); gauge(1.05, 0.25, 4.1); gauge(1.05, -0.2, 1.3); gauge(-1.5, 0.02, 5); gauge(1.5, 0.02, 3);
+  for (let i = 0; i < 6; i++) { cx(0.07, 0.16, 0.07, '#d9d9d4', -0.62 + i * 0.25, -0.52, 0.1, 0.4, painel); cx(0.12, 0.06, 0.04, '#111', -0.62 + i * 0.25, -0.6, 0.08, 0, painel); }
+  for (let i = 0; i < 5; i++) { const l = cx(0.14, 0.09, 0.05, mat(VERMELHO, { neon: true }), -0.5 + i * 0.25, 0.58, 0.08, 0, painel); luzesAlarme.push(l); }
+  const etiqueta = (txt, x, y) => { const t = new THREE.CanvasTexture(cv(256, 64, g => { g.fillStyle = '#2f343e'; g.fillRect(0, 0, 256, 64); g.fillStyle = '#e8e6df'; g.font = `26px ${TIT}`; g.textAlign = 'center'; g.fillText(txt, 128, 42); })); const m = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1), new THREE.MeshBasicMaterial({ map: t })); m.position.set(x, y, 0.08); painel.add(m); };
+  etiqueta('ATTITUDE', 0, -0.42); etiqueta('RCS', -1.05, 0.48); etiqueta('RETRO', 1.05, 0.48);
+  // laterais com chaves (cápsula apertada, como a Mercury)
+  for (const s of [-1, 1]) { const lat = cx(0.9, 1, 0.1, '#2b2f38', s * 1.55, -0.3, -1.1); lat.rotation.y = -s * 0.9; for (let i = 0; i < 4; i++) cx(0.06, 0.14, 0.06, '#d9d9d4', s * (1.3 + i * 0.12), -0.15 - (i % 2) * 0.2, -1.0 + i * 0.09, 0.3); }
+}
+// desenho do mostrador de atitude (redesenhado a cada quadro)
+function desenharMostrador() {
+  const c = texMostrador.image, g = c.getContext('2d'), W = 512, R = 240, k = (R * 0.72) / 45;
+  g.clearRect(0, 0, W, W);
+  g.save(); g.translate(256, 256);
+  g.beginPath(); g.arc(0, 0, R, 0, 7); g.clip();
+  g.save(); g.rotate(M.a * Math.PI / 180 * 0.6); // horizonte inclina com a nave
+  g.fillStyle = '#2f6fb8'; g.fillRect(-W, -W, W * 2, W); g.fillStyle = '#7a4e2a'; g.fillRect(-W, 0, W * 2, W);
+  g.strokeStyle = '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(-W, 0); g.lineTo(W, 0); g.stroke();
+  g.restore();
+  g.save(); g.rotate(M.t * (M.fase === 'manual' || M.fase === 'alarme' ? 0.9 : 0.1)); // anel girando sozinho
+  g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 4;
+  for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2, r1 = i % 3 ? R - 18 : R - 34; g.beginPath(); g.moveTo(Math.cos(a) * r1, Math.sin(a) * r1); g.lineTo(Math.cos(a) * R, Math.sin(a) * R); g.stroke(); }
+  g.restore();
+  // régua horizontal
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 3;
+  for (let v = -45; v <= 45; v += 15) { g.beginPath(); g.moveTo(v * k, -12); g.lineTo(v * k, 12); g.stroke(); }
+  // alvo verde
+  if (M.alvoI < ALVOS.length && M.fase === 'manual') {
+    const ax = ALVOS[M.alvoI] * k, perto = Math.abs(M.a - ALVOS[M.alvoI]) < AJ.raioAlvo;
+    g.strokeStyle = perto ? '#9be37a' : '#2fbf71'; g.lineWidth = 8; g.beginPath(); g.arc(ax, 0, AJ.raioAlvo * k + 14, 0, 7); g.stroke();
+    if (M.hold > 0) { g.strokeStyle = '#ffffff'; g.lineWidth = 10; g.beginPath(); g.arc(ax, 0, AJ.raioAlvo * k + 28, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (M.hold / AJ.segurar)); g.stroke(); }
+  } else if (M.fase === 'ok' || M.fase === 'fim') { g.strokeStyle = '#2fbf71'; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, AJ.raioAlvo * k + 14, 0, 7); g.stroke(); }
+  // cruz (indicador de atitude)
+  const x = M.a * k;
+  g.strokeStyle = '#111'; g.lineWidth = 16; g.beginPath(); g.moveTo(x - 46, 0); g.lineTo(x + 46, 0); g.moveTo(x, -46); g.lineTo(x, 46); g.stroke();
+  g.strokeStyle = '#ffb21a'; g.lineWidth = 9; g.beginPath(); g.moveTo(x - 44, 0); g.lineTo(x + 44, 0); g.moveTo(x, -44); g.lineTo(x, 44); g.stroke();
+  g.restore();
+  g.strokeStyle = '#0b0d12'; g.lineWidth = 16; g.beginPath(); g.arc(256, 256, R + 6, 0, 7); g.stroke();
+  texMostrador.needsUpdate = true;
+}
+let audio = null;
+function bip(f = 880, d = 0.08, tipo = 'square', vol = 0.05) {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), gn = audio.createGain();
+    o.type = tipo; o.frequency.value = f; gn.gain.value = vol; o.connect(gn); gn.connect(audio.destination);
+    o.start(); gn.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + d); o.stop(audio.currentTime + d + 0.02);
+  } catch (e) { /* sem áudio */ }
+}
+const LM = () => L.missao;
+function embarcar() {
+  if (M.ativa) return;
+  if (!estado.capacete) { // capacete aparece automaticamente na primeira missão
+    estado.capacete = true; salvar(); definirCapacete(jogador, true);
+    falarSistema(L.msg.capacete); bip(660, 0.15, 'sine', 0.06);
+    setTimeout(abrirBriefing, 1400);
+  } else abrirBriefing();
+}
+function abrirBriefing() {
+  const t = LM();
+  $('mb-fase').textContent = t.fase; $('mb-task').textContent = t.task; $('mb-tipo').textContent = t.tipo;
+  $('mb-intro').textContent = t.intro; $('mb-como-t').textContent = t.como_titulo; $('mb-hist-t').textContent = t.historia_titulo;
+  $('mb-aviso').textContent = t.aviso; $('mb-comecar').textContent = '▶ ' + t.comecar;
+  const lista = (id, itens) => { const el = $(id); el.innerHTML = ''; itens.forEach(x => { const li = document.createElement('li'); li.textContent = x; el.appendChild(li); }); };
+  lista('mb-como', t.como); lista('mb-fatos', t.fatos);
+  const fotos = $('mb-fotos'); fotos.innerHTML = '';
+  const fontes = $('mb-fontes'); fontes.innerHTML = '';
+  DADOS.missao1.forEach(r => {
+    const im = document.createElement('img'); im.src = r.foto; im.alt = L.ui.foto_nasa + ' ' + r.id; im.loading = 'lazy'; fotos.appendChild(im);
+    const d = document.createElement('div');
+    const a = document.createElement('a'); a.href = 'https://images.nasa.gov/details/' + encodeURIComponent(r.id); a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = r.id;
+    d.append(`${L.ui.fonte}: ${FONTE_API} · `, a, ` · ${L.ui.credito}: ${r.credito}`); fontes.appendChild(d);
+  });
+  limparTeclas(); $('m-brief').showModal();
+}
+$('mb-comecar').onclick = () => { $('m-brief').close(); comecarMissao(); };
+function comecarMissao() {
+  const t = LM();
+  Object.assign(M, { ativa: true, fase: 'alarme', a: 0, w: 7, tq: 0, tqT: 0, fuel: 100, alvoI: 0, hold: 0, t: 0, toques: [], avisoT: 0, fimT: 0 });
+  M.look.x = M.look.y = 0;
+  document.body.classList.add('em-missao'); $('missao').hidden = false;
+  $('m-fase').textContent = t.fase; $('m-task').textContent = t.task; $('m-sair').textContent = '✕ ' + t.sair;
+  $('m-rcs-l').textContent = t.rcs; $('m-alvos-l').textContent = t.alvos; $('m-tempo-l').textContent = t.tempo;
+  $('m-alerta').textContent = t.alerta; $('m-alerta').className = 'm-alerta pisca';
+  $('m-vermelho').classList.add('on');
+  $('m-botao').textContent = t.botao; $('m-botao').hidden = false;
+  $('m-esq').hidden = $('m-dir').hidden = true;
+  dica(t.dica_alarme);
+  document.querySelectorAll('#m-luzes i').forEach(i => i.classList.remove('on'));
+  luzCabine.color.set('#ff3030');
+  limparTeclas(); cvs.focus({ preventScroll: true });
+  bip(440, 0.25, 'sawtooth', 0.04);
+}
+function dica(txt, aviso) { const d = $('m-dica'); d.textContent = txt; d.classList.toggle('aviso', !!aviso); }
+function desligarAutopiloto() {
+  if (M.fase !== 'alarme') return;
+  M.fase = 'manual'; M.tqT = 0;
+  $('m-botao').hidden = true; $('m-esq').hidden = $('m-dir').hidden = false;
+  dica(LM().dica_manual); bip(300, 0.2, 'square', 0.05);
+}
+function toqueRCS(dir) {
+  if (M.fase !== 'manual') return;
+  M.w += dir * AJ.impulso;
+  M.fuel = Math.max(0, M.fuel - AJ.custo);
+  M.toques.push(M.t);
+  bip(dir > 0 ? 520 : 480, 0.04, 'triangle', 0.03);
+  if (M.fuel <= 0) fimMissao(false);
+}
+function fimMissao(ok) {
+  M.fase = 'fim';
+  const t = LM();
+  setTimeout(() => {
+    $('mf-icone').textContent = ok ? '✔' : '✕'; $('mf-icone').className = 'm-fim-icone' + (ok ? '' : ' falha');
+    $('mf-titulo').textContent = ok ? t.sucesso_titulo : t.falha_titulo;
+    $('mf-texto').textContent = ok ? t.sucesso_txt : t.falha_txt;
+    const st = $('mf-stats'); st.innerHTML = '';
+    for (const [rot, val] of [[t.restou, Math.round(M.fuel) + '%'], [t.fim_tempo, M.t.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s']]) {
+      const d = document.createElement('div'); const s = document.createElement('small'); s.textContent = rot; const b = document.createElement('b'); b.textContent = val; d.append(s, b); st.appendChild(d);
+    }
+    $('mf-aprendizado').textContent = ok ? t.aprendizado : '';
+    $('mf-voltar').textContent = t.voltar; $('mf-tentar').textContent = '↻ ' + t.tentar;
+    $('m-fim').showModal();
+    if (ok) concluir('missao1');
+  }, ok ? 1800 : 700);
+  if (!ok) { bip(160, 0.6, 'sawtooth', 0.06); dica(t.falha_titulo, true); }
+}
+function sairMissao() {
+  M.ativa = false; M.fase = '';
+  if ($('m-fim').open) $('m-fim').close();
+  document.body.classList.remove('em-missao'); $('missao').hidden = true;
+  $('m-vermelho').classList.remove('on');
+  teleportar('braco');
+}
+$('m-botao').onclick = desligarAutopiloto;
+$('m-sair').onclick = sairMissao;
+$('mf-voltar').onclick = sairMissao;
+$('mf-tentar').onclick = () => { $('m-fim').close(); comecarMissao(); };
+// fechar o card de resultado de qualquer jeito (Esc, clique fora) volta ao hangar, a não ser que tenha clicado em "tentar de novo"
+$('m-fim').addEventListener('close', () => setTimeout(() => { if (M.ativa && M.fase === 'fim') sairMissao(); }, 0));
+for (const [id, d] of [['m-esq', -1], ['m-dir', 1]]) $(id).addEventListener('pointerdown', e => { e.preventDefault(); toqueRCS(d); });
+function atualizarMissao(dt) {
+  if (Math.abs(cam2.aspect - innerWidth / innerHeight) > 0.001) { cam2.aspect = innerWidth / innerHeight; cam2.updateProjectionMatrix(); }
+  const t = LM();
+  if (M.fase !== 'fim' || M.fimT < 3) M.t += M.fase === 'fim' ? 0 : dt;
+  let tremor = 0;
+  if (M.fase === 'alarme') {
+    M.a = Math.min(AJ.limite * 0.8, M.a + M.w * dt); tremor = 0.035;
+  } else if (M.fase === 'manual') {
+    M.tqT -= dt;
+    if (M.tqT <= 0) { M.tq = (Math.random() * 2 - 1) * AJ.empurrao + (Math.random() < 0.5 ? -AJ.vies : AJ.vies); M.tqT = 1.5 + Math.random() * 1.5; }
+    M.w += M.tq * dt; M.w *= 1 - AJ.amortecer * dt; M.a += M.w * dt;
+    if (Math.abs(M.a) > AJ.limite) { M.a = Math.sign(M.a) * AJ.limite; M.w = 0; }
+    tremor = 0.012 + Math.min(0.03, Math.abs(M.w) * 0.0012);
+    // alvo atual
+    if (Math.abs(M.a - ALVOS[M.alvoI]) < AJ.raioAlvo) {
+      if (M.hold === 0) dica(t.segure);
+      M.hold += dt;
+      if (M.hold >= AJ.segurar) {
+        document.querySelectorAll('#m-luzes i')[M.alvoI].classList.add('on');
+        M.alvoI++; M.hold = 0; bip(990, 0.12, 'sine', 0.07); dica(t.travado);
+        if (M.alvoI >= ALVOS.length) { // piloto automático volta
+          M.fase = 'ok'; $('m-alerta').textContent = t.restaurado; $('m-alerta').className = 'm-alerta ok';
+          $('m-vermelho').classList.remove('on'); luzCabine.color.set('#ffffff');
+          $('m-esq').hidden = $('m-dir').hidden = true; dica(t.restaurado); bip(1320, 0.3, 'sine', 0.07);
+          fimMissao(true);
+        }
+      }
+    } else if (M.hold > 0) { M.hold = Math.max(0, M.hold - dt * 2); if (M.hold === 0) dica(t.dica_manual); }
+    // pânico: muitos toques em pouco tempo
+    M.toques = M.toques.filter(x => M.t - x < 1.2);
+    if (M.toques.length >= 5 && M.avisoT <= 0) { dica(t.panico, true); M.avisoT = 1.6; }
+    if (M.avisoT > 0) { M.avisoT -= dt; if (M.avisoT <= 0) dica(t.dica_manual); }
+  } else { // ok / fim: estabiliza
+    M.w *= 1 - Math.min(1, dt * 3); M.a += (0 - M.a) * Math.min(1, dt * (M.fase === 'ok' || M.fuel > 0 ? 1.5 : 0)); M.fimT += dt;
+    if (M.fuel <= 0) { M.a += M.w * dt; tremor = 0.02; }
+  }
+  // HUD
+  $('m-rcs-bar').style.height = M.fuel + '%'; $('m-rcs-bar').classList.toggle('baixo', M.fuel < 30);
+  $('m-rcs-v').textContent = Math.round(M.fuel) + '%';
+  $('m-tempo').textContent = M.t.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
+  // câmera em primeira pessoa: tremor + olhar com o mouse; o lado de fora gira com a nave
+  const tr = reduz ? 0 : tremor;
+  cam2.position.set((Math.random() - 0.5) * tr, (Math.random() - 0.5) * tr, 0);
+  cam2.rotation.set(-0.12 + M.look.y * 0.18, -M.look.x * 0.35, (Math.random() - 0.5) * tr * 0.6);
+  exterior.rotation.z = M.a * Math.PI / 180 * 0.6;
+  exterior.userData.terra.rotation.y += dt * 0.02;
+  const alarme = M.fase === 'alarme' || M.fase === 'manual' || (M.fase === 'fim' && M.fuel <= 0);
+  const pisca = Math.sin(M.t * 10) > 0;
+  luzesAlarme.forEach((l, i) => l.visible = alarme ? (pisca ? i % 2 === 0 : i % 2 === 1) : false);
+  luzCabine.intensity = alarme ? 0.8 + (pisca ? 0.5 : 0) : 0.9;
+  desenharMostrador();
+}
+// olhar com o mouse dentro da cabine ("guiar a visão")
+addEventListener('pointermove', e => { if (!M.ativa) return; M.look.x = (e.clientX / innerWidth - 0.5) * 2; M.look.y = -(e.clientY / innerHeight - 0.5) * 2; });
 
 /* ================================================================
    ENTRADA
@@ -1132,11 +1385,19 @@ function limparTeclas() { for (const k in teclas) delete teclas[k]; joy.x = joy.
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
   const k = e.key.toLowerCase();
+  if (M.ativa) { // controles da cabine
+    if (document.querySelector('dialog[open]')) return;
+    if (['arrowleft', 'arrowright', ' ', 'enter', 'a', 'd'].includes(k)) e.preventDefault();
+    if (e.repeat) return; // segurar a tecla não dispara mais propulsores: cada toque conta
+    if (k === 'arrowleft' || k === 'a') toqueRCS(-1);
+    else if (k === 'arrowright' || k === 'd') toqueRCS(1);
+    else if ((k === ' ' || k === 'enter') && M.fase === 'alarme') desligarAutopiloto();
+    return;
+  }
   if (k === 'm' && jogando()) { const d = $('map'); d.open ? d.close() : (limparTeclas(), d.showModal()); return; }
   if (pausado()) return;
   if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
   if (k === ' ') pularPedido = true;
-  else if (k === 'h' && !e.repeat) alternarCapacete();
   else if (k === 'e' && !e.repeat) { if (fala >= 0 && maisPerto !== itMarcos && P.pos.distanceTo(marcos.position) < 14) conversar(); else if (maisPerto) maisPerto.acao(); }
   else teclas[k] = true;
 });
@@ -1191,7 +1452,6 @@ document.querySelectorAll('dialog').forEach(d => {
 });
 $('btn-map').onclick = () => { limparTeclas(); $('map').showModal(); };
 $('btn-credits').onclick = () => { limparTeclas(); $('credits').showModal(); };
-$('btn-helmet').onclick = alternarCapacete;
 $('btn-lang').onclick = () => { // troca de idioma: salva posição e recarrega já dentro do jogo
   estado.lang = estado.lang === 'pt' ? 'en' : 'pt'; salvar();
   sessao.set('rr-abrir', 'jogo'); sessao.set('rr-pos', JSON.stringify([P.pos.x, P.pos.y, P.pos.z, cam.yaw]));
@@ -1202,19 +1462,15 @@ $('missions-toggle').onclick = () => { const m = $('missions'); m.classList.togg
 if (innerWidth < 560) { $('missions').classList.add('closed'); $('missions-toggle').setAttribute('aria-expanded', 'false'); }
 
 function jogar(retorno) {
-  if (!retorno) estado.nome = $('name-input').value.trim().slice(0, 20);
   salvar();
   tagJogador.textContent = nomeJogador();
   desenharTelao(); renderMissoes(); aplicarTextos();
-  $('start').classList.add('hide');
+  $('start').classList.add('hide'); document.body.classList.remove('inicio');
   cvs.focus({ preventScroll: true });
   const pos = sessao.get('rr-pos'); sessao.del('rr-pos');
   if (retorno && pos) { try { const [x, y, z, yaw] = JSON.parse(pos); P.pos.set(x, y, z); cam.yaw = yaw; P.rot = yaw + Math.PI; } catch (e) {} }
   else setTimeout(() => { if (!estado.feitas.includes('falar')) falarSistema(toque ? L.msg.chamado_toque : L.msg.chamado); }, 900);
 }
-$('play-btn').onclick = () => jogar(false);
-$('name-input').addEventListener('keydown', e => { if (e.key === 'Enter') jogar(false); });
-$('name-input').addEventListener('input', () => { estado.nome = $('name-input').value.trim().slice(0, 20); tagJogador.textContent = nomeJogador(); desenharTelao(); });
 tagJogador.textContent = nomeJogador(); desenharTelao(); renderMissoes();
 
 /* ================================================================
@@ -1223,6 +1479,7 @@ tagJogador.textContent = nomeJogador(); desenharTelao(); renderMissoes();
 let ultimo = performance.now(), tempo = 0;
 function quadro(t) {
   const dt = Math.min((t - ultimo) / 1000, 0.05); ultimo = t; tempo += dt;
+  if (M.ativa) { atualizarMissao(dt); renderer.render(cena2, cam2); requestAnimationFrame(quadro); return; }
   atualizarElevador(dt); atualizarJogador(dt); atualizarCamera(dt);
   if (jogando()) atualizarZona();
   const dm = P.pos.distanceTo(marcos.position);
@@ -1255,21 +1512,24 @@ function quadro(t) {
 teleportar('recepcao');
 requestAnimationFrame(quadro);
 
-// atalhos para apresentação: index.html#jogar&tp=museu  ·  #jogar&expo=atlantis
+// atalhos para apresentação: index.html#lang=pt&g=m&jogar&tp=museu  ·  &expo=atlantis  ·  &missao
 const h = new URLSearchParams(location.hash.slice(1));
-if (h.has('jogar')) jogar(false);
 if (PONTOS[h.get('tp')]) teleportar(h.get('tp'));
+if (h.has('missao')) setTimeout(() => { estado.capacete = true; definirCapacete(jogador, true); teleportar('braco'); const m = h.get('missao'); if (m === 'direto' || m === 'manual') { comecarMissao(); if (m === 'manual') desligarAutopiloto(); } else abrirBriefing(); }, 300);
 if (L.expos[h.get('expo')]) abrirExpo(h.get('expo'));
 if (h.has('cam')) { const [d, y, p] = h.get('cam').split(',').map(Number); if (d) cam.dist = cam.alvoDist = d; if (!isNaN(y)) cam.yaw = y; if (!isNaN(p)) cam.pitch = p; }
 if (h.has('falar')) conversar();
 
-return { jogar, trocarAvatar() { criarJogador(); tagJogador.textContent = nomeJogador(); desenharTelao(); renderMissoes(); } };
+return { jogar };
 }
 
-// atalho de apresentação também escolhe idioma: index.html#lang=en&jogar
+// atalhos de apresentação: index.html#lang=en&g=m&jogar  (g = m feminino, h masculino)
 {
   const h = new URLSearchParams(location.hash.slice(1));
-  if (/^[hm][01]$/.test(h.get('av') || '')) estado.av = { g: h.get('av')[0], cap: h.get('av')[1] === '1' };
+  if (h.get('g') === 'm' || h.get('g') === 'h') estado.av.g = h.get('g');
   if (h.get('lang') === 'pt' || h.get('lang') === 'en') escolherIdioma(h.get('lang'));
+  atualizarStart();
+  if (sessao.get('rr-abrir') === 'jogo' && L && estado.av.g) { sessao.del('rr-abrir'); iniciarJogo(true); } // volta de uma troca de idioma
+  else if (h.has('jogar') && L && estado.av.g) iniciarJogo(false);
 }
 })();

@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="estilo.css?v=4">
 </head>
-<body>
+<body class="inicio">
 
-<!-- logotipo reutilizado (rastro de foguete vermelho) -->
+<!-- logotipo: duas faixas vermelhas inclinadas (rastro de foguete) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="logo" viewBox="0 0 40 32">
-    <path d="M2 31 L33 1 L38 1 L12 31 Z" fill="#e3262b"/>
-    <path d="M14 31 L36 9 L38 12 L21 31 Z" fill="#e3262b" opacity=".85"/>
+  <symbol id="logo" viewBox="0 0 100 100">
+    <path d="M4 96 L64 22 Q80 8 99 3 L37 96 Z" fill="#e3262b"/>
+    <path d="M46 96 L87 34 Q92 24 97 17 L73 96 Z" fill="#e3262b"/>
   </symbol>
 </svg>
 
@@ -21,31 +21,29 @@
 <div id="world-ui" aria-hidden="true"></div>
 
 <!-- ===== HUD ===== -->
-<div class="hud-top-left">
+<div class="hud hud-top-left">
   <div class="chip brand"><svg class="logo"><use href="#logo"/></svg> ROOKIE ROCKET</div>
   <button class="icon-btn" id="btn-map" data-i18n-title="btn_mapa" aria-label="Mapa">🗺️</button>
-  <button class="icon-btn" id="btn-helmet" data-i18n-title="btn_capacete" aria-label="Capacete">🪖</button>
   <button class="icon-btn lang-btn" id="btn-lang" data-i18n-title="btn_idioma" aria-label="Idioma">EN</button>
   <button class="icon-btn" id="btn-credits" data-i18n-title="btn_creditos" aria-label="Créditos">ⓘ</button>
 </div>
 
-<div class="leaderstats">
+<div class="hud leaderstats">
   <div class="ls-head"><span data-i18n="ls_nome">Astronauta</span><span data-i18n="ls_expos">Expos</span><span>★</span></div>
   <div class="ls-row"><span id="ls-name">—</span><span id="ls-expo">0/6</span><span id="ls-badges">0</span></div>
 </div>
 
-<aside class="missions" id="missions">
+<aside class="hud missions" id="missions">
   <button class="missions-head" id="missions-toggle" aria-expanded="true"><span><svg class="logo"><use href="#logo"/></svg> <span data-i18n="missoes_titulo">MISSÕES</span></span> <i>▾</i></button>
   <ol id="mission-list"></ol>
 </aside>
 
 <div class="zone-banner" id="zone-banner"><small id="zone-sub"></small><strong id="zone-title"></strong></div>
 
-<div class="hint-bar" id="hint-bar">
+<div class="hud hint-bar" id="hint-bar">
   <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span data-i18n="hint_andar"></span></span>
   <span><kbd>␣</kbd> <span data-i18n="hint_pular"></span></span>
   <span><kbd>E</kbd> <span data-i18n="hint_interagir"></span></span>
-  <span><kbd>H</kbd> <span data-i18n="hint_capacete"></span></span>
   <span>🖱️ <span data-i18n="hint_camera"></span></span>
 </div>
 
@@ -54,43 +52,105 @@
   <div><small data-i18n="conquista"></small><strong id="badge-name"></strong></div>
 </div>
 
-<div class="touch-ui" id="touch-ui">
+<div class="hud touch-ui" id="touch-ui">
   <div class="joystick" id="joystick"><div class="stick" id="stick"></div></div>
   <button class="jump-btn" id="jump-btn" aria-label="Jump">⤒</button>
 </div>
 
-<!-- ===== Tela inicial (estética do storyboard) ===== -->
+<!-- ===== Missão: cabine em primeira pessoa ===== -->
+<div id="missao" hidden>
+  <div class="m-vermelho" id="m-vermelho"></div>
+  <div class="m-visor"></div>
+  <div class="m-top">
+    <div class="m-titulo"><svg class="logo"><use href="#logo"/></svg><div><small id="m-fase"></small><b id="m-task"></b></div></div>
+    <div class="m-alerta" id="m-alerta"></div>
+    <button class="m-sair" id="m-sair"></button>
+  </div>
+  <div class="m-rcs"><span id="m-rcs-l"></span><div class="m-barra"><i id="m-rcs-bar"></i></div><b id="m-rcs-v">100%</b></div>
+  <div class="m-alvos"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div><span id="m-tempo-l"></span><b id="m-tempo">0,0 s</b></div>
+  <div class="m-baixo">
+    <div class="m-dica" id="m-dica"></div>
+    <div class="m-controles">
+      <button class="m-seta" id="m-esq" aria-label="←">◀</button>
+      <button class="m-botao" id="m-botao"></button>
+      <button class="m-seta" id="m-dir" aria-label="→">▶</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="m-brief" class="m-card">
+  <div class="m-card-head"><svg class="logo"><use href="#logo"/></svg><div><small id="mb-fase"></small><h2 id="mb-task"></h2></div><span class="tag" id="mb-tipo"></span></div>
+  <div class="m-card-body">
+    <div class="m-col">
+      <p class="m-intro" id="mb-intro"></p>
+      <h3 id="mb-como-t"></h3><ol id="mb-como"></ol>
+      <button class="big-btn" id="mb-comecar"></button>
+    </div>
+    <div class="m-col m-hist">
+      <div class="m-fotos" id="mb-fotos"></div>
+      <h3 id="mb-hist-t"></h3><ul id="mb-fatos"></ul>
+      <p class="m-aviso" id="mb-aviso"></p>
+      <div class="source" id="mb-fontes"></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="m-fim" class="m-card m-fim">
+  <div class="m-fim-icone" id="mf-icone"></div>
+  <h2 id="mf-titulo"></h2>
+  <p id="mf-texto"></p>
+  <div class="m-stats" id="mf-stats"></div>
+  <p class="m-aprendizado" id="mf-aprendizado"></p>
+  <div class="m-fim-botoes"><button class="big-btn small alt" id="mf-voltar"></button><button class="big-btn small" id="mf-tentar"></button></div>
+</dialog>
+
+<!-- ===== Tela inicial ===== -->
 <div class="overlay" id="start">
   <div class="start-card">
     <header class="sb-head">
-      <div class="sb-title"><svg class="logo"><use href="#logo"/></svg> ROOKIE ROCKET</div>
-      <div class="sb-sub"><span></span><b id="sb-tagline">PROGRAMA ESTAGIÁRIO ASTRONAUTA · ROOKIE ASTRONAUT PROGRAM</b><span></span></div>
-    </header>
-
-    <section class="step" id="step-lang">
-      <h2 class="sb-label">ESCOLHA O IDIOMA · CHOOSE YOUR LANGUAGE</h2>
-      <div class="lang-grid">
-        <button class="lang-card" data-lang="pt">
-          <svg viewBox="0 0 70 50" class="flag"><rect width="70" height="50" fill="#009c3b"/><path d="M35 5 L65 25 L35 45 L5 25Z" fill="#ffdf00"/><circle cx="35" cy="25" r="11" fill="#002776"/><path d="M24 23 Q35 19 46 27" stroke="#fff" stroke-width="2" fill="none"/></svg>
-          <b>PORTUGUÊS</b><small>Brasil</small>
-        </button>
-        <button class="lang-card" data-lang="en">
-          <svg viewBox="0 0 70 50" class="flag"><rect width="70" height="50" fill="#fff"/><g fill="#b22234"><rect y="0" width="70" height="3.85"/><rect y="7.7" width="70" height="3.85"/><rect y="15.4" width="70" height="3.85"/><rect y="23.1" width="70" height="3.85"/><rect y="30.8" width="70" height="3.85"/><rect y="38.5" width="70" height="3.85"/><rect y="46.2" width="70" height="3.85"/></g><rect width="30" height="27" fill="#3c3b6e"/><g fill="#fff"><circle cx="6" cy="5" r="1.4"/><circle cx="15" cy="5" r="1.4"/><circle cx="24" cy="5" r="1.4"/><circle cx="10.5" cy="11" r="1.4"/><circle cx="19.5" cy="11" r="1.4"/><circle cx="6" cy="17" r="1.4"/><circle cx="15" cy="17" r="1.4"/><circle cx="24" cy="17" r="1.4"/><circle cx="10.5" cy="23" r="1.4"/><circle cx="19.5" cy="23" r="1.4"/></g></svg>
-          <b>ENGLISH</b><small>United States</small>
-        </button>
+      <svg class="sb-logo"><use href="#logo"/></svg>
+      <div>
+        <div class="sb-title">ROOKIE ROCKET</div>
+        <div class="sb-sub" id="sb-tagline">PROGRAMA ESTAGIÁRIO ASTRONAUTA · ROOKIE ASTRONAUT PROGRAM</div>
       </div>
-    </section>
-
-    <section class="step" id="step-perfil" hidden>
-      <h2 class="sb-label" data-i18n="perfil_titulo"></h2>
-      <div class="avatar-grid" id="avatar-grid" role="radiogroup"></div>
-      <p class="start-text" data-i18n="start_texto"></p>
-      <label for="name-input" data-i18n="nome_label"></label>
-      <input id="name-input" maxlength="20" autocomplete="given-name" data-i18n-ph="nome_ph">
-      <button class="big-btn" id="play-btn" data-i18n="jogar"></button>
-      <button class="link-btn" id="back-lang" data-i18n="voltar_idioma"></button>
-      <small class="start-note" data-i18n="start_nota"></small>
-    </section>
+    </header>
+    <div class="sb-body">
+      <div class="sb-preview" aria-hidden="true"><div id="av-preview"></div><span class="sb-pedestal"></span></div>
+      <form class="sb-form" id="start-form" novalidate>
+        <div class="field">
+          <div class="legend" id="lg-idioma">IDIOMA · LANGUAGE</div>
+          <div class="opts" role="radiogroup" aria-labelledby="lg-idioma">
+            <button type="button" class="opt" data-lang="pt" role="radio" aria-checked="false">
+              <span class="check"></span>
+              <svg viewBox="0 0 30 20" class="flag"><rect width="30" height="20" fill="#009c3b"/><path d="M15 2 L28 10 L15 18 L2 10Z" fill="#ffdf00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/></svg>
+              <span>Português</span>
+            </button>
+            <button type="button" class="opt" data-lang="en" role="radio" aria-checked="false">
+              <span class="check"></span>
+              <svg viewBox="0 0 30 20" class="flag"><rect width="30" height="20" fill="#fff"/><g fill="#b22234"><rect width="30" height="1.54"/><rect y="3.08" width="30" height="1.54"/><rect y="6.16" width="30" height="1.54"/><rect y="9.24" width="30" height="1.54"/><rect y="12.32" width="30" height="1.54"/><rect y="15.4" width="30" height="1.54"/><rect y="18.46" width="30" height="1.54"/></g><rect width="13" height="10.8" fill="#3c3b6e"/></svg>
+              <span>English</span>
+            </button>
+          </div>
+        </div>
+        <div class="rest" id="form-rest">
+          <div class="field">
+            <label class="legend" for="name-input" data-i18n="nome_titulo">NOME</label>
+            <input id="name-input" maxlength="20" autocomplete="given-name" data-i18n-ph="nome_ph">
+          </div>
+          <div class="field">
+            <div class="legend" id="lg-genero" data-i18n="genero_label">PERSONAGEM</div>
+            <div class="opts" role="radiogroup" aria-labelledby="lg-genero">
+              <button type="button" class="opt" data-g="m" role="radio" aria-checked="false"><span class="check"></span><span data-i18n="fem">Feminino</span></button>
+              <button type="button" class="opt" data-g="h" role="radio" aria-checked="false"><span class="check"></span><span data-i18n="masc">Masculino</span></button>
+            </div>
+          </div>
+          <button class="big-btn" id="play-btn" type="submit" data-i18n="jogar">▶ JOGAR</button>
+        </div>
+        <p class="start-hint" id="start-hint">Escolha um idioma para começar · Choose a language to start</p>
+        <p class="start-text" data-i18n="start_texto"></p>
+        <small class="start-note" data-i18n="start_nota"></small>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -117,6 +177,7 @@
     <button data-tp="museu"><b>02</b> <span data-i18n="tp_museu"></span><small data-i18n="tp_museu_s"></small></button>
     <button data-tp="hangar"><b>03</b> <span data-i18n="tp_hangar"></span><small data-i18n="tp_hangar_s"></small></button>
     <button data-tp="elevador"><b>04</b> <span data-i18n="tp_elevador"></span><small data-i18n="tp_elevador_s"></small></button>
+    <button data-tp="braco"><b>05</b> <span data-i18n="tp_braco"></span><small data-i18n="tp_braco_s"></small></button>
   </div>
   <p class="map-note" data-i18n="mapa_nota"></p>
 </dialog>
@@ -137,7 +198,7 @@
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js"></script>
-<script src="jogo.js"></script>
+<script src="dados.js?v=4"></script>
+<script src="jogo.js?v=4"></script>
 </body>
 </html>
