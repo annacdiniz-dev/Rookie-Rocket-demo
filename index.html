@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css?v=7">
+<link rel="stylesheet" href="estilo.css?v=8">
 </head>
 <body class="inicio">
 
@@ -57,7 +57,7 @@
     <div class="m-alerta" id="m-alerta"></div>
     <button class="m-sair" id="m-sair"></button>
   </div>
-  <div class="m-alvos"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div><span id="m-tempo-l"></span><b id="m-tempo">0,0 s</b></div>
+  <div class="m-alvos"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div><span id="m-tempo-l"></span><b id="m-tempo">0,0 s</b><small class="m-bonus" id="m-bonus"></small></div>
   <div class="m-baixo"><div class="m-dica" id="m-dica"></div></div>
 </div>
 
@@ -67,9 +67,30 @@
   <div class="banner-corpo">
     <div class="m-estrelas" id="m-estrelas" aria-hidden="true"></div>
     <p class="m-estrelas-txt" id="m-estrelas-txt"></p>
+    <!-- Marcos explica o resultado (mesmo estilo do balão da recepção) -->
+    <div class="fala-marcos" id="mf-marcos">
+      <svg class="fm-rosto" viewBox="0 0 40 40" aria-hidden="true"><rect x="6" y="9" width="28" height="28" rx="6" fill="#d8a47f"/><path d="M6 17 Q6 5 20 5 Q34 5 34 17 L34 14 L6 14Z" fill="#b9bab6"/><rect x="6" y="11" width="28" height="5" rx="2" fill="#b9bab6"/><ellipse cx="15" cy="23" rx="1.8" ry="2.6" fill="#1b1b1b"/><ellipse cx="25" cy="23" rx="1.8" ry="2.6" fill="#1b1b1b"/><path d="M14 30 Q20 34 26 30" stroke="#1b1b1b" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+      <div class="fm-balao"><span class="who">MARCOS PONTES</span><p id="mf-fala"></p><p class="fm-dica" id="mf-dica"></p></div>
+    </div>
     <small class="novo-card" id="mf-novo"></small>
     <div id="mf-card"></div>
-    <div class="banner-botoes"><button class="big-btn alt" id="mf-voltar"></button><button class="big-btn" id="mf-proxima"></button></div>
+    <div class="banner-botoes tres"><button class="big-btn alt" id="mf-voltar"></button><button class="big-btn alt2" id="mf-trocar"></button><button class="big-btn" id="mf-proxima"></button></div>
+  </div>
+</dialog>
+
+<!-- Painel: preparação da missão (escolha de equipamentos por peso) -->
+<dialog id="preparo" class="banner prep">
+  <button class="close" data-close data-i18n-label="fechar">✕</button>
+  <div class="banner-topo"><svg class="logo"><use href="#logo"/></svg><div><small class="pr-fase" id="pr-fase"></small><h2 id="pr-titulo"></h2></div></div>
+  <div class="banner-corpo">
+    <p class="pr-task" id="pr-task"></p>
+    <p class="pr-obj" id="pr-obj"></p>
+    <div class="pr-pesos"><span id="pr-nave"></span><span id="pr-limite"></span></div>
+    <div class="pr-barra" aria-hidden="true"><div class="pr-fill" id="pr-fill"></div><i class="pr-marca" id="pr-marca"></i></div>
+    <p class="pr-peso" id="pr-peso" aria-live="polite"></p>
+    <div class="pr-itens" id="pr-itens"></div>
+    <p class="pr-dica" id="pr-dica"></p>
+    <button class="big-btn" id="pr-lancar"></button>
   </div>
 </dialog>
 
@@ -176,13 +197,14 @@
   <p data-i18n-html="cr_p3"></p>
   <p data-i18n-html="cr_p4"></p>
   <p class="muted" data-i18n="cr_p5"></p>
+  <p class="muted" data-i18n="cr_p6"></p>
   <div id="cr-list"></div>
 </dialog>
 
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js?v=7"></script>
-<script src="jogo.js?v=7"></script>
+<script src="dados.js?v=8"></script>
+<script src="jogo.js?v=8"></script>
 </body>
 </html>

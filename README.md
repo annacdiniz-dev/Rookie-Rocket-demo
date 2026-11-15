@@ -25,27 +25,67 @@ No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa.
 
 ## Fase 1 · Projeto Mercury: O Colapso do Piloto Automático
 
-Ao embarcar pela escotilha, o **capacete aparece sozinho** e a cabine abre **em primeira pessoa**, já com o piloto automático desligado. Na tela aparece só o título da fase.
+Ao embarcar pela escotilha, o **capacete aparece sozinho** e abre primeiro a **Preparação da missão**. A fase só começa depois do 🚀 **Lançar**.
+
+### Preparação: equipamentos x peso
+
+O jogador escolhe o que levar. Cada equipamento ajuda na mira, mas pesa. Pode marcar nenhum, um ou vários.
+
+| Equipamento | Peso | Efeito na Fase 1 |
+|---|---|---|
+| 🛡️ Amortecedor | 25 kg | tremor da cabine 70% menor e raio de acerto dos pontos 30% maior |
+| ⛽ Combustível extra | 20 kg | a missão só é encerrada por tempo aos **55 s** (em vez de 40 s) |
+| 🧭 Giroscópio | 15 kg | segurar a mira em cada ponto leva **1,3 s** (em vez de 2 s) |
+
+**Regra de peso:**
+- A nave pesa **20 kg**, e o foguete Atlas leva no máximo **60 kg**.
+- Barra: verde até 50 kg, amarela de 51 a 60 kg, vermelha acima de 60 kg.
+- **Acima de 60 kg o foguete não decola:** falha na hora, com 0 estrelas e sem mira.
+
+**Tempo final:**
+- `kgLivres = 60 − peso` e `bônus = floor(kgLivres ÷ 10) × 1 s`.
+- `tempo final = max(0, tempo − bônus)`; as estrelas saem do tempo final.
+- Exemplo do resultado: "Tempo 14,2 s − 3 s de bônus de leveza = 11,2 s · ⭐⭐".
+
+**Onde mexer:** todos esses números ficam em `regrasPeso` e `equipamentos`, no [dados.js](dados.js). São **valores didáticos** para balancear, não dados reais da NASA (isso também aparece nos créditos). As últimas escolhas ficam salvas e vêm pré-marcadas. Os efeitos valem só naquela tentativa: os valores originais (`AJ_BASE`) voltam ao sair ou reiniciar.
+
+### Na cabine
+
+A cabine é **em primeira pessoa**, já com o piloto automático desligado. Na tela aparece só o título da fase.
 
 1. A tela treme e fica vermelha, e pisca o alerta **FALHA NO PILOTO AUTOMÁTICO**.
 2. Há um **+** no centro da visão e **4 pontos vermelhos no espaço**, fora da nave.
 3. O jogador move a câmera (mouse, setas/WASD ou arrastar no celular) até o + ficar sobre um ponto e **segura 2 s**. Um **círculo branco** em volta do ponto mostra o tempo.
 4. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
-5. A nota vem em **estrelas**, pelo tempo para estabilizar a nave (cronômetro `M.t`):
+5. A nota vem em **estrelas**, pelo **tempo final** (cronômetro `M.t` menos o bônus de leveza):
 
-   | Tempo | Estrelas |
+   | Tempo final | Estrelas |
    |-------|----------|
    | até 10,0 s | ⭐⭐⭐ |
    | 10,1 a 17,0 s | ⭐⭐ |
    | 17,1 a 25,0 s | ⭐ |
-   | 25,1 a 40,0 s | nenhuma: missão falhou ("demorou demais") |
-   | mais de 40,0 s | nenhuma: a missão é encerrada na hora |
+   | acima de 25,0 s | nenhuma: missão falhou ("demorou demais") |
+   | cronômetro passou de 40 s (55 s com combustível) | nenhuma: a missão é encerrada na hora |
 
 6. **Com 1 a 3 estrelas:** banner **Missão concluída com sucesso!**, estrelas douradas, **card da missão real** (Friendship 7, 1962: objetivo, o que aconteceu e foto oficial da NASA) e selo. O card entra no **Álbum espacial**. **Voltar a explorar** volta ao mapa e **Próxima fase** abre o banner **A aventura continua no Roblox!**.
-7. **Com 0 estrelas:** **MISSÃO FALHOU** em vermelho, estrelas apagadas, sem card e sem selo. **Tentar novamente** reinicia a fase com o tempo zerado; **Sair para o mapa** volta ao hangar.
-8. Embarcar de novo depois de concluir a Fase 1 mostra o melhor resultado em estrelas e as opções **Refazer fase 1** e **Próxima fase** (Roblox).
+7. **Com 0 estrelas:** **MISSÃO FALHOU** em vermelho, estrelas apagadas, sem card e sem selo. O **Marcos Pontes explica o motivo** e dá uma dica. Os botões são:
+   - **Trocar equipamentos:** volta à Preparação.
+   - **Tentar de novo:** repete com as mesmas escolhas e o tempo zerado. Não aparece na falha de peso, porque com a mesma carga o foguete falharia de novo.
+   - **Sair para o mapa.**
+8. Embarcar de novo depois de concluir a Fase 1 mostra o melhor resultado em estrelas e as opções **Refazer fase 1** (que passa pela Preparação) e **Próxima fase** (Roblox).
 
-Os limites ficam no [jogo.js](jogo.js): `LIMITE_ESTRELAS` (10 / 17 / 25 s) e `LIMITE_TEMPO` (40 s, quando a missão é encerrada).
+Os limites de estrela ficam no [jogo.js](jogo.js): `LIMITE_ESTRELAS` (10 / 17 / 25 s) e `LIMITE_TEMPO` (40 s).
+
+### Falas do Marcos no resultado
+
+As falas ficam em `marcosResultado`, no [dados.js](dados.js), em PT e EN, e usam os valores reais da tentativa. O jogo mostra **uma** dica só, a mais útil.
+
+| Motivo | Fala | Dica |
+|---|---|---|
+| Passou do peso | "o foguete Atlas só consegue levar 60 kg e a sua nave estava com {peso} kg…" | (a fala já ensina) |
+| Tempo esgotado | "A nave ficou fora de controle por tempo demais…" | sem combustível: "o combustível extra teria te dado mais 15 segundos" · com combustível: "trave primeiro os pontos mais próximos" |
+| Demorou (tempo final acima de 25 s) | "Você salvou a nave, mas demorou {tempo}…" | sem giroscópio: "o giroscópio trava cada ponto mais rápido" · com giroscópio: "cada 10 kg livres valem 1 s" |
+| Sucesso | "Mandou bem, {nome}! Tempo final de {tempo} e {n} de 3 estrelas…" | — |
 
 A recepção tem seis quadros decorativos (Lua cheia, céu estrelado, planeta com anéis, nascer da Terra, nebulosa e Cruzeiro do Sul). São ilustrações originais, sem dados científicos.
 
@@ -79,7 +119,8 @@ O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 **Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
 - `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`, `braco`)
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
-- `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 · `missao=fim&t=18` mostra o banner com o tempo informado (`t=41` mostra a falha) · `missao=escolha` mostra a escolha ao reembarcar
+- `index.html#lang=pt&g=m&jogar&preparo=falha`: abre a Preparação com os 3 itens (80 kg, o foguete não decola) · `preparo=bom`: só o Giroscópio · `preparo`: últimas escolhas
+- `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 direto · `missao=fim&t=18` mostra o banner com o tempo informado (`t=41` mostra a falha) · `missao=escolha` mostra a escolha ao reembarcar
 - `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
 
 ## Regra de dados: só NASA
@@ -122,7 +163,7 @@ A demo foi feita em **studs**, com os valores padrão do Roblox, então dá para
 
 - `index.html`: estrutura e HUD.
 - `estilo.css`: visual da interface (HUD, balões, prompts, cards, celular).
-- `dados.js`: textos em PT e EN (falas, exposições com fontes da NASA, placas, missões e conquistas).
+- `dados.js`: textos em PT e EN (falas, exposições com fontes da NASA, placas, missões e conquistas) e os números da Preparação (`regrasPeso`, `equipamentos`).
 - `jogo.js`: mundo 3D, personagens, física (escada e elevador), câmera, interações e salvamento.
 - `lib/three.min.js`: three.js r128 (licença MIT).
 - `lib/Michroma-Regular.ttf`: fonte dos títulos, no estilo do storyboard (SIL Open Font License, em `lib/Michroma-OFL.txt`).

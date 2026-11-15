@@ -19,7 +19,7 @@ if (toque) document.body.classList.add('touch');
 
 /* ---------------- salvamento ---------------- */
 const SAVE = 'rookie-rocket-v4';
-const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [], estrelas: 0 };
+const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [], estrelas: 0, equip: [] };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE) || '{}');
   if (s.lang === 'pt' || s.lang === 'en') estado.lang = s.lang;
@@ -27,6 +27,8 @@ try {
   if (s.av && (s.av.g === 'h' || s.av.g === 'm')) estado.av = { g: s.av.g };
   estado.capacete = s.capacete === true;
   if ([1, 2, 3].includes(s.estrelas)) estado.estrelas = s.estrelas; // melhor resultado da Fase 1
+  // últimas escolhas da Preparação (só ids que existem no dados.js)
+  if (Array.isArray(s.equip)) estado.equip = s.equip.filter(id => DADOS.equipamentos.some(e => e.id === id));
   if (Array.isArray(s.feitas)) estado.feitas = s.feitas.filter(x => typeof x === 'string');
   if (Array.isArray(s.expos)) estado.expos = s.expos.filter(x => typeof x === 'string' && DADOS.registros[x]);
 } catch (e) { /* segue sem salvar */ }
@@ -358,6 +360,18 @@ function astronauta(cfg) {
     if (cfg.cabelo === 'chanel') { // parte de baixo do chanel
       caixa(1.3, 0.62, 0.26, m, cabeloLongo, 0, 4.46, -0.56);
       caixa(0.2, 0.62, 0.82, m, cabeloLongo, -0.66, 4.56, -0.14); caixa(0.2, 0.62, 0.82, m, cabeloLongo, 0.66, 4.56, -0.14);
+    }
+    if (cfg.cabelo === 'cacheado') { // cachos volumosos (como no storyboard): bolinhas por cima de toda a cabeça
+      const cacho = new THREE.SphereGeometry(0.25, 10, 8), cachoP = new THREE.SphereGeometry(0.2, 10, 8);
+      const pos = [[0, 5.7, 0, 1]];
+      for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; pos.push([Math.cos(a) * 0.34, 5.66, Math.sin(a) * 0.34, 1]); }           // topo
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; pos.push([Math.cos(a) * 0.6, 5.5, Math.sin(a) * 0.6, 1]); }           // coroa (inclui a testa)
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; if (Math.sin(a) > 0.45) continue; pos.push([Math.cos(a) * 0.7, 5.22, Math.sin(a) * 0.7, 0]); } // laterais e trás (sem cobrir o rosto)
+      for (let i = 0; i < 7; i++) { const a = Math.PI + 0.25 + i / 6 * (Math.PI - 0.5); pos.push([Math.cos(a) * 0.66, 4.95, Math.sin(a) * 0.66, 0]); } // nuca
+      for (const [x, y, z, grande] of pos) {
+        const c = new THREE.Mesh(grande ? cacho : cachoP, m); c.position.set(x, y, z); c.castShadow = true;
+        cabeloLongo.add(c); // somem com o capacete; por dentro fica só a base lisa (topo + franja)
+      }
     }
   }
   // capacete
@@ -938,7 +952,7 @@ let jogador = null;
 function criarJogador() {
   const pos = jogador ? jogador.position.clone() : null, rot = jogador ? jogador.rotation.y : 0;
   if (jogador) scene.remove(jogador);
-  jogador = astronauta({ g: estado.av.g, cap: false, cabelo: estado.av.g === 'm' ? 'chanel' : 'liso', corCabelo: estado.av.g === 'm' ? '#3a2216' : '#2b1a12' });
+  jogador = astronauta({ g: estado.av.g, cap: false, cabelo: estado.av.g === 'm' ? 'chanel' : 'cacheado', corCabelo: estado.av.g === 'm' ? '#3a2216' : '#2b1a12' });
   if (pos) { jogador.position.copy(pos); jogador.rotation.y = rot; }
 }
 criarJogador();
@@ -1205,6 +1219,8 @@ function teleportar(k) { const [x, y, z, yaw] = PONTOS[k]; P.pos.set(x, y, z); P
    ================================================================ */
 // Ajustes: tempo em cada ponto (s), tolerância da mira (rad), limites da câmera e tremor
 const AJ = { segurar: 2, raio: 0.065, dist: 30, yawMax: 0.78, pitchMin: -0.14, pitchMax: 0.64, tremor: 0.006, intro: 2.6 };
+// Cópia dos valores originais: os equipamentos mudam AJ só durante uma tentativa e depois tudo volta para cá.
+const AJ_BASE = Object.freeze({ ...AJ });
 const PONTOS_M = [[-0.46, 0.20], [0.40, 0.34], [-0.10, 0.50], [0.56, 0.08]]; // [giro, inclinação] em radianos
 const M = { ativa: false, fase: '', t: 0, tFase: 0, olhar: { x: 0, y: 0.2 }, alvo: { x: 0, y: 0.2 }, pontos: [], naMira: false, teclas: {}, arrasto: null };
 const cena2 = new THREE.Scene(); cena2.background = new THREE.Color('#02040a');
@@ -1298,12 +1314,84 @@ function embarcar() {
   const primeira = !estado.capacete;
   if (primeira) { estado.capacete = true; salvar(); falarSistema(L.msg.capacete); bip(660, 0.15, 'sine', 0.06); } // capacete aparece sozinho
   if (missaoFeita()) abrirEscolha();         // fase 1 já concluída: refazer ou ir para a próxima (Roblox)
-  else setTimeout(comecarMissao, primeira ? 1100 : 0);
+  else if (primeira) setTimeout(() => abrirPreparo(), 1100); // espera o capacete aparecer
+  else abrirPreparo();                       // a fase não começa direto: antes vem a Preparação
 }
+
+/* ---------------- Preparação: equipamentos x peso ----------------
+   Todos os números (pesos, limite, efeitos, bônus) vêm de DADOS.regrasPeso e DADOS.equipamentos. */
+const RP = DADOS.regrasPeso;
+const equipPorId = id => DADOS.equipamentos.find(e => e.id === id);
+const pesoTotal = sel => RP.pesoNave + sel.reduce((soma, id) => soma + equipPorId(id).peso, 0);
+const kgLivres = sel => RP.limite - pesoTotal(sel);                         // negativo = acima do limite
+const bonusLeveza = sel => Math.floor(Math.max(0, kgLivres(sel)) / RP.kgPorBonus) * RP.segundosPorBonus; // em segundos
+let selPreparo = [];                                                         // escolhas marcadas no painel aberto
+const fmtNum = n => String(n).replace('.', L.codigo === 'pt-BR' ? ',' : '.');
+function abrirPreparo(selInicial) {
+  selPreparo = (selInicial || estado.equip).slice();
+  const p = L.preparo;
+  $('pr-fase').textContent = LM().fase; $('pr-titulo').textContent = p.titulo;
+  $('pr-task').textContent = LM().task; $('pr-obj').textContent = p.objetivo;
+  $('pr-nave').textContent = p.nave.replace('{n}', RP.pesoNave); $('pr-limite').textContent = p.limite.replace('{n}', RP.limite);
+  $('pr-dica').textContent = p.dica.replace('{kg}', RP.kgPorBonus).replace('{s}', RP.segundosPorBonus);
+  $('pr-lancar').textContent = p.lancar;
+  // cards de equipamento: clicar liga/desliga
+  const box = $('pr-itens'); box.innerHTML = '';
+  DADOS.equipamentos.forEach(eq => {
+    const tx = p.itens[eq.id], b = document.createElement('button');
+    b.type = 'button'; b.className = 'pr-item'; b.dataset.id = eq.id;
+    const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = eq.icone;
+    const kg = document.createElement('span'); kg.className = 'kg'; kg.textContent = '+' + eq.peso + ' kg';
+    const nome = document.createElement('b'); nome.textContent = tx.nome;
+    const desc = document.createElement('p'); desc.textContent = tx.txt;
+    const ck = document.createElement('span'); ck.className = 'check';
+    b.append(ico, kg, nome, desc, ck);
+    b.onclick = () => { selPreparo = selPreparo.includes(eq.id) ? selPreparo.filter(x => x !== eq.id) : [...selPreparo, eq.id]; atualizarPreparo(); };
+    box.appendChild(b);
+  });
+  atualizarPreparo();
+  limparTeclas();
+  if (!$('preparo').open) $('preparo').showModal();
+}
+function atualizarPreparo() {
+  const p = L.preparo, peso = pesoTotal(selPreparo), livre = kgLivres(selPreparo);
+  const escala = RP.pesoNave + DADOS.equipamentos.reduce((s, e) => s + e.peso, 0); // barra vai até "tudo marcado"
+  const cor = peso > RP.limite ? 'vermelho' : peso > RP.faixaVerde ? 'amarelo' : 'verde';
+  $('pr-fill').style.width = Math.min(100, peso / escala * 100) + '%'; $('pr-fill').className = 'pr-fill ' + cor;
+  $('pr-marca').style.left = (RP.limite / escala * 100) + '%';
+  const linha = $('pr-peso'); linha.className = 'pr-peso' + (cor === 'vermelho' ? ' vermelho' : ''); linha.textContent = '';
+  linha.append(livre >= 0 ? p.peso.replace('{p}', peso).replace('{l}', RP.limite).replace('{f}', livre)
+                          : p.acima.replace('{p}', peso).replace('{l}', RP.limite).replace('{x}', -livre));
+  const b = bonusLeveza(selPreparo);
+  if (b > 0) { const s = document.createElement('small'); s.textContent = p.bonus.replace('{b}', b); linha.appendChild(s); }
+  document.querySelectorAll('#pr-itens .pr-item').forEach(el => el.setAttribute('aria-pressed', String(selPreparo.includes(el.dataset.id))));
+}
+// Lançar fica sempre habilitado: errar o peso faz parte do aprendizado
+$('pr-lancar').onclick = () => {
+  estado.equip = selPreparo.slice(); salvar();            // pré-marca na próxima vez
+  $('preparo').close();
+  if (pesoTotal(estado.equip) > RP.limite) falhaPeso();    // pesado demais: nem decola
+  else comecarMissao();
+};
+// Liga os efeitos escolhidos SÓ nesta tentativa (sempre partindo dos valores originais)
+function aplicarEquipamentos(sel) {
+  Object.assign(AJ, AJ_BASE); M.limiteTempo = LIMITE_TEMPO;
+  sel.forEach(id => {
+    const ef = equipPorId(id).efeito;
+    if (ef.tremorFator) AJ.tremor = AJ_BASE.tremor * ef.tremorFator;
+    if (ef.raioFator) AJ.raio = AJ_BASE.raio * ef.raioFator;
+    if (ef.segurar) AJ.segurar = ef.segurar;
+    if (ef.limiteTempo) M.limiteTempo = ef.limiteTempo;
+  });
+  M.equip = sel.slice(); M.peso = pesoTotal(sel); M.bonus = bonusLeveza(sel);
+}
+function restaurarEquipamentos() { Object.assign(AJ, AJ_BASE); M.limiteTempo = LIMITE_TEMPO; }
 // Estrelas pelo tempo (M.t) até estabilizar a nave
 const LIMITE_ESTRELAS = [10.0, 17.0, 25.0]; // ≤10 s = 3 · ≤17 s = 2 · ≤25 s = 1 · acima de 25 s = 0 (falhou)
 const LIMITE_TEMPO = 40.0;                   // aos 40 s a missão é encerrada automaticamente como falha
 const arred = s => Math.round(s * 10) / 10; // mesma precisão do cronômetro da tela
+// valores padrão da tentativa (sem equipamentos), trocados por aplicarEquipamentos()
+Object.assign(M, { limiteTempo: LIMITE_TEMPO, bonus: 0, equip: [], peso: DADOS.regrasPeso.pesoNave });
 function calcularEstrelas(tempo) {
   const t = arred(tempo);
   if (t <= LIMITE_ESTRELAS[0]) return 3;
@@ -1327,14 +1415,17 @@ function abrirEscolha() {
   $('me-refazer').textContent = '↻ ' + t.refazer; $('me-proxima').textContent = t.proxima + ' ▶';
   limparTeclas(); $('m-escolha').showModal();
 }
-$('me-refazer').onclick = () => { $('m-escolha').close(); comecarMissao(); };
+$('me-refazer').onclick = () => { $('m-escolha').close(); abrirPreparo(); };
 $('me-proxima').onclick = () => { $('m-escolha').close(); abrirRoblox(); };
 function dica(txt) { $('m-dica').textContent = txt; }
+const dicaMira = () => (toque ? LM().dica_toque : LM().dica).replace('{s}', fmtNum(AJ.segurar)); // "segure 2 s" ou "1,3 s"
 function comecarMissao() {
   const t = LM();
-  // zera o cronômetro (M.t) e o resto do estado: "Tentar novamente" sempre começa do zero
+  // zera o cronômetro (M.t) e o resto do estado: "Tentar de novo" sempre começa do zero
   Object.assign(M, { ativa: true, fase: 'intro', t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null });
+  aplicarEquipamentos(estado.equip);                       // efeitos valem só nesta tentativa
   $('m-tempo').textContent = tempoTxt(0);
+  $('m-bonus').textContent = M.bonus > 0 ? `${t.bonus_hud} −${M.bonus} s` : '';
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
   M.pontos.forEach(p => { p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
   document.body.classList.add('em-missao'); $('missao').hidden = false;
@@ -1348,33 +1439,75 @@ function comecarMissao() {
   limparTeclas(); cvs.focus({ preventScroll: true });
   bip(440, 0.25, 'sawtooth', 0.04);
 }
-function fimMissao() {
+// Troca os marcadores de uma fala do Marcos pelos valores reais da tentativa
+function falaMarcos(chave, v = {}) {
+  let s = fmt(L.marcosResultado[chave]); // {nome}, {o}, {a}
+  for (const [k, val] of Object.entries(v)) s = s.split('{' + k + '}').join(val);
+  return s;
+}
+// Escolhe UMA dica, a mais útil para esta tentativa
+function escolherDica(motivo) {
+  const tem = id => M.equip.includes(id);
+  const comb = equipPorId('combustivel');
+  if (motivo === 'tempo') return tem('combustivel') ? falaMarcos('dica_proximos')
+    : falaMarcos('dica_combustivel', { extra: comb.efeito.limiteTempo - LIMITE_TEMPO });
+  if (motivo === 'lento') return !tem('giroscopio') ? falaMarcos('dica_giroscopio')
+    : falaMarcos('dica_leveza', { bonusKg: RP.kgPorBonus, bonusS: RP.segundosPorBonus });
+  return ''; // peso: a própria fala já ensina o que fazer
+}
+// Monta o banner de resultado. motivo: undefined (fase jogada) ou 'peso' (não decolou)
+function fimMissao(motivo) {
   M.fase = 'fim';
   const t = LM();
-  const estrelas = calcularEstrelas(M.t);
+  let estrelas = 0, tempoFinal = 0;
+  if (motivo !== 'peso') {
+    tempoFinal = Math.max(0, M.t - M.bonus);                       // tempo final = tempo − bônus de leveza
+    const estourou = arred(M.t) > M.limiteTempo;                   // 40 s (ou 55 s com combustível extra)
+    estrelas = estourou ? 0 : calcularEstrelas(tempoFinal);
+    if (estrelas === 0) motivo = estourou ? 'tempo' : 'lento';
+    const e = estrelas > 0 ? '⭐'.repeat(estrelas) : t.sem_estrelas;
+    $('m-estrelas-txt').textContent = t.conta.replace('{t}', tempoTxt(M.t)).replace('{b}', M.bonus).replace('{f}', tempoTxt(tempoFinal)).replace('{e}', e);
+  } else {
+    $('m-estrelas-txt').textContent = t.conta_peso.replace('{p}', M.peso).replace('{l}', RP.limite);
+  }
   desenharEstrelas('m-estrelas', estrelas);
-  $('m-estrelas-txt').textContent = t.estrelas_txt.replace('{n}', estrelas).replace('{t}', tempoTxt(M.t));
   const card = $('mf-card'); card.innerHTML = '';
+  $('mf-trocar').textContent = '🎒 ' + t.trocar;
+  $('mf-trocar').onclick = () => { if (M.ativa) sairMissao(); else $('m-fim').close(); abrirPreparo(); };
   if (estrelas > 0) { // passou de fase: card da NASA, selo e Próxima fase → Roblox
     $('mf-topo').className = 'banner-topo ok'; $('mf-selo').textContent = '✔';
     $('mf-titulo').textContent = t.sucesso_titulo;
+    $('mf-fala').textContent = falaMarcos('sucesso', { tempo: tempoTxt(tempoFinal), estrelas }); $('mf-dica').textContent = '';
     $('mf-novo').textContent = t.novo_card; card.hidden = false;
     card.appendChild(cardMissao(DADOS.album[0], true));
     $('mf-voltar').textContent = t.voltar; $('mf-voltar').onclick = sairMissao;
-    $('mf-proxima').textContent = t.proxima + ' ▶'; $('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
+    $('mf-trocar').hidden = true;
+    $('mf-proxima').hidden = false; $('mf-proxima').textContent = t.proxima + ' ▶'; $('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
     estado.estrelas = Math.max(estado.estrelas, estrelas); salvar(); // guarda o melhor resultado
     concluir('missao1');
-  } else { // 0 estrelas: missão falhou, sem card e sem selo
+  } else { // 0 estrelas: missão falhou, Marcos explica o motivo e dá uma dica
     $('mf-topo').className = 'banner-topo falha'; $('mf-selo').textContent = '✕';
     $('mf-titulo').textContent = t.falhou_titulo;
-    $('mf-novo').textContent = arred(M.t) > LIMITE_TEMPO ? t.falhou_txt : t.falhou_lento; card.hidden = true;
-    $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = sairMissao;
+    $('mf-fala').textContent = falaMarcos(motivo, { peso: M.peso, limite: RP.limite, tempo: tempoTxt(tempoFinal), limiteEstrela: LIMITE_ESTRELAS[2] });
+    $('mf-dica').textContent = escolherDica(motivo);
+    $('mf-novo').textContent = ''; card.hidden = true;
+    $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = () => { if (M.ativa) sairMissao(); else $('m-fim').close(); };
+    $('mf-trocar').hidden = false;
+    // "Tentar de novo" repete com as mesmas escolhas. No peso não aparece: com a mesma carga o foguete falharia de novo.
+    $('mf-proxima').hidden = motivo === 'peso';
     $('mf-proxima').textContent = '↻ ' + t.tentar; $('mf-proxima').onclick = () => { $('m-fim').close(); comecarMissao(); };
     bip(160, 0.6, 'sawtooth', 0.06);
   }
   $('m-fim').showModal();
 }
+// Peso acima do limite: o foguete não decola, falha na hora e a mira nem começa
+function falhaPeso() {
+  aplicarEquipamentos(estado.equip); restaurarEquipamentos(); // só para registrar peso e escolhas em M
+  M.ativa = false; M.t = 0;
+  fimMissao('peso');
+}
 function sairMissao() {
+  restaurarEquipamentos();                                  // AJ e limite de tempo voltam ao normal
   M.ativa = false; M.fase = '';
   if ($('m-fim').open) $('m-fim').close();
   document.body.classList.remove('em-missao'); $('missao').hidden = true;
@@ -1387,11 +1520,11 @@ $('m-sair').onclick = sairMissao;
 $('m-fim').addEventListener('close', () => setTimeout(() => { if (M.ativa && M.fase === 'fim') sairMissao(); }, 0));
 
 function atualizarMissao(dt) {
-  // segurança: passou de 40 s na mira = 0 estrelas, mostra a tela de falha na hora
-  if (M.fase === 'mira' && arred(M.t) > LIMITE_TEMPO) { fimMissao(); return; }
+  // segurança: passou do limite (40 s, ou 55 s com combustível extra) = falha por tempo, na hora
+  if (M.fase === 'mira' && arred(M.t) > M.limiteTempo) { fimMissao(); return; }
   if (Math.abs(cam2.aspect - innerWidth / innerHeight) > 0.001) { cam2.aspect = innerWidth / innerHeight; cam2.updateProjectionMatrix(); }
   const t = LM(); M.tFase += dt;
-  if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(toque ? t.dica_toque : t.dica); }
+  if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(dicaMira()); }
   if (M.fase === 'mira') M.t += dt;
   // câmera: teclado soma no alvo, mouse/toque definem o alvo; a visão segue suave
   const kx = (M.teclas.arrowright || M.teclas.d ? 1 : 0) - (M.teclas.arrowleft || M.teclas.a ? 1 : 0), ky = (M.teclas.arrowup || M.teclas.w ? 1 : 0) - (M.teclas.arrowdown || M.teclas.s ? 1 : 0);
@@ -1426,7 +1559,7 @@ function atualizarMissao(dt) {
     // luzes laterais: contadas DEPOIS de checar todos os pontos, então a ordem em que o jogador trava os pontos não importa
     const feitos = M.pontos.filter(p => p.ok).length;
     document.querySelectorAll('#m-luzes i').forEach((l, i) => l.classList.toggle('on', i < feitos));
-    if (naMira !== M.naMira) { M.naMira = naMira; $('m-mira').classList.toggle('on', naMira); dica(naMira ? t.segure : (toque ? t.dica_toque : t.dica)); }
+    if (naMira !== M.naMira) { M.naMira = naMira; $('m-mira').classList.toggle('on', naMira); dica(naMira ? t.segure : dicaMira()); }
     if (feitos >= M.pontos.length) { // piloto automático volta
       M.fase = 'ok'; M.tFase = 0; $('m-alerta').textContent = t.restaurado; $('m-alerta').className = 'm-alerta ok';
       $('m-vermelho').classList.remove('on'); $('m-mira').className = 'm-mira ok'; luzCabine.color.set('#ffffff'); dica(''); bip(1320, 0.3, 'sine', 0.07);
@@ -1633,11 +1766,17 @@ const h = new URLSearchParams(location.hash.slice(1));
 if (PONTOS[h.get('tp')]) teleportar(h.get('tp'));
 if (h.has('missao')) setTimeout(() => { // #missao abre a fase 1 · #missao=fim mostra o banner de conclusão
   estado.capacete = true; teleportar('braco'); comecarMissao();
-  if (h.get('missao') === 'mira') { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(L.missao.dica); M.alvo.x = PONTOS_M[0][0] + 0.03; M.alvo.y = PONTOS_M[0][1]; M.pontos[1].prog = 2; }
+  if (h.get('missao') === 'mira') { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(dicaMira()); M.alvo.x = PONTOS_M[0][0] + 0.03; M.alvo.y = PONTOS_M[0][1]; M.pontos[1].prog = 2; }
   if (h.get('missao') === 'fim') { M.t = parseFloat(h.get('t')) || 11.4; fimMissao(); } // ex.: #missao=fim&t=30 (1 estrela) · &t=41 (falha)
   if (h.get('missao') === 'escolha') { sairMissao(); if (!estado.estrelas) estado.estrelas = 2; if (!missaoFeita()) estado.feitas.push('missao1'); abrirEscolha(); }
 }, 300);
 if (h.has('capacete')) estado.capacete = true; // atalho: já chega com o capacete liberado (aparece na plataforma de cima)
+// atalho do pitch: #preparo=falha (3 itens, 80 kg → não decola) · #preparo=bom (só o giroscópio) · #preparo (últimas escolhas)
+if (h.has('preparo')) setTimeout(() => {
+  estado.capacete = true; teleportar('braco');
+  const modo = h.get('preparo');
+  abrirPreparo(modo === 'falha' ? DADOS.equipamentos.map(e => e.id) : modo === 'bom' ? ['giroscopio'] : undefined);
+}, 300);
 if (h.has('album')) setTimeout(abrirAlbum, 300);
 if (h.has('roblox')) setTimeout(abrirRoblox, 300);
 if (L.expos[h.get('expo')]) abrirExpo(h.get('expo'));

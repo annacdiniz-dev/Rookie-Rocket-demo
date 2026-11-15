@@ -50,6 +50,28 @@ const DADOS = {
   // Enquanto estiver vazio, o banner mostra "link em breve".
   linkRoblox: '',
 
+  // =====================================================================
+  // PREPARAÇÃO DA FASE 1: equipamentos e peso
+  // ATENÇÃO: são VALORES DIDÁTICOS para balancear o jogo, não dados reais da NASA.
+  // Pode ajustar à vontade. O jogo.js lê tudo daqui.
+  // =====================================================================
+  regrasPeso: {
+    pesoNave: 20,          // kg: peso da cápsula vazia
+    limite: 60,            // kg: o máximo que o foguete Atlas consegue levar (acima disso não decola)
+    faixaVerde: 50,        // kg: barra verde até aqui · amarela até o limite · vermelha acima do limite
+    kgPorBonus: 10,        // a cada 10 kg livres (limite − peso)...
+    segundosPorBonus: 1    // ...o jogador ganha 1 s de desconto no tempo final
+  },
+  equipamentos: [
+    // efeito.tremorFator: multiplica o tremor da cabine (0.3 = 70% menos)
+    // efeito.raioFator: multiplica o raio de acerto dos pontos (1.3 = 30% maior)
+    { id: 'amortecedor', icone: '🛡️', peso: 25, efeito: { tremorFator: 0.3, raioFator: 1.3 } },
+    // efeito.limiteTempo: novo tempo máximo da missão, em segundos (o normal é 40)
+    { id: 'combustivel', icone: '⛽', peso: 20, efeito: { limiteTempo: 55 } },
+    // efeito.segurar: segundos segurando a mira para travar cada ponto (o normal é 2)
+    { id: 'giroscopio', icone: '🧭', peso: 15, efeito: { segurar: 1.3 } }
+  ],
+
   equipe: ['Anna Clara Diniz', 'Hurias Felipe Silveira', 'Luis Renato Fernandes', 'Nando Nogueira', 'Túlio Amaral', 'Valter Cauã Alves'],
 
   // Álbum espacial: um card de missão real por fase concluída. O total de espaços define o "Missões 0/2".
@@ -92,6 +114,7 @@ const DADOS = {
         cr_p3: 'Cenários, personagens, trajes e a nave RR-01 são criações originais em estilo de blocos. O museu é uma representação simplificada, não uma réplica arquitetônica.',
         cr_p4: 'As falas do personagem Marcos Pontes são <b>fictícias</b>, escritas para o jogo. Os fatos citados nelas vêm dos registros da NASA iss012e22280 e 20060409_exp12_11.',
         cr_p5: 'Motor 3D: three.js r128 (licença MIT). Fontes: Outfit e Michroma (SIL Open Font License). Tudo incluído na pasta lib.',
+        cr_p6: 'Pesos e efeitos dos equipamentos são valores didáticos simplificados, não dados reais da NASA.',
         cr_desafio: 'Página do desafio',
         continuar: 'Continuar explorando', fechar: 'Fechar',
         btn_mapa: 'Mapa (M)', btn_creditos: 'Fontes e créditos', btn_idioma: 'Trocar idioma', btn_capacete: 'Capacete (H)',
@@ -160,17 +183,46 @@ const DADOS = {
       missao: {
         fase: 'FASE 1 · PROJETO MERCURY', task: 'O Colapso do Piloto Automático', sair: 'Sair',
         alerta: '⚠ FALHA NO PILOTO AUTOMÁTICO', restaurado: '✔ PILOTO AUTOMÁTICO RESTAURADO',
-        dica: 'Mova a câmera: leve o + até um ponto vermelho e segure 2 s',
-        dica_toque: 'Arraste a tela: leve o + até um ponto vermelho e segure 2 s',
+        dica: 'Mova a câmera: leve o + até um ponto vermelho e segure {s} s',
+        dica_toque: 'Arraste a tela: leve o + até um ponto vermelho e segure {s} s',
         segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO',
         sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'Novo card no seu Álbum Espacial',
         voltar: 'Voltar a explorar', proxima: 'Próxima fase',
         // estrelas: 3 ≤ 10 s · 2 ≤ 17 s · 1 ≤ 25 s · mais que isso = falhou (aos 40 s a missão é encerrada)
-        falhou_titulo: 'MISSÃO FALHOU', falhou_txt: 'O tempo passou de 40 segundos e a nave ficou fora de controle.',
-        falhou_lento: 'Você estabilizou a nave, mas levou mais de 25 segundos. Seja mais rápido para ganhar estrelas!',
-        tentar: 'Tentar novamente', sair_mapa: 'Sair para o mapa',
-        estrelas_txt: '{n} de 3 estrelas · {t}',
+        falhou_titulo: 'MISSÃO FALHOU',
+        tentar: 'Tentar de novo', sair_mapa: 'Sair para o mapa', trocar: 'Trocar equipamentos',
+        // conta do resultado. {t} tempo · {b} bônus · {f} tempo final · {e} estrelas
+        conta: 'Tempo {t} − {b} s de bônus de leveza = {f} · {e}',
+        conta_peso: 'Peso {p} kg · limite {l} kg · o foguete não decolou',
+        sem_estrelas: 'sem estrelas', bonus_hud: 'BÔNUS',
         escolha_titulo: 'Fase 1 concluída!', escolha_txt: 'Seu melhor resultado:', refazer: 'Refazer fase 1'
+      },
+      // Falas do Marcos no resultado (fictícias, escritas para o jogo).
+      // Marcadores: {nome} {o} {peso} {limite} {tempo} {limiteTempo} {extra} {estrelas} {bonusKg} {bonusS}
+      marcosResultado: {
+        peso: '{nome}, o foguete Atlas só consegue levar {limite} kg e a sua nave estava com {peso} kg. Pesado demais, ele nem saiu da plataforma! Na engenharia espacial, cada quilo conta: escolha os equipamentos que mais ajudam e deixe o resto em terra.',
+        tempo: 'A nave ficou fora de controle por tempo demais, {nome}. No Projeto Mercury, o astronauta precisava agir rápido quando o piloto automático falhava.',
+        lento: 'Você salvou a nave, mas demorou {tempo}. Para ganhar estrelas, o tempo final precisa ficar abaixo de {limiteEstrela} s.',
+        // dicas: o jogo escolhe só UMA, a mais útil para a tentativa
+        dica_combustivel: 'Dica: o combustível extra teria te dado mais {extra} segundos.',
+        dica_proximos: 'Dica: tente travar primeiro os pontos mais próximos da mira.',
+        dica_giroscopio: 'Dica: o giroscópio trava cada ponto mais rápido.',
+        dica_leveza: 'Dica: uma nave mais leve ganha bônus de tempo: cada {bonusKg} kg livres valem {bonusS} s.',
+        sucesso: 'Mandou bem, {nome}! Tempo final de {tempo} e {estrelas} de 3 estrelas. Você pilotou como um{a} verdadeir{o} astronauta do Projeto Mercury!'
+      },
+      preparo: {
+        titulo: 'Preparação da missão',
+        objetivo: 'Escolha o que levar na nave. Depois, trave os 4 pontos vermelhos com a mira + o mais rápido que puder.',
+        nave: 'Peso da nave: {n} kg', limite: 'Limite do foguete Atlas: {n} kg',
+        peso: 'Peso: {p} / {l} kg · Livre: {f} kg', acima: 'Peso: {p} / {l} kg · {x} kg acima do limite!',
+        bonus: 'Bônus de leveza: −{b} s',
+        dica: 'Nave mais leve manobra melhor: cada {kg} kg livres tiram {s} s do seu tempo final.',
+        lancar: '🚀 Lançar',
+        itens: {
+          amortecedor: { nome: 'Amortecedor', txt: 'A cabine treme menos e fica mais fácil mirar.' },
+          combustivel: { nome: 'Combustível extra', txt: 'Mais tempo antes da nave sair de controle.' },
+          giroscopio: { nome: 'Giroscópio', txt: 'Trava cada ponto mais rápido.' }
+        }
       },
       // Cards das missões reais (álbum). Fase 1: foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório NTRS 20040110111.
       cards: {
@@ -230,6 +282,7 @@ const DADOS = {
         cr_p3: 'Scenery, characters, suits and the RR-01 ship are original block-style creations. The museum is a simplified representation, not an architectural replica.',
         cr_p4: 'The lines spoken by the Marcos Pontes character are <b>fictional</b>, written for the game. The facts they mention come from NASA records iss012e22280 and 20060409_exp12_11.',
         cr_p5: '3D engine: three.js r128 (MIT license). Fonts: Outfit and Michroma (SIL Open Font License). All included in the lib folder.',
+        cr_p6: 'Equipment weights and effects are simplified teaching values, not real NASA data.',
         cr_desafio: 'Challenge page',
         continuar: 'Keep exploring', fechar: 'Close',
         btn_mapa: 'Map (M)', btn_creditos: 'Sources and credits', btn_idioma: 'Change language', btn_capacete: 'Helmet (H)',
@@ -298,17 +351,44 @@ const DADOS = {
       missao: {
         fase: 'PHASE 1 · PROJECT MERCURY', task: 'Autopilot Meltdown', sair: 'Exit',
         alerta: '⚠ AUTOPILOT FAILURE', restaurado: '✔ AUTOPILOT RESTORED',
-        dica: 'Move the camera: put the + on a red dot and hold for 2 s',
-        dica_toque: 'Drag the screen: put the + on a red dot and hold for 2 s',
+        dica: 'Move the camera: put the + on a red dot and hold for {s} s',
+        dica_toque: 'Drag the screen: put the + on a red dot and hold for {s} s',
         segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME',
         sucesso_titulo: 'Mission accomplished!', novo_card: 'New card in your Space Album',
         voltar: 'Keep exploring', proxima: 'Next phase',
         // stars: 3 ≤ 10 s · 2 ≤ 17 s · 1 ≤ 25 s · slower = failed (the mission ends at 40 s)
-        falhou_titulo: 'MISSION FAILED', falhou_txt: 'Time went past 40 seconds and the spacecraft went out of control.',
-        falhou_lento: 'You stabilized the spacecraft, but it took more than 25 seconds. Be faster to earn stars!',
-        tentar: 'Try again', sair_mapa: 'Back to the map',
-        estrelas_txt: '{n} of 3 stars · {t}',
+        falhou_titulo: 'MISSION FAILED',
+        tentar: 'Try again', sair_mapa: 'Back to the map', trocar: 'Change equipment',
+        // result math. {t} time · {b} bonus · {f} final time · {e} stars
+        conta: 'Time {t} − {b} s lightness bonus = {f} · {e}',
+        conta_peso: 'Weight {p} kg · limit {l} kg · the rocket did not lift off',
+        sem_estrelas: 'no stars', bonus_hud: 'BONUS',
         escolha_titulo: 'Phase 1 complete!', escolha_txt: 'Your best result:', refazer: 'Replay Phase 1'
+      },
+      // Marcos lines on the result screen (fictional, written for the game).
+      marcosResultado: {
+        peso: '{nome}, the Atlas rocket can only carry {limite} kg and your spacecraft weighed {peso} kg. Too heavy: it never left the pad! In space engineering every kilogram counts: pick the equipment that helps most and leave the rest on the ground.',
+        tempo: 'The spacecraft was out of control for too long, {nome}. In Project Mercury, astronauts had to act fast when the autopilot failed.',
+        lento: 'You saved the spacecraft, but it took {tempo}. To earn stars, your final time must be under {limiteEstrela} s.',
+        dica_combustivel: 'Tip: the extra fuel would have given you {extra} more seconds.',
+        dica_proximos: 'Tip: try locking the dots closest to your crosshair first.',
+        dica_giroscopio: 'Tip: the gyroscope locks each dot faster.',
+        dica_leveza: 'Tip: a lighter spacecraft earns a time bonus: every {bonusKg} kg free is worth {bonusS} s.',
+        sucesso: 'Great job, {nome}! Final time {tempo} and {estrelas} of 3 stars. You flew like a real Project Mercury astronaut!'
+      },
+      preparo: {
+        titulo: 'Mission preparation',
+        objetivo: 'Choose what to carry on the spacecraft. Then lock the 4 red dots with the + crosshair as fast as you can.',
+        nave: 'Spacecraft weight: {n} kg', limite: 'Atlas rocket limit: {n} kg',
+        peso: 'Weight: {p} / {l} kg · Free: {f} kg', acima: 'Weight: {p} / {l} kg · {x} kg over the limit!',
+        bonus: 'Lightness bonus: −{b} s',
+        dica: 'A lighter spacecraft handles better: every {kg} kg free takes {s} s off your final time.',
+        lancar: '🚀 Launch',
+        itens: {
+          amortecedor: { nome: 'Shock absorber', txt: 'The cabin shakes less and aiming gets easier.' },
+          combustivel: { nome: 'Extra fuel', txt: 'More time before the spacecraft goes out of control.' },
+          giroscopio: { nome: 'Gyroscope', txt: 'Locks each dot faster.' }
+        }
       },
       // Real mission cards (album). Phase 1: photo and goal from NASA record 9248362; "what happened" from NTRS report 20040110111.
       cards: {

@@ -163,6 +163,51 @@ dialog p{color:var(--tinta2);line-height:1.6;font-size:16px}
 .banner-corpo{padding:18px 22px 22px;max-height:calc(100vh - 150px);overflow:auto}
 .banner-corpo.centro{text-align:center}
 .banner-corpo.centro p{font-size:17px;margin:4px 0 16px}
+/* ---------- preparação da missão: equipamentos x peso ---------- */
+.banner.prep{width:680px}
+.pr-fase{display:block;font-size:12px;font-weight:700;letter-spacing:2px;color:#c9d3ea}
+.pr-task{margin:0!important;font-size:18px!important;font-weight:800;color:var(--marinho)!important}
+.pr-obj{margin:4px 0 12px!important;font-size:15px!important}
+.pr-pesos{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px;font-weight:700;color:var(--marinho2)}
+.pr-barra{position:relative;height:22px;border-radius:11px;background:#dfe2e7;margin:8px 0 6px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.12)}
+.pr-fill{position:absolute;left:0;top:0;bottom:0;border-radius:11px;transition:width .25s,background .25s}
+.pr-fill.verde{background:linear-gradient(90deg,#2fbf71,#5fd88f)}
+.pr-fill.amarelo{background:linear-gradient(90deg,#f0b400,#ffd23f)}
+.pr-fill.vermelho{background:linear-gradient(90deg,#c4161b,#ff5a5f)}
+.pr-marca{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--marinho)}
+.pr-peso{margin:0 0 12px!important;font-size:16px!important;font-weight:800;color:var(--tinta)!important}
+.pr-peso.vermelho{color:var(--vermelho)!important}
+.pr-peso small{display:block;font-size:13px;font-weight:700;color:var(--verde)}
+.pr-itens{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pr-item{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:150px;padding:14px 12px 12px;border-radius:14px;border:3px solid #c9ccd3;background:#fff;color:var(--tinta);text-align:left;box-shadow:0 4px 0 #d5d8de;transition:border-color .12s,transform .12s}
+.pr-item:hover{transform:translateY(-2px)}
+.pr-item[aria-pressed="true"]{border-color:var(--verde);background:#effaf3}
+.pr-item .ico{font-size:30px;line-height:1}
+.pr-item b{font-size:17px;font-weight:800;color:var(--marinho)}
+.pr-item .kg{position:absolute;top:10px;right:10px;background:var(--marinho);color:#fff;font-weight:800;font-size:13px;padding:3px 8px;border-radius:8px}
+.pr-item p{margin:0!important;font-size:14px!important;line-height:1.35!important;color:var(--tinta2)!important}
+.pr-item .check{position:absolute;bottom:10px;right:10px;width:22px;height:22px;border-radius:6px;border:2px solid #9aa1b0;display:grid;place-items:center}
+.pr-item[aria-pressed="true"] .check{background:var(--verde);border-color:var(--verde)}
+.pr-item[aria-pressed="true"] .check:after{content:"";width:9px;height:5px;border:3px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.pr-dica{margin:12px 0!important;padding:10px 12px;border-radius:10px;background:#e6ecf8;font-size:14px!important;font-weight:600;color:var(--marinho)!important}
+#pr-lancar{font-size:20px}
+/* fala do Marcos no resultado */
+.fala-marcos{display:flex;gap:10px;align-items:flex-start;margin:8px 0 12px}
+.fala-marcos[hidden]{display:none}
+.fm-rosto{flex:none;width:52px;height:52px;border-radius:12px;background:var(--marinho);padding:5px}
+.fm-balao{position:relative;flex:1;background:#fff;border-radius:14px;border-top:4px solid var(--vermelho);padding:10px 14px;box-shadow:0 4px 0 rgba(22,40,79,.15)}
+.fm-balao:before{content:"";position:absolute;left:-9px;top:16px;border:9px solid transparent;border-right-color:#fff;border-left:0}
+.fm-balao .who{display:block;font-size:12px;font-weight:800;letter-spacing:1px;color:var(--vermelho);margin-bottom:3px}
+.fm-balao p{margin:0!important;font-size:15px!important;line-height:1.45!important;color:var(--tinta)!important}
+.fm-balao .fm-dica{margin-top:6px!important;font-weight:700;color:var(--marinho2)!important}
+.fm-balao .fm-dica:empty{display:none}
+.banner-botoes.tres{display:flex;flex-wrap:wrap}
+.banner-botoes.tres .big-btn{flex:1 1 160px;font-size:16px}
+.big-btn.alt2{background:#5b6b8f;box-shadow:0 5px 0 #3f4b66}
+.big-btn[hidden]{display:none}
+.m-bonus{display:block;font-size:12px;font-weight:800;color:#9be37a;letter-spacing:.5px}
+.m-bonus:empty{display:none}
+
 /* estrelas da Fase 1 */
 .m-estrelas{display:flex;justify-content:center;gap:14px;margin:4px 0 2px}
 .m-estrelas:empty{display:none}
@@ -263,6 +308,9 @@ body.touch .hint-bar{display:none}
   .sb-head{padding:12px 14px;gap:10px}
   .sb-logo{width:42px;height:42px}
   .opt{padding:9px 10px;font-size:15px}
+  .pr-itens{grid-template-columns:1fr}
+  .pr-item{min-height:0;padding-right:70px}
+  .banner-corpo{max-height:calc(100vh - 120px)}
   .card-missao{grid-template-columns:1fr}
   .cm-foto{min-height:150px}
   .banner-botoes{grid-template-columns:1fr}
