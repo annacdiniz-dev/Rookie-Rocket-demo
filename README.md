@@ -1,4 +1,4 @@
-# Rookie Rocket · demo local (3D, estilo jogo de blocos)
+# Rookie Rocket · demo local
 
 Demo navegável do jogo que está sendo criado no Roblox para o **NASA Space Apps Challenge 2026 · Space Mission Design Game**.
 
