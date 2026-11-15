@@ -96,13 +96,18 @@ O capacete sai da cabeça quando o jogador desce da plataforma de cima (pulando 
 
 ## Link do Roblox
 
-Quando o jogo estiver pronto, cole o link em `linkRoblox`, no topo do [dados.js](dados.js). Enquanto estiver vazio, o botão mostra "Link do jogo em breve".
+O link do jogo oficial fica em `linkRoblox`, no topo do [dados.js](dados.js). Se ficar vazio, o botão mostra "Link do jogo em breve". O botão **Jogar no Roblox** aparece em dois lugares:
+
+- no **totem "JOGO OFICIAL"** da recepção (à direita de quem entra): chegar perto e apertar **E**, ou tocar nele;
+- no banner de **Próxima fase**, depois de concluir a Fase 1.
+
+O nome do desafio (**Space Mission Design Game**) aparece em destaque no botão **i** (créditos) e leva à página do desafio. Nome, evento e link ficam em `desafio`, no dados.js.
 
 ## O que tem no mapa
 
 | # | Área | Destaques |
 |---|------|-----------|
-| 01 | **Recepção** (lobby da agência) | Marcos Pontes com "!" de missão, balão de fala em 5 partes com o nome do jogador, telão "BEM-VINDO(A), NOME!", globo holográfico, 2 totens (Marcos Pontes e entrada do Visitor Complex) |
+| 01 | **Recepção** (lobby da agência) | Marcos Pontes com "!" de missão, balão de fala em 5 partes com o nome do jogador, telão "BEM-VINDO(A), NOME!", globo holográfico, 2 totens (Marcos Pontes e entrada do Visitor Complex), **totem do jogo oficial no Roblox** |
 | → | Corredor 1 | Setas neon e placas "Museu KSC" |
 | 02 | **Museu: Kennedy Space Center Visitor Complex** | 6 exposições: Rocket Garden, Sigma 7 sobre Redstone, Controle de Missão Mercury, Hall da Fama com estátua, **Atlantis erguido e inclinado 43,21° com as portas abertas**, **Saturn V suspenso na horizontal** |
 | → | Corredor 2 (na parede **oposta** à entrada) | "Corredor de embarque" |
@@ -111,14 +116,15 @@ Quando o jogo estiver pronto, cole o link em `linkRoblox`, no topo do [dados.js]
 ## Controles
 
 - **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo.
-- **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom.
+- **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom, de 48 até 6 studs. No mínimo, mais um passo da roda entra em **primeira pessoa**; rolar para trás volta.
 - **Clique** em personagens, totens, Atlantis, Saturn V ou na nave para abrir as informações.
-- **Celular**: joystick, botão de pulo e toque nos prompts.
+- **Celular**: joystick, botão de pulo e toque nos prompts. Um dedo gira a câmera. **Pinça com dois dedos** dá zoom: afastar os dedos aproxima até a primeira pessoa, juntar os dedos volta. Não há botão para isso.
+- Em primeira pessoa o boneco some, o corpo acompanha o olhar e dá para olhar para cima.
 
 O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 
 **Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
-- `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`, `braco`)
+- `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `totem`, `hangar`, `elevador`, `braco`) · acrescente `&pp` para já começar em primeira pessoa
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
 - `index.html#lang=pt&g=m&jogar&preparo=falha`: abre a Preparação com os 3 itens (80 kg: ao lançar, a missão falha dentro da cabine) · `preparo=bom`: só o Giroscópio · `preparo`: últimas escolhas
 - `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 direto · `missao=fim&t=18` mostra o banner com o tempo informado (`t=41` mostra a falha) · `missao=escolha` mostra a escolha ao reembarcar

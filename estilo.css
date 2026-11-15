@@ -146,6 +146,12 @@ dialog p{color:var(--tinta2);line-height:1.6;font-size:16px}
 .source a,#credits a,.cm-fonte a{color:var(--marinho2);font-weight:600}
 #credits{width:600px;padding:26px}
 #credits p{font-size:15px}
+/* créditos: desafio escolhido */
+.cr-desafio{display:flex;flex-direction:column;gap:2px;text-decoration:none;background:#fff;border:2px solid var(--marinho);border-left:6px solid var(--vermelho);border-radius:14px;padding:10px 16px;margin:4px 0 10px}
+.cr-desafio small{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--vermelho)}
+.cr-desafio b{font-size:clamp(18px,4.5vw,22px);font-weight:800;color:var(--marinho);line-height:1.2}
+.cr-desafio span{font-size:13px;font-weight:600;color:var(--tinta2)}
+.cr-desafio:hover b,.cr-desafio:focus-visible b{text-decoration:underline}
 .equipe{background:var(--marinho);border-radius:14px;padding:14px 16px;margin:4px 0 12px;border-left:6px solid var(--vermelho)}
 .equipe-titulo{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:10px}
 .equipe-titulo .logo{width:20px;height:20px}

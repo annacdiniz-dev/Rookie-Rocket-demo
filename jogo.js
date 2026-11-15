@@ -54,6 +54,9 @@ function aplicarTextos() {
   document.querySelectorAll('[data-i18n-label]').forEach(e => { e.setAttribute('aria-label', L.ui[e.dataset.i18nLabel] || ''); });
   $('sb-tagline').textContent = L.ui.tagline;
   $('btn-lang-txt').textContent = estado.lang === 'pt' ? 'EN' : 'PT';
+  // créditos: nome do desafio escolhido (clicar abre a página do desafio)
+  $('cr-desafio').href = DADOS.desafio.url;
+  $('cr-desafio-nome').textContent = DADOS.desafio.nome; $('cr-desafio-evento').textContent = DADOS.desafio.evento + ' ↗';
   // créditos: equipe em destaque
   const eq = $('cr-equipe'); eq.innerHTML = '';
   DADOS.equipe.forEach(n => { const s = document.createElement('span'); s.textContent = n; eq.appendChild(s); });
@@ -544,6 +547,32 @@ planta(-27, -22); planta(27, -22); planta(-27, 21); planta(27, 21);
 for (const [x, z] of [[-22, 6], [22, 6], [-22, 15], [22, 15]]) bloco(x - 0.8, x + 0.8, 0, 1.5, z - 3, z + 3, MARINHO, { stud: true });
 placa([{ t: P_.poster1a, tam: 40, cor: MARINHO }, { t: P_.poster1b, tam: 48, cor: VERMELHO }], 10, 6, { pos: [-29.4, 10, -6], rot: Math.PI / 2, fundo: '#f1efe9', borda: MARINHO });
 placa([{ t: P_.poster2a, tam: 44, cor: MARINHO }, { t: P_.poster2b, tam: 44, cor: VERMELHO }], 10, 6, { pos: [29.4, 10, -6], rot: -Math.PI / 2, fundo: '#f1efe9', borda: MARINHO });
+/* ---------- totem do jogo oficial (Roblox) ----------
+   Fica à direita de quem entra, virado para a entrada. Apertar E (ou tocar) abre o banner com o link. */
+let anelJogo = null;
+{
+  const kx = 14, kz = 3, g = new THREE.Group(); g.position.set(kx, 0, kz); g.rotation.y = -Math.PI / 4; scene.add(g);
+  const peca = (w, h, d, material, y, z = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material); m.position.set(0, y, z); m.castShadow = true; g.add(m); return m; };
+  peca(4.4, 7.6, 1.2, mat(MARINHO), 3.8);                       // corpo
+  peca(4.44, 0.3, 1.24, mat(VERMELHO, { neon: true }), 0.6);    // faixa de luz embaixo
+  peca(4.9, 0.5, 1.6, mat(VERMELHO, { neon: true }), 7.85);     // topo iluminado
+  const tela = new THREE.Mesh(new THREE.PlaneGeometry(3.9, 5.6), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv(512, 735, (c, w, h) => {
+    const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0d1830'); gr.addColorStop(1, '#24407a'); c.fillStyle = gr; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#fff'; for (let i = 0; i < 40; i++) c.fillRect((i * 97) % w, (i * 151) % (h - 200), 3, 3); // estrelinhas
+    logoCanvas(c, w / 2 - 70, 40, 140);
+    c.textAlign = 'center';
+    c.fillStyle = '#ffcf3f'; c.font = `26px ${TIT}`; c.fillText(P_.jogo_topo, w / 2, 232);
+    c.fillStyle = '#fff'; c.font = `34px ${TIT}`; c.fillText('ROOKIE ROCKET', w / 2, 284);
+    c.font = `800 62px ${TXT}`; c.fillText(P_.jogo_l1, w / 2, 388); c.fillText(P_.jogo_l2, w / 2, 456);
+    c.fillStyle = VERMELHO; c.fillRect(46, 500, w - 92, 110);                                                 // "botão"
+    c.fillStyle = '#fff'; c.font = `800 50px ${TXT}`; c.fillText(P_.jogo_botao, w / 2, 572);
+    c.font = `700 30px ${TXT}`; c.fillStyle = '#c9d3ea'; c.fillText(toque ? '👆 ' + P_.jogo_pe_toque : P_.jogo_pe, w / 2, 680);
+  })) }));
+  tela.position.set(0, 4.2, 0.62); g.add(tela);
+  anelJogo = anelChao(kx, 0, kz, 3.6, '#ffcf3f');
+  colisor(kx - 1.9, kx + 1.9, 0, 8, kz - 1.9, kz + 1.9);
+  interativo({ pos: new THREE.Vector3(kx, 5, kz), raio: 9, rotulo: L.prompt.jogar, objeto: L.prompt.jogo, acao: () => abrirRoblox(true), alvos: [g] });
+}
 /* ---------- quadros decorativos (arte original: céu, Lua e afins) ---------- */
 function quadroDecor(x, y, z, rot, w, h, pintar) {
   const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot; scene.add(g);
@@ -984,6 +1013,16 @@ function chaoEm(x, z, y) {
 const teclas = {}, joy = { x: 0, y: 0 };
 let pularPedido = false;
 const cam = { yaw: 0, pitch: 0.38, dist: 24, alvoDist: 24 };
+// ZOOM: a câmera fica entre 6 e 48 studs atrás do jogador. Aproximando além do mínimo, ela entra
+// em PRIMEIRA PESSOA (alvoDist = 0: a câmera vai para os olhos e o boneco some).
+const ZOOM_MIN = 6, ZOOM_MAX = 48;
+const primeiraPessoa = () => cam.alvoDist < 1;
+let avisouPP = false;
+function zoomPara(d, aproximando) {
+  const antes = primeiraPessoa();
+  cam.alvoDist = d < ZOOM_MIN ? (aproximando ? 0 : ZOOM_MIN) : Math.min(ZOOM_MAX, d);
+  if (!antes && primeiraPessoa() && !avisouPP) { avisouPP = true; falarSistema(toque ? L.msg.primeira_pessoa_toque : L.msg.primeira_pessoa); } // avisa só na 1ª vez
+}
 function atualizarJogador(dt) {
   let ix = 0, iz = 0;
   if (!pausado()) {
@@ -995,7 +1034,8 @@ function atualizarJogador(dt) {
   const n = Math.hypot(dx, dz);
   if (n > 1) { dx /= n; dz /= n; }
   P.vel = Math.min(n, 1);
-  if (n > 0.05) { let d = Math.atan2(dx, dz) - P.rot; d = Math.atan2(Math.sin(d), Math.cos(d)); P.rot += d * Math.min(1, dt * 14); }
+  if (primeiraPessoa()) P.rot = cam.yaw + Math.PI; // em primeira pessoa o corpo acompanha o olhar
+  else if (n > 0.05) { let d = Math.atan2(dx, dz) - P.rot; d = Math.atan2(Math.sin(d), Math.cos(d)); P.rot += d * Math.min(1, dt * 14); }
   for (let i = 0; i < 3; i++) {
     const sx = dx * VEL * dt / 3, sz = dz * VEL * dt / 3;
     if (!bate(P.pos.x + sx, P.pos.z, P.pos.y)) P.pos.x += sx;
@@ -1019,11 +1059,19 @@ function atualizarCamera(dt) {
   cam.dist += (cam.alvoDist - cam.dist) * Math.min(1, dt * 10);
   alvoCam.set(P.pos.x, P.pos.y + 4.8, P.pos.z);
   const dir = new THREE.Vector3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch));
-  ray.set(alvoCam, dir); ray.far = cam.dist;
-  const hit = ray.intersectObjects(bloqueiaCam, false)[0];
-  const d = hit ? Math.max(1.5, hit.distance - 0.8) : cam.dist;
-  camera.position.copy(alvoCam).addScaledVector(dir, d); camera.lookAt(alvoCam);
-  jogador.visible = d > 2.2;
+  if (primeiraPessoa() && cam.dist < 2.6) {
+    // primeira pessoa: câmera nos olhos, olhando para a frente (o oposto de "dir"); o boneco some
+    camera.position.set(P.pos.x, P.pos.y + 5, P.pos.z);
+    camera.lookAt(v3.copy(camera.position).sub(dir));
+    jogador.visible = false;
+  } else {
+    if (!primeiraPessoa() && cam.pitch < -0.25) cam.pitch += (-0.25 - cam.pitch) * Math.min(1, dt * 8); // saiu da 1ª pessoa olhando para cima
+    ray.set(alvoCam, dir); ray.far = cam.dist;
+    const hit = ray.intersectObjects(bloqueiaCam, false)[0];
+    const d = hit ? Math.max(1.5, hit.distance - 0.8) : Math.max(1.5, cam.dist);
+    camera.position.copy(alvoCam).addScaledVector(dir, d); camera.lookAt(alvoCam);
+    jogador.visible = d > 2.2;
+  }
   sol.position.set(P.pos.x + 40, P.pos.y + 100, P.pos.z + 30); sol.target.position.copy(P.pos);
 }
 
@@ -1235,7 +1283,7 @@ function abrirExpo(chave) {
 }
 
 /* ---------------- teleporte ---------------- */
-const PONTOS = { recepcao: [0, 0, 16, 0], museu: [0, 0, -84, 0], hangar: [2, 0, -192, 0.35], elevador: [16, 14, -220, -Math.PI / 2], braco: [3, 41, -210, Math.PI / 2] };
+const PONTOS = { recepcao: [0, 0, 16, 0], totem: [8, 0, 9, -Math.PI / 4], museu: [0, 0, -84, 0], hangar: [2, 0, -192, 0.35], elevador: [16, 14, -220, -Math.PI / 2], braco: [3, 41, -210, Math.PI / 2] };
 function teleportar(k) { const [x, y, z, yaw] = PONTOS[k]; P.pos.set(x, y, z); P.vy = 0; cam.yaw = yaw; P.rot = yaw + Math.PI; }
 
 /* ================================================================
@@ -1684,8 +1732,9 @@ function abrirAlbum() {
   });
   limparTeclas(); $('album').showModal();
 }
-function abrirRoblox() {
-  $('rb-titulo').textContent = L.roblox.titulo; $('rb-texto').textContent = L.roblox.texto;
+function abrirRoblox(doTotem) { // doTotem = aberto pelo totem da recepção (texto de convite, não de "continuação")
+  $('rb-titulo').textContent = doTotem === true ? L.roblox.titulo_totem : L.roblox.titulo;
+  $('rb-texto').textContent = doTotem === true ? L.roblox.texto_totem : L.roblox.texto;
   const b = $('rb-link');
   if (DADOS.linkRoblox) { b.href = DADOS.linkRoblox; b.textContent = L.roblox.botao + ' ↗'; b.classList.remove('off'); b.removeAttribute('aria-disabled'); }
   else { b.removeAttribute('href'); b.textContent = L.roblox.em_breve; b.classList.add('off'); b.setAttribute('aria-disabled', 'true'); }
@@ -1718,20 +1767,39 @@ addEventListener('blur', limparTeclas);
 
 const cvs = renderer.domElement;
 let arrasto = null;
-cvs.addEventListener('pointerdown', e => { arrasto = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY }; cvs.setPointerCapture(e.pointerId); });
+// Um dedo (ou o mouse) gira a câmera. Dois dedos na tela fazem a PINÇA de zoom:
+// afastar os dedos aproxima (até entrar em primeira pessoa), juntar os dedos afasta.
+const dedos = new Map(); let pinca = null;
+const distDedos = () => { const [a, b] = [...dedos.values()]; return Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)); };
+cvs.addEventListener('pointerdown', e => {
+  dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { cvs.setPointerCapture(e.pointerId); } catch (err) { /* ponteiro já solto: segue sem captura */ }
+  if (dedos.size === 2) { arrasto = null; pinca = { d0: distDedos(), z0: cam.alvoDist }; return; }
+  if (dedos.size === 1) arrasto = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY };
+});
 cvs.addEventListener('pointermove', e => {
+  const dd = dedos.get(e.pointerId); if (dd) { dd.x = e.clientX; dd.y = e.clientY; }
+  if (pinca && dedos.size >= 2) {
+    const r = pinca.d0 / distDedos();                 // < 1: dedos se afastando (aproximar) · > 1: dedos se juntando (afastar)
+    if (pinca.z0 < 1) { if (r > 1.2) zoomPara(ZOOM_MIN * r * r, false); }   // estava em 1ª pessoa: só sai com um gesto claro
+    else zoomPara(pinca.z0 * r * r, r < 1);           // ao quadrado: dobrar a abertura dos dedos já leva do zoom padrão ao mínimo
+    return;
+  }
   if (!arrasto || arrasto.id !== e.pointerId) return;
   cam.yaw -= (e.clientX - arrasto.x) * 0.006;
-  cam.pitch = Math.max(-0.25, Math.min(1.25, cam.pitch + (e.clientY - arrasto.y) * 0.005));
+  cam.pitch = Math.max(primeiraPessoa() ? -1.3 : -0.25, Math.min(1.25, cam.pitch + (e.clientY - arrasto.y) * 0.005)); // em 1ª pessoa dá para olhar para cima
   arrasto.x = e.clientX; arrasto.y = e.clientY;
 });
+const soltarDedo = e => { dedos.delete(e.pointerId); if (pinca) { if (dedos.size < 2) pinca = null; arrasto = null; return true; } return false; };
 cvs.addEventListener('pointerup', e => {
+  if (soltarDedo(e)) return;                          // fim de uma pinça não conta como clique
   if (!arrasto || arrasto.id !== e.pointerId) return;
   const moveu = Math.hypot(e.clientX - arrasto.sx, e.clientY - arrasto.sy); arrasto = null;
   if (moveu < 6 && !pausado()) clicarMundo(e.clientX, e.clientY);
 });
-cvs.addEventListener('pointercancel', () => { arrasto = null; });
-cvs.addEventListener('wheel', e => { e.preventDefault(); cam.alvoDist = Math.max(6, Math.min(48, cam.alvoDist + e.deltaY * 0.03)); }, { passive: false });
+cvs.addEventListener('pointercancel', e => { soltarDedo(e); arrasto = null; });
+// roda do mouse (ou pinça no touchpad): aproxima/afasta; no mínimo, mais um passo entra em primeira pessoa
+cvs.addEventListener('wheel', e => { e.preventDefault(); zoomPara(cam.alvoDist + e.deltaY * 0.03, e.deltaY < 0); }, { passive: false });
 cvs.addEventListener('contextmenu', e => e.preventDefault());
 const mouse = new THREE.Vector2();
 function clicarMundo(x, y) {
@@ -1778,6 +1846,8 @@ function jogar(retorno) {
   const pos = sessao.get('rr-pos'); sessao.del('rr-pos');
   if (retorno && pos) { try { const [x, y, z, yaw] = JSON.parse(pos); P.pos.set(x, y, z); cam.yaw = yaw; P.rot = yaw + Math.PI; } catch (e) {} }
   else setTimeout(() => { if (!estado.feitas.includes('falar')) falarSistema(toque ? L.msg.chamado_toque : L.msg.chamado); }, 900);
+  // no celular não há barra de dicas: ensina a pinça de zoom uma vez, depois do primeiro aviso
+  if (toque) setTimeout(() => { if (!pausado() && !M.ativa && !avisouPP) falarSistema(L.msg.dica_pinca); }, 7000);
 }
 tagJogador.textContent = nomeJogador(); desenharTelao(); renderMissoes();
 preCarregarFotos();
@@ -1804,17 +1874,23 @@ function quadro(t) {
     globo.rotation.y += dt * 0.4;
     const pulso = 1 + Math.sin(tempo * 3) * 0.06;
     totens.forEach(tt => tt.anel.scale.set(pulso, pulso, 1));
+    anelJogo.scale.set(pulso, pulso, 1);
     luzEscotilha.visible = Math.sin(tempo * 4) > 0;
   }
   totens.forEach(tt => tt.anel.material = mat(estado.expos.includes(tt.chave) ? '#2fbf71' : VERMELHO, { neon: true }));
   renderer.render(scene, camera);
-  naTela(tagJogador, P.pos, 7.4);
+  const emPP = primeiraPessoa() && cam.dist < 2.6;
+  if (emPP) tagJogador.style.visibility = 'hidden'; else naTela(tagJogador, P.pos, 7.4);
   const marcosPerto = dm < 45; // longe demais: não mostra nome nem "!"
   if (marcosPerto) naTela(tagMarcos, marcos.position, 7.6, true); else tagMarcos.style.visibility = 'hidden';
   exclamacao.style.display = estado.feitas.includes('falar') || fala >= 0 || !marcosPerto ? 'none' : 'block';
   if (exclamacao.style.display === 'block') naTela(exclamacao, marcos.position, 10.4 + (reduz ? 0 : Math.sin(tempo * 4) * 0.4), true);
   if (balao.style.display === 'block') naTela(balao, marcos.position, 8.6, true);
-  if (balaoJog.style.display === 'block') naTela(balaoJog, P.pos, 8.8);
+  if (balaoJog.style.display === 'block') {
+    // em primeira pessoa não há boneco para ancorar o aviso: ele fica fixo no alto da tela
+    if (emPP) { balaoJog.style.visibility = 'visible'; balaoJog.style.left = (innerWidth / 2) + 'px'; balaoJog.style.top = (innerHeight * 0.3) + 'px'; }
+    else naTela(balaoJog, P.pos, 8.8);
+  }
   const alvo = jogando() ? alvoObjetivo() : null;
   const mostraSeta = alvo && alvo.distanceTo(P.pos) >= 9 && fala < 0;
   seta.style.display = mostraSeta ? 'block' : 'none';
@@ -1844,6 +1920,7 @@ if (h.has('preparo')) setTimeout(() => {
 if (h.has('album')) setTimeout(abrirAlbum, 300);
 if (h.has('roblox')) setTimeout(abrirRoblox, 300);
 if (L.expos[h.get('expo')]) abrirExpo(h.get('expo'));
+if (h.has('pp')) cam.dist = cam.alvoDist = 0; // atalho: já começa em primeira pessoa
 if (h.has('cam')) { const [d, y, p] = h.get('cam').split(',').map(Number); if (d) cam.dist = cam.alvoDist = d; if (!isNaN(y)) cam.yaw = y; if (!isNaN(p)) cam.pitch = p; }
 if (h.has('falar')) conversar();
 

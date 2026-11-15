@@ -20,7 +20,7 @@
 const FONTE_API = 'NASA Image and Video Library (images-api.nasa.gov)';
 
 const DADOS = {
-  desafio: { url: 'https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/' },
+  desafio: { nome: 'Space Mission Design Game', evento: 'NASA Space Apps Challenge 2026', url: 'https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/' },
 
   // Registros oficiais usados em cada exposição (iguais nos dois idiomas)
   registros: {
@@ -46,9 +46,9 @@ const DADOS = {
   },
 
   // >>> LINK DO JOGO NO ROBLOX <<<
-  // Quando o jogo oficial estiver pronto, cole o link entre as aspas (ex.: 'https://www.roblox.com/games/123456/Rookie-Rocket').
-  // Enquanto estiver vazio, o banner mostra "link em breve".
-  linkRoblox: '',
+  // Link do jogo oficial. Aparece no banner "Jogar no Roblox" (fim da fase 1 e totem da recepção).
+  // Se ficar vazio (''), o banner mostra "link em breve".
+  linkRoblox: 'https://www.roblox.com/share?code=a84324d6a84b554796b4115f8931b4ff&type=ExperienceDetails&stamp=1794753740191',
 
   // =====================================================================
   // PREPARAÇÃO DA FASE 1: equipamentos e peso
@@ -101,7 +101,7 @@ const DADOS = {
         start_texto: 'Seu primeiro dia na agência espacial começa agora. Fale com o guia, explore o museu do Kennedy Space Center e encontre sua nave no hangar.',
         start_nota: 'Demo local do jogo que está sendo criado no Roblox · Fatos e fotos: NASA Image and Video Library',
         missoes_titulo: 'OBJETIVOS', ls_nome: 'Astronauta', ls_miss: 'Missões', btn_album: 'Álbum espacial', cr_equipe: 'EQUIPE',
-        hint_andar: 'andar', hint_pular: 'pular', hint_interagir: 'interagir', hint_capacete: 'capacete', hint_camera: 'arraste para girar · roda = zoom',
+        hint_andar: 'andar', hint_pular: 'pular', hint_interagir: 'interagir', hint_capacete: 'capacete', hint_camera: 'arraste para girar · roda = zoom até 1ª pessoa',
         conquista: 'CONQUISTA DESBLOQUEADA',
         mapa_tag: 'TELEPORTE RÁPIDO', mapa_titulo: 'Mapa da base',
         tp_recepcao: 'Recepção', tp_recepcao_s: 'Lobby da agência + Marcos Pontes',
@@ -117,7 +117,7 @@ const DADOS = {
         cr_p4: 'As falas do personagem Marcos Pontes são <b>fictícias</b>, escritas para o jogo. Os fatos citados nelas vêm dos registros da NASA iss012e22280 e 20060409_exp12_11.',
         cr_p5: 'Motor 3D: three.js r128 (licença MIT). Fontes: Outfit e Michroma (SIL Open Font License). Tudo incluído na pasta lib.',
         cr_p6: 'Pesos e efeitos dos equipamentos são valores didáticos simplificados, não dados reais da NASA.',
-        cr_desafio: 'Página do desafio',
+        cr_desafio: 'Página do desafio', cr_desafio_rot: 'DESAFIO ESCOLHIDO',
         continuar: 'Continuar explorando', fechar: 'Fechar',
         btn_mapa: 'Mapa (M)', btn_creditos: 'Fontes e créditos', btn_idioma: 'Trocar idioma', btn_capacete: 'Capacete (H)',
         fonte: 'Fonte', credito: 'Crédito', foto: 'Foto', foto_nasa: 'foto NASA'
@@ -174,13 +174,17 @@ const DADOS = {
       },
       prompt: {
         ver: 'Ver exposição', conversar: 'Conversar', proxima: 'Próxima fala', marcos: 'Marcos Pontes · Guia',
-        embarcar: 'Embarcar', escotilha: 'Fase 1 · Projeto Mercury', subir: 'Subir', descer: 'Descer', chamar: 'Chamar elevador', elevador: 'Elevador', movendo: 'Em movimento…', tocar: 'Tocar'
+        embarcar: 'Embarcar', escotilha: 'Fase 1 · Projeto Mercury', subir: 'Subir', descer: 'Descer', chamar: 'Chamar elevador', elevador: 'Elevador', movendo: 'Em movimento…', tocar: 'Tocar',
+        jogar: 'Jogar no Roblox', jogo: 'Jogo oficial do Rookie Rocket'
       },
       msg: {
         chamado: '👋 Marcos Pontes quer falar com você! Vá até ele e aperte E.',
         chamado_toque: '👋 Marcos Pontes quer falar com você! Vá até ele e toque no botão.',
         subindo: '⬆️ Subindo para o braço de acesso…', descendo: '⬇️ Descendo para a plataforma…',
-        perto: 'Chegue mais perto para interagir! 🚶', capacete: '🪖 Capacete travado! Preparando o embarque…'
+        perto: 'Chegue mais perto para interagir! 🚶', capacete: '🪖 Capacete travado! Preparando o embarque…',
+        primeira_pessoa: '👀 Primeira pessoa! Role a roda para trás para voltar.',
+        primeira_pessoa_toque: '👀 Primeira pessoa! Junte dois dedos na tela para voltar.',
+        dica_pinca: '🤏 Dica: afaste dois dedos na tela para dar zoom até a primeira pessoa.'
       },
       missao: {
         fase: 'FASE 1 · PROJETO MERCURY', task: 'O Colapso do Piloto Automático', sair: 'Sair',
@@ -239,9 +243,12 @@ const DADOS = {
         missao2: { nome: 'Fase 2', vazio: 'Card da Fase 2' }
       },
       album: { titulo: 'Álbum Espacial', sub: 'Conclua as fases para colecionar os cards das missões reais.', real: 'MISSÃO REAL', objetivo: 'Objetivo: ', aconteceu: 'O que aconteceu: ' },
-      roblox: { titulo: 'A aventura continua no Roblox!', texto: 'As próximas fases estão no jogo oficial do Rookie Rocket.', botao: 'Jogar no Roblox', em_breve: 'Link do jogo em breve' },
+      roblox: { titulo: 'A aventura continua no Roblox!', texto: 'As próximas fases estão no jogo oficial do Rookie Rocket.', botao: 'Jogar no Roblox', em_breve: 'Link do jogo em breve',
+        // textos do totem da recepção (antes de terminar a fase 1)
+        titulo_totem: 'Jogue o Rookie Rocket de verdade!', texto_totem: 'Esta é só a demo. O jogo oficial, com a aventura completa, está no Roblox.' },
       placas: {
         totem_topo: '★ EXPOSIÇÃO ★', totem_pe: 'Aperte E para ver',
+        jogo_topo: 'JOGO OFICIAL', jogo_l1: 'JOGUE DE', jogo_l2: 'VERDADE!', jogo_botao: '▶ NO ROBLOX', jogo_pe: 'Aperte E', jogo_pe_toque: 'Toque aqui',
         recepcao: 'RECEPÇÃO', programa: 'PROGRAMA ESTAGIÁRIO ASTRONAUTA',
         telao_topo: 'PRIMEIRO DIA · PROGRAMA ESTAGIÁRIO ASTRONAUTA', telao_bemvindo: 'BEM-VIND{O}, ', telao_pe: '↓ Corredor para o museu do Kennedy Space Center',
         poster1a: 'SEU PRIMEIRO', poster1b: 'DIA NO ESPAÇO', poster2a: 'CURIOSIDADE', poster2b: 'É COMBUSTÍVEL',
@@ -271,7 +278,7 @@ const DADOS = {
         start_texto: 'Your first day at the space agency starts now. Talk to your guide, explore the Kennedy Space Center museum and find your ship in the hangar.',
         start_nota: 'Local demo of the game being built on Roblox · Facts and photos: NASA Image and Video Library',
         missoes_titulo: 'OBJECTIVES', ls_nome: 'Astronaut', ls_miss: 'Missions', btn_album: 'Space album', cr_equipe: 'TEAM',
-        hint_andar: 'walk', hint_pular: 'jump', hint_interagir: 'interact', hint_capacete: 'helmet', hint_camera: 'drag to turn · wheel = zoom',
+        hint_andar: 'walk', hint_pular: 'jump', hint_interagir: 'interact', hint_capacete: 'helmet', hint_camera: 'drag to turn · wheel = zoom to 1st person',
         conquista: 'BADGE UNLOCKED',
         mapa_tag: 'QUICK TELEPORT', mapa_titulo: 'Base map',
         tp_recepcao: 'Reception', tp_recepcao_s: 'Agency lobby + Marcos Pontes',
@@ -287,7 +294,7 @@ const DADOS = {
         cr_p4: 'The lines spoken by the Marcos Pontes character are <b>fictional</b>, written for the game. The facts they mention come from NASA records iss012e22280 and 20060409_exp12_11.',
         cr_p5: '3D engine: three.js r128 (MIT license). Fonts: Outfit and Michroma (SIL Open Font License). All included in the lib folder.',
         cr_p6: 'Equipment weights and effects are simplified teaching values, not real NASA data.',
-        cr_desafio: 'Challenge page',
+        cr_desafio: 'Challenge page', cr_desafio_rot: 'OUR CHALLENGE',
         continuar: 'Keep exploring', fechar: 'Close',
         btn_mapa: 'Map (M)', btn_creditos: 'Sources and credits', btn_idioma: 'Change language', btn_capacete: 'Helmet (H)',
         fonte: 'Source', credito: 'Credit', foto: 'Photo', foto_nasa: 'NASA photo'
@@ -344,13 +351,17 @@ const DADOS = {
       },
       prompt: {
         ver: 'View exhibit', conversar: 'Talk', proxima: 'Next line', marcos: 'Marcos Pontes · Guide',
-        embarcar: 'Board', escotilha: 'Phase 1 · Project Mercury', subir: 'Go up', descer: 'Go down', chamar: 'Call elevator', elevador: 'Elevator', movendo: 'Moving…', tocar: 'Tap'
+        embarcar: 'Board', escotilha: 'Phase 1 · Project Mercury', subir: 'Go up', descer: 'Go down', chamar: 'Call elevator', elevador: 'Elevator', movendo: 'Moving…', tocar: 'Tap',
+        jogar: 'Play on Roblox', jogo: 'Official Rookie Rocket game'
       },
       msg: {
         chamado: '👋 Marcos Pontes wants to talk to you! Walk up to him and press E.',
         chamado_toque: '👋 Marcos Pontes wants to talk to you! Walk up to him and tap the button.',
         subindo: '⬆️ Going up to the access arm…', descendo: '⬇️ Going down to the platform…',
-        perto: 'Get closer to interact! 🚶', capacete: '🪖 Helmet locked! Getting ready to board…'
+        perto: 'Get closer to interact! 🚶', capacete: '🪖 Helmet locked! Getting ready to board…',
+        primeira_pessoa: '👀 First person! Scroll back to zoom out.',
+        primeira_pessoa_toque: '👀 First person! Pinch two fingers together to zoom out.',
+        dica_pinca: '🤏 Tip: spread two fingers on the screen to zoom into first person.'
       },
       missao: {
         fase: 'PHASE 1 · PROJECT MERCURY', task: 'Autopilot Meltdown', sair: 'Exit',
@@ -407,9 +418,11 @@ const DADOS = {
         missao2: { nome: 'Phase 2', vazio: 'Phase 2 card' }
       },
       album: { titulo: 'Space Album', sub: 'Complete the phases to collect the real mission cards.', real: 'REAL MISSION', objetivo: 'Goal: ', aconteceu: 'What happened: ' },
-      roblox: { titulo: 'The adventure continues on Roblox!', texto: 'The next phases are in the official Rookie Rocket game.', botao: 'Play on Roblox', em_breve: 'Game link coming soon' },
+      roblox: { titulo: 'The adventure continues on Roblox!', texto: 'The next phases are in the official Rookie Rocket game.', botao: 'Play on Roblox', em_breve: 'Game link coming soon',
+        titulo_totem: 'Play the real Rookie Rocket!', texto_totem: 'This is just the demo. The official game, with the full adventure, is on Roblox.' },
       placas: {
         totem_topo: '★ EXHIBIT ★', totem_pe: 'Press E to view',
+        jogo_topo: 'OFFICIAL GAME', jogo_l1: 'PLAY THE', jogo_l2: 'REAL GAME!', jogo_botao: '▶ ON ROBLOX', jogo_pe: 'Press E', jogo_pe_toque: 'Tap here',
         recepcao: 'RECEPTION', programa: 'ROOKIE ASTRONAUT PROGRAM',
         telao_topo: 'DAY ONE · ROOKIE ASTRONAUT PROGRAM', telao_bemvindo: 'WELCOME ABOARD, ', telao_pe: '↓ Hallway to the Kennedy Space Center museum',
         poster1a: 'YOUR FIRST', poster1b: 'DAY IN SPACE', poster2a: 'CURIOSITY', poster2b: 'IS YOUR FUEL',
