@@ -34,13 +34,13 @@ O jogador escolhe o que levar. Cada equipamento ajuda na mira, mas pesa. Pode ma
 | Equipamento | Peso | Efeito na Fase 1 |
 |---|---|---|
 | 🛡️ Amortecedor | 25 kg | tremor da cabine 70% menor e raio de acerto dos pontos 30% maior |
-| ⛽ Combustível extra | 20 kg | a missão só é encerrada por tempo aos **55 s** (em vez de 40 s) |
-| 🧭 Giroscópio | 15 kg | segurar a mira em cada ponto leva **1,3 s** (em vez de 2 s) |
+| ⛽ Combustível extra | 20 kg | a barra de combustível dura **55 s** (em vez de 40 s) antes da missão ser encerrada |
+| 🧭 Giroscópio | 15 kg | **ímã na mira:** quando o "+" encosta no círculo cinza em volta de um ponto, a mira pula para o centro dele e fica presa até o ponto travar |
 
 **Regra de peso:**
 - A nave pesa **20 kg**, e o foguete Atlas leva no máximo **60 kg**.
 - Barra: verde até 50 kg, amarela de 51 a 60 kg, vermelha acima de 60 kg.
-- **Acima de 60 kg o foguete não decola:** falha na hora, com 0 estrelas e sem mira.
+- **Acima de 60 kg a missão falha dentro da cabine:** o jogador entra na cena, mas a mira nunca libera. Depois de 1,4 s o alerta muda para **PESO ACIMA DO LIMITE**, a cabine sacode forte e a Terra sobe na janela. Aos 3,4 s o banner **MISSÃO FALHOU** abre por cima da própria cena, com 0 estrelas e sem "Tentar de novo".
 
 **Tempo final:**
 - `kgLivres = 60 − peso` e `bônus = floor(kgLivres ÷ 10) × 1 s`.
@@ -56,8 +56,9 @@ A cabine é **em primeira pessoa**, já com o piloto automático desligado. Na t
 1. A tela treme e fica vermelha, e pisca o alerta **FALHA NO PILOTO AUTOMÁTICO**.
 2. Há um **+** no centro da visão e **4 pontos vermelhos no espaço**, fora da nave.
 3. O jogador move a câmera (mouse, setas/WASD ou arrastar no celular) até o + ficar sobre um ponto e **segura 2 s**. Um **círculo branco** em volta do ponto mostra o tempo.
-4. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
-5. A nota vem em **estrelas**, pelo **tempo final** (cronômetro `M.t` menos o bônus de leveza):
+4. No painel da direita, a **barra de combustível** esvazia com o tempo: verde, depois amarela (≤ 45%) e vermelha piscando (≤ 20%). Vazia, a missão falha por tempo (40 s, ou 55 s com o combustível extra).
+5. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
+6. A nota vem em **estrelas**, pelo **tempo final** (cronômetro `M.t` menos o bônus de leveza):
 
    | Tempo final | Estrelas |
    |-------|----------|
@@ -84,7 +85,7 @@ As falas ficam em `marcosResultado`, no [dados.js](dados.js), em PT e EN, e usam
 |---|---|---|
 | Passou do peso | "o foguete Atlas só consegue levar 60 kg e a sua nave estava com {peso} kg…" | (a fala já ensina) |
 | Tempo esgotado | "A nave ficou fora de controle por tempo demais…" | sem combustível: "o combustível extra teria te dado mais 15 segundos" · com combustível: "trave primeiro os pontos mais próximos" |
-| Demorou (tempo final acima de 25 s) | "Você salvou a nave, mas demorou {tempo}…" | sem giroscópio: "o giroscópio trava cada ponto mais rápido" · com giroscópio: "cada 10 kg livres valem 1 s" |
+| Demorou (tempo final acima de 25 s) | "Você salvou a nave, mas demorou {tempo}…" | sem giroscópio: "com o giroscópio, a mira gruda sozinha no centro dos pontos" · com giroscópio: "cada 10 kg livres valem 1 s" |
 | Sucesso | "Mandou bem, {nome}! Tempo final de {tempo} e {n} de 3 estrelas…" | — |
 
 A recepção tem seis quadros decorativos (Lua cheia, céu estrelado, planeta com anéis, nascer da Terra, nebulosa e Cruzeiro do Sul). São ilustrações originais, sem dados científicos.
@@ -119,7 +120,7 @@ O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 **Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
 - `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `hangar`, `elevador`, `braco`)
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
-- `index.html#lang=pt&g=m&jogar&preparo=falha`: abre a Preparação com os 3 itens (80 kg, o foguete não decola) · `preparo=bom`: só o Giroscópio · `preparo`: últimas escolhas
+- `index.html#lang=pt&g=m&jogar&preparo=falha`: abre a Preparação com os 3 itens (80 kg: ao lançar, a missão falha dentro da cabine) · `preparo=bom`: só o Giroscópio · `preparo`: últimas escolhas
 - `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 direto · `missao=fim&t=18` mostra o banner com o tempo informado (`t=41` mostra a falha) · `missao=escolha` mostra a escolha ao reembarcar
 - `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
 
@@ -154,7 +155,7 @@ Os textos estão em [dados.js](dados.js), em `idiomas.pt` e `idiomas.en`. Para t
 A demo foi feita em **studs**, com os valores padrão do Roblox, então dá para copiar as medidas direto:
 
 - 1 unidade = 1 stud. Personagem R6 com ~5,2 studs de altura.
-- WalkSpeed **16**, JumpPower **50**, Gravity **196,2**.
+- WalkSpeed **22** (um pouco acima do padrão 16 do Roblox), JumpPower **50**, Gravity **196,2**.
 - Recepção 60×50 (pé-direito 22). Corredores 14×30 (altura 14). Museu 100×90 (altura 45). Hangar 80×60 (altura 60).
 - Escada com 14 degraus (1 stud de altura × 2 de profundidade) até a plataforma em Y=14. Elevador de Y=14 até Y=41 a 6 studs/s.
 - Prompts "E" = **ProximityPrompt**. Balão do Marcos = **BubbleChat** / `TextChatService`. Telão com o nome = **SurfaceGui**. Conquistas = **Badges**. Painel de progresso = **leaderstats**.

@@ -66,10 +66,12 @@ const DADOS = {
     // efeito.tremorFator: multiplica o tremor da cabine (0.3 = 70% menos)
     // efeito.raioFator: multiplica o raio de acerto dos pontos (1.3 = 30% maior)
     { id: 'amortecedor', icone: '🛡️', peso: 25, efeito: { tremorFator: 0.3, raioFator: 1.3 } },
-    // efeito.limiteTempo: novo tempo máximo da missão, em segundos (o normal é 40)
+    // efeito.limiteTempo: novo tempo máximo da missão, em segundos (o normal é 40).
+    // A barra de combustível na tela esvazia nesse tempo: 40 s sem o item, 55 s com ele.
     { id: 'combustivel', icone: '⛽', peso: 20, efeito: { limiteTempo: 55 } },
-    // efeito.segurar: segundos segurando a mira para travar cada ponto (o normal é 2)
-    { id: 'giroscopio', icone: '🧭', peso: 15, efeito: { segurar: 1.3 } }
+    // efeito.ima: "ímã" da mira. Com 1, a mira pula para o centro do ponto assim que o "+"
+    // encosta no círculo cinza em volta dele. 1.5 = alcance 50% maior. Sem o giroscópio não há ímã.
+    { id: 'giroscopio', icone: '🧭', peso: 15, efeito: { ima: 1 } }
   ],
 
   equipe: ['Anna Clara Diniz', 'Hurias Felipe Silveira', 'Luis Renato Fernandes', 'Nando Nogueira', 'Túlio Amaral', 'Valter Cauã Alves'],
@@ -183,6 +185,8 @@ const DADOS = {
       missao: {
         fase: 'FASE 1 · PROJETO MERCURY', task: 'O Colapso do Piloto Automático', sair: 'Sair',
         alerta: '⚠ FALHA NO PILOTO AUTOMÁTICO', restaurado: '✔ PILOTO AUTOMÁTICO RESTAURADO',
+        alerta_peso: '⚠ PESO ACIMA DO LIMITE', dica_peso: 'A nave está pesada demais e não responde aos comandos!',
+        combustivel: 'COMBUST.',
         dica: 'Mova a câmera: leve o + até um ponto vermelho e segure {s} s',
         dica_toque: 'Arraste a tela: leve o + até um ponto vermelho e segure {s} s',
         segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO',
@@ -193,20 +197,20 @@ const DADOS = {
         tentar: 'Tentar de novo', sair_mapa: 'Sair para o mapa', trocar: 'Trocar equipamentos',
         // conta do resultado. {t} tempo · {b} bônus · {f} tempo final · {e} estrelas
         conta: 'Tempo {t} − {b} s de bônus de leveza = {f} · {e}',
-        conta_peso: 'Peso {p} kg · limite {l} kg · o foguete não decolou',
+        conta_peso: 'Peso {p} kg · limite {l} kg · a nave saiu de controle',
         sem_estrelas: 'sem estrelas', bonus_hud: 'BÔNUS',
         escolha_titulo: 'Fase 1 concluída!', escolha_txt: 'Seu melhor resultado:', refazer: 'Refazer fase 1'
       },
       // Falas do Marcos no resultado (fictícias, escritas para o jogo).
       // Marcadores: {nome} {o} {peso} {limite} {tempo} {limiteTempo} {extra} {estrelas} {bonusKg} {bonusS}
       marcosResultado: {
-        peso: '{nome}, o foguete Atlas só consegue levar {limite} kg e a sua nave estava com {peso} kg. Pesado demais, ele nem saiu da plataforma! Na engenharia espacial, cada quilo conta: escolha os equipamentos que mais ajudam e deixe o resto em terra.',
+        peso: '{nome}, o foguete Atlas só consegue levar {limite} kg e a sua nave estava com {peso} kg. Pesada demais, ela não chegou à órbita certa e saiu de controle antes de você conseguir agir! Na engenharia espacial, cada quilo conta: escolha os equipamentos que mais ajudam e deixe o resto em terra.',
         tempo: 'A nave ficou fora de controle por tempo demais, {nome}. No Projeto Mercury, o astronauta precisava agir rápido quando o piloto automático falhava.',
         lento: 'Você salvou a nave, mas demorou {tempo}. Para ganhar estrelas, o tempo final precisa ficar abaixo de {limiteEstrela} s.',
         // dicas: o jogo escolhe só UMA, a mais útil para a tentativa
         dica_combustivel: 'Dica: o combustível extra teria te dado mais {extra} segundos.',
         dica_proximos: 'Dica: tente travar primeiro os pontos mais próximos da mira.',
-        dica_giroscopio: 'Dica: o giroscópio trava cada ponto mais rápido.',
+        dica_giroscopio: 'Dica: com o giroscópio, a mira gruda sozinha no centro dos pontos.',
         dica_leveza: 'Dica: uma nave mais leve ganha bônus de tempo: cada {bonusKg} kg livres valem {bonusS} s.',
         sucesso: 'Mandou bem, {nome}! Tempo final de {tempo} e {estrelas} de 3 estrelas. Você pilotou como um{a} verdadeir{o} astronauta do Projeto Mercury!'
       },
@@ -221,7 +225,7 @@ const DADOS = {
         itens: {
           amortecedor: { nome: 'Amortecedor', txt: 'A cabine treme menos e fica mais fácil mirar.' },
           combustivel: { nome: 'Combustível extra', txt: 'Mais tempo antes da nave sair de controle.' },
-          giroscopio: { nome: 'Giroscópio', txt: 'Trava cada ponto mais rápido.' }
+          giroscopio: { nome: 'Giroscópio', txt: 'Encostou no círculo cinza, a mira pula para o centro do ponto.' }
         }
       },
       // Cards das missões reais (álbum). Fase 1: foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório NTRS 20040110111.
@@ -351,6 +355,8 @@ const DADOS = {
       missao: {
         fase: 'PHASE 1 · PROJECT MERCURY', task: 'Autopilot Meltdown', sair: 'Exit',
         alerta: '⚠ AUTOPILOT FAILURE', restaurado: '✔ AUTOPILOT RESTORED',
+        alerta_peso: '⚠ OVER WEIGHT LIMIT', dica_peso: 'The spacecraft is too heavy and won\'t respond!',
+        combustivel: 'FUEL',
         dica: 'Move the camera: put the + on a red dot and hold for {s} s',
         dica_toque: 'Drag the screen: put the + on a red dot and hold for {s} s',
         segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME',
@@ -361,18 +367,18 @@ const DADOS = {
         tentar: 'Try again', sair_mapa: 'Back to the map', trocar: 'Change equipment',
         // result math. {t} time · {b} bonus · {f} final time · {e} stars
         conta: 'Time {t} − {b} s lightness bonus = {f} · {e}',
-        conta_peso: 'Weight {p} kg · limit {l} kg · the rocket did not lift off',
+        conta_peso: 'Weight {p} kg · limit {l} kg · the spacecraft lost control',
         sem_estrelas: 'no stars', bonus_hud: 'BONUS',
         escolha_titulo: 'Phase 1 complete!', escolha_txt: 'Your best result:', refazer: 'Replay Phase 1'
       },
       // Marcos lines on the result screen (fictional, written for the game).
       marcosResultado: {
-        peso: '{nome}, the Atlas rocket can only carry {limite} kg and your spacecraft weighed {peso} kg. Too heavy: it never left the pad! In space engineering every kilogram counts: pick the equipment that helps most and leave the rest on the ground.',
+        peso: '{nome}, the Atlas rocket can only carry {limite} kg and your spacecraft weighed {peso} kg. Too heavy: it never reached the right orbit and lost control before you could act! In space engineering every kilogram counts: pick the equipment that helps most and leave the rest on the ground.',
         tempo: 'The spacecraft was out of control for too long, {nome}. In Project Mercury, astronauts had to act fast when the autopilot failed.',
         lento: 'You saved the spacecraft, but it took {tempo}. To earn stars, your final time must be under {limiteEstrela} s.',
         dica_combustivel: 'Tip: the extra fuel would have given you {extra} more seconds.',
         dica_proximos: 'Tip: try locking the dots closest to your crosshair first.',
-        dica_giroscopio: 'Tip: the gyroscope locks each dot faster.',
+        dica_giroscopio: 'Tip: with the gyroscope, the crosshair snaps to the center of the dots.',
         dica_leveza: 'Tip: a lighter spacecraft earns a time bonus: every {bonusKg} kg free is worth {bonusS} s.',
         sucesso: 'Great job, {nome}! Final time {tempo} and {estrelas} of 3 stars. You flew like a real Project Mercury astronaut!'
       },
@@ -387,7 +393,7 @@ const DADOS = {
         itens: {
           amortecedor: { nome: 'Shock absorber', txt: 'The cabin shakes less and aiming gets easier.' },
           combustivel: { nome: 'Extra fuel', txt: 'More time before the spacecraft goes out of control.' },
-          giroscopio: { nome: 'Gyroscope', txt: 'Locks each dot faster.' }
+          giroscopio: { nome: 'Gyroscope', txt: 'Touch the gray ring and the crosshair jumps to the center of the dot.' }
         }
       },
       // Real mission cards (album). Phase 1: photo and goal from NASA record 9248362; "what happened" from NTRS report 20040110111.

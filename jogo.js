@@ -962,7 +962,7 @@ const itMarcos = interativo({ pos: new THREE.Vector3(0, 6.6, -4.5), raio: 10, ro
 
 /* ---------------- física do jogador ---------------- */
 const P = { pos: new THREE.Vector3(0, 0, 16), vy: 0, noChao: true, chaoSol: null, rot: Math.PI, vel: 0 };
-const RAIO = 0.9, ALT = 5.6, DEGRAU = 2.2, VEL = 16, PULO = 50, GRAV = 196.2;
+const RAIO = 0.9, ALT = 5.6, DEGRAU = 2.2, VEL = 22, PULO = 50, GRAV = 196.2; // VEL 22 = WalkSpeed 22 (padrão do Roblox é 16)
 function bate(x, z, y) {
   for (const s of solidos) {
     if (s.off) continue;
@@ -1176,6 +1176,35 @@ function atualizarZona() {
   if (P.pos.y >= 40 && P.noChao) concluir('elevador');
 }
 
+/* ---------------- fotos: pré-carregamento ----------------
+   As fotos só baixavam quando o card abria (tela preta enquanto isso).
+   Agora todas são baixadas em segundo plano logo depois que o mapa aparece,
+   uma de cada vez para não disputar banda com o jogo. */
+const fotosProntas = new Set();
+function preCarregarFotos() {
+  const lista = [...new Set([
+    ...Object.values(DADOS.registros).flat().map(r => r.foto),
+    ...DADOS.album.map(a => a.foto).filter(Boolean)
+  ])];
+  const proxima = () => {
+    const src = lista.shift(); if (!src) return;
+    const im = new Image(); im.decoding = 'async';
+    im.onload = () => { fotosProntas.add(src); (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(proxima); };
+    im.onerror = proxima;
+    im.src = src;
+  };
+  setTimeout(proxima, 400);
+}
+// mostra a foto com um fundo azul animado enquanto carrega (em vez do preto)
+function trocarFoto(img, src) {
+  const moldura = img.parentElement;
+  if (img.getAttribute('src') === src && img.complete) { moldura.classList.remove('carregando'); return; }
+  moldura.classList.toggle('carregando', !fotosProntas.has(src));
+  img.onload = () => { fotosProntas.add(src); moldura.classList.remove('carregando'); };
+  img.onerror = () => moldura.classList.remove('carregando');
+  img.src = src;
+}
+
 /* ---------------- card de exposição ---------------- */
 const dataFmt = iso => new Date(iso + 'T12:00:00').toLocaleDateString(L.codigo, { day: 'numeric', month: 'short', year: 'numeric' });
 function abrirExpo(chave) {
@@ -1189,7 +1218,7 @@ function abrirExpo(chave) {
   e.fatos.forEach(f => { const li = document.createElement('li'); li.textContent = f; ul.appendChild(li); });
   const th = $('info-thumbs'); th.innerHTML = '';
   const src = $('info-source'); src.innerHTML = '';
-  const mostrar = (r, btn) => { $('info-img').src = r.foto; $('info-img').alt = `${e.titulo} · ${L.ui.foto_nasa} ${r.id}`; th.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn)); };
+  const mostrar = (r, btn) => { trocarFoto($('info-img'), r.foto); $('info-img').alt = `${e.titulo} · ${L.ui.foto_nasa} ${r.id}`; th.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn)); };
   regs.forEach((r, i) => {
     if (regs.length > 1) {
       const b = document.createElement('button'); b.setAttribute('aria-label', `${L.ui.foto} ${i + 1}`);
@@ -1218,7 +1247,12 @@ function teleportar(k) { const [x, y, z, yaw] = PONTOS[k]; P.pos.set(x, y, z); P
    Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
    ================================================================ */
 // Ajustes: tempo em cada ponto (s), tolerância da mira (rad), limites da câmera e tremor
-const AJ = { segurar: 2, raio: 0.065, dist: 30, yawMax: 0.78, pitchMin: -0.14, pitchMax: 0.64, tremor: 0.006, intro: 2.6 };
+// ima: ímã da mira (giroscópio). 0 = desligado. 1 = a mira pula para o centro do ponto
+// assim que o "+" encosta no círculo cinza em volta dele (valores maiores aumentam esse alcance).
+const RAIO_CIRCULO = 1.95;  // raio do círculo cinza, em unidades da cena (o ponto fica a AJ.dist de distância)
+const BRACO_MIRA = 22;      // metade do "+" na tela, em pixels (igual ao .m-mira do estilo.css)
+const vibrar = ms => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* sem vibração */ } }; // resposta tátil no celular
+const AJ = { segurar: 2, raio: 0.065, dist: 30, yawMax: 0.78, pitchMin: -0.14, pitchMax: 0.64, tremor: 0.006, intro: 2.6, ima: 0 };
 // Cópia dos valores originais: os equipamentos mudam AJ só durante uma tentativa e depois tudo volta para cá.
 const AJ_BASE = Object.freeze({ ...AJ });
 const PONTOS_M = [[-0.46, 0.20], [0.40, 0.34], [-0.10, 0.50], [0.56, 0.08]]; // [giro, inclinação] em radianos
@@ -1279,7 +1313,7 @@ for (const [yaw, pitch] of PONTOS_M) {
   const zona = new THREE.Mesh(new THREE.RingGeometry(1.8, 1.95, 48), matZona); g.add(zona);
   const arco = new THREE.Mesh(new THREE.RingGeometry(2.2, 2.65, 48, 1, Math.PI / 2, -0.001), matBranco); arco.visible = false; g.add(arco);
   cena2.add(g);
-  M.pontos.push({ dir, g, nucleo, brilho, arco, prog: 0, ok: false, desenhado: -1 });
+  M.pontos.push({ yaw, pitch, dir, g, nucleo, brilho, arco, prog: 0, ok: false, desenhado: -1 });
 }
 function desenharMostrador() { // instrumento decorativo: horizonte balançando e aviso AUTO
   const g = texMostrador.image.getContext('2d'), W = 512, R = 240, falha = M.fase === 'intro' || M.fase === 'mira';
@@ -1370,8 +1404,7 @@ function atualizarPreparo() {
 $('pr-lancar').onclick = () => {
   estado.equip = selPreparo.slice(); salvar();            // pré-marca na próxima vez
   $('preparo').close();
-  if (pesoTotal(estado.equip) > RP.limite) falhaPeso();    // pesado demais: nem decola
-  else comecarMissao();
+  comecarMissao(); // acima do limite também entra na cabine: a falha acontece lá dentro (ver atualizarMissao)
 };
 // Liga os efeitos escolhidos SÓ nesta tentativa (sempre partindo dos valores originais)
 function aplicarEquipamentos(sel) {
@@ -1381,6 +1414,7 @@ function aplicarEquipamentos(sel) {
     if (ef.tremorFator) AJ.tremor = AJ_BASE.tremor * ef.tremorFator;
     if (ef.raioFator) AJ.raio = AJ_BASE.raio * ef.raioFator;
     if (ef.segurar) AJ.segurar = ef.segurar;
+    if (ef.ima) AJ.ima = ef.ima;
     if (ef.limiteTempo) M.limiteTempo = ef.limiteTempo;
   });
   M.equip = sel.slice(); M.peso = pesoTotal(sel); M.bonus = bonusLeveza(sel);
@@ -1422,9 +1456,12 @@ const dicaMira = () => (toque ? LM().dica_toque : LM().dica).replace('{s}', fmtN
 function comecarMissao() {
   const t = LM();
   // zera o cronômetro (M.t) e o resto do estado: "Tentar de novo" sempre começa do zero
-  Object.assign(M, { ativa: true, fase: 'intro', t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null });
+  Object.assign(M, { ativa: true, fase: 'intro', t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null, ima: null, alertaPeso: false });
   aplicarEquipamentos(estado.equip);                       // efeitos valem só nesta tentativa
+  M.pesado = M.peso > RP.limite;                           // acima do limite: a nave sai de controle antes da mira liberar
+  exterior.position.y = 0;
   $('m-tempo').textContent = tempoTxt(0);
+  $('m-comb-l').textContent = t.combustivel; atualizarCombustivel();
   $('m-bonus').textContent = M.bonus > 0 ? `${t.bonus_hud} −${M.bonus} s` : '';
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
   M.pontos.forEach(p => { p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
@@ -1496,19 +1533,21 @@ function fimMissao(motivo) {
     // "Tentar de novo" repete com as mesmas escolhas. No peso não aparece: com a mesma carga o foguete falharia de novo.
     $('mf-proxima').hidden = motivo === 'peso';
     $('mf-proxima').textContent = '↻ ' + t.tentar; $('mf-proxima').onclick = () => { $('m-fim').close(); comecarMissao(); };
-    bip(160, 0.6, 'sawtooth', 0.06);
+    bip(160, 0.6, 'sawtooth', 0.06); vibrar([90, 60, 90]);
   }
   $('m-fim').showModal();
 }
-// Peso acima do limite: o foguete não decola, falha na hora e a mira nem começa
-function falhaPeso() {
-  aplicarEquipamentos(estado.equip); restaurarEquipamentos(); // só para registrar peso e escolhas em M
-  M.ativa = false; M.t = 0;
-  fimMissao('peso');
+// Barra de combustível: cheia no começo, vazia no limite de tempo.
+// Sem o item ela dura 40 s; com o combustível extra, 55 s (esvazia mais devagar).
+function atualizarCombustivel() {
+  const resta = Math.max(0, 1 - M.t / M.limiteTempo), pct = Math.round(resta * 100);
+  $('m-comb').style.setProperty('--n', (resta * 100) + '%'); // o CSS usa --n como altura (computador) ou largura (celular)
+  $('m-comb').className = 'm-comb' + (resta <= 0.2 ? ' vermelho' : resta <= 0.45 ? ' amarelo' : '');
+  $('m-comb').setAttribute('aria-valuenow', pct);
 }
 function sairMissao() {
   restaurarEquipamentos();                                  // AJ e limite de tempo voltam ao normal
-  M.ativa = false; M.fase = '';
+  M.ativa = false; M.fase = ''; M.pesado = false; exterior.position.y = 0;
   if ($('m-fim').open) $('m-fim').close();
   document.body.classList.remove('em-missao'); $('missao').hidden = true;
   $('m-vermelho').classList.remove('on'); $('m-splash').classList.remove('on');
@@ -1524,30 +1563,53 @@ function atualizarMissao(dt) {
   if (M.fase === 'mira' && arred(M.t) > M.limiteTempo) { fimMissao(); return; }
   if (Math.abs(cam2.aspect - innerWidth / innerHeight) > 0.001) { cam2.aspect = innerWidth / innerHeight; cam2.updateProjectionMatrix(); }
   const t = LM(); M.tFase += dt;
-  if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(dicaMira()); }
+  // PESO ACIMA DO LIMITE: o jogador entra na cabine, mas a mira nunca libera.
+  // 1,4 s depois da abertura o alarme muda, a cabine sacode forte e a Terra "sobe" na janela (nave caindo);
+  // aos 3,4 s o banner de falha abre por cima da própria cena.
+  if (M.fase === 'intro' && M.pesado) {
+    if (M.tFase > 1.4 && !M.alertaPeso) {
+      M.alertaPeso = true; $('m-splash').classList.remove('on');
+      $('m-alerta').textContent = t.alerta_peso; dica(t.dica_peso); bip(220, 0.5, 'sawtooth', 0.06);
+    }
+    if (M.tFase > 3.4) fimMissao('peso');
+  } else if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(dicaMira()); }
+  if (M.pesado) exterior.position.y = Math.min(14, Math.max(0, M.tFase - 1.4) * 6);
   if (M.fase === 'mira') M.t += dt;
   // câmera: teclado soma no alvo, mouse/toque definem o alvo; a visão segue suave
   const kx = (M.teclas.arrowright || M.teclas.d ? 1 : 0) - (M.teclas.arrowleft || M.teclas.a ? 1 : 0), ky = (M.teclas.arrowup || M.teclas.w ? 1 : 0) - (M.teclas.arrowdown || M.teclas.s ? 1 : 0);
   M.alvo.x = Math.max(-AJ.yawMax, Math.min(AJ.yawMax, M.alvo.x + kx * dt * 0.7));
   M.alvo.y = Math.max(AJ.pitchMin, Math.min(AJ.pitchMax, M.alvo.y + ky * dt * 0.6));
-  const s = Math.min(1, dt * 8);
-  M.olhar.x += (M.alvo.x - M.olhar.x) * s; M.olhar.y += (M.alvo.y - M.olhar.y) * s;
-  const falha = M.fase === 'intro' || M.fase === 'mira';
-  const tr = reduz ? 0 : (falha ? AJ.tremor : Math.max(0, AJ.tremor * (1 - M.tFase)));
+  // GIROSCÓPIO (ímã): se o jogador apontou perto de um ponto ainda vermelho, a visão pula para o centro dele.
+  // Ela fica presa ali enquanto o jogador não afastar a mira; depois que o ponto trava, solta sozinha.
+  let ima = null;
+  if (M.fase === 'mira' && AJ.ima > 0) {
+    // alcance = círculo cinza + o braço do "+" (convertido de pixels para ângulo, então vale em qualquer tela)
+    const pxPorRad = (innerHeight / 2) / Math.tan(cam2.fov * Math.PI / 360);
+    let melhor = (Math.atan(RAIO_CIRCULO / AJ.dist) + BRACO_MIRA / pxPorRad) * AJ.ima;
+    const quer = dirDe(M.alvo.x, M.alvo.y);
+    M.pontos.forEach(p => { if (p.ok) return; const a = quer.angleTo(p.dir); if (a < melhor) { melhor = a; ima = p; } });
+  }
+  if (ima !== M.ima) { M.ima = ima; if (ima) { bip(1180, 0.06, 'sine', 0.05); vibrar(25); } $('m-mira').classList.toggle('ima', !!ima); }
+  if (ima) { M.olhar.x = ima.yaw; M.olhar.y = ima.pitch; }
+  else { const s = Math.min(1, dt * 8); M.olhar.x += (M.alvo.x - M.olhar.x) * s; M.olhar.y += (M.alvo.y - M.olhar.y) * s; }
+  const falha = M.fase === 'intro' || M.fase === 'mira' || (M.pesado && M.fase === 'fim');
+  let tr = reduz ? 0 : (falha ? AJ.tremor : Math.max(0, AJ.tremor * (1 - M.tFase)));
+  if (M.alertaPeso) tr *= 5;   // nave pesada: sacode muito
+  if (ima) tr *= 0.3;          // presa no ponto: quase parada
   const yaw = M.olhar.x + (Math.random() - 0.5) * tr * 2, pitch = M.olhar.y + (Math.random() - 0.5) * tr * 2;
   cam2.rotation.set(pitch, -yaw, (Math.random() - 0.5) * tr * 2);
   cam2.position.set((Math.random() - 0.5) * tr * 5, (Math.random() - 0.5) * tr * 5, 0);
   exterior.rotation.z = Math.sin(M.t * 0.25) * 0.04; exterior.userData.terra.rotation.y += dt * 0.02;
   // mira "+" sobre os pontos
   if (M.fase === 'mira') {
-    const frente = dirDe(yaw, pitch); let naMira = false;
+    const frente = ima ? ima.dir : dirDe(yaw, pitch); let naMira = false; // com o ímã, conta o centro exato do ponto
     M.pontos.forEach(p => {
       if (p.ok) return;
       if (frente.angleTo(p.dir) < AJ.raio) {
         naMira = true; p.prog += dt;
         if (p.prog >= AJ.segurar) {
           p.ok = true; p.nucleo.material = matVerde; p.brilho.visible = false; p.arco.visible = false;
-          bip(990, 0.12, 'sine', 0.07);
+          bip(990, 0.12, 'sine', 0.07); vibrar(45);
         }
       } else p.prog = Math.max(0, p.prog - dt * 1.5);
       const f = Math.min(1, p.prog / AJ.segurar), passo = Math.round(f * 48);
@@ -1566,6 +1628,7 @@ function atualizarMissao(dt) {
     }
   } else if (M.fase === 'ok' && M.tFase > 1.7) fimMissao();
   $('m-tempo').textContent = M.t.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
+  atualizarCombustivel();
   const pisca = Math.sin(M.tFase * 10) > 0;
   luzesAlarme.forEach((l, i) => l.visible = falha ? (pisca ? i % 2 === 0 : i % 2 === 1) : false);
   luzCabine.intensity = falha ? 0.8 + (pisca ? 0.5 : 0) : 0.9;
@@ -1717,6 +1780,7 @@ function jogar(retorno) {
   else setTimeout(() => { if (!estado.feitas.includes('falar')) falarSistema(toque ? L.msg.chamado_toque : L.msg.chamado); }, 900);
 }
 tagJogador.textContent = nomeJogador(); desenharTelao(); renderMissoes();
+preCarregarFotos();
 
 /* ================================================================
    LOOP

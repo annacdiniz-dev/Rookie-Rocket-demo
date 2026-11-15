@@ -127,8 +127,13 @@ dialog p{color:var(--tinta2);line-height:1.6;font-size:16px}
 .tag{display:inline-block;background:var(--marinho);color:#fff;font-size:12px;font-weight:700;letter-spacing:1px;padding:5px 10px;border-radius:6px}
 #info{width:900px;display:none}
 #info[open]{display:grid;grid-template-columns:1.05fr 1fr}
-.info-photo{background:#000;position:relative;min-height:340px}
-.info-photo img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.info-photo{background:linear-gradient(135deg,#16284f,#24407a);position:relative;min-height:340px;overflow:hidden}
+.info-photo img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;transition:opacity .2s}
+/* enquanto a foto baixa: esconde a imagem antiga e mostra um brilho correndo */
+.info-photo.carregando #info-img{opacity:0}
+.info-photo.carregando::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.14) 50%,transparent 70%);background-size:250% 100%;animation:brilhoFoto 1s linear infinite}
+@keyframes brilhoFoto{from{background-position:120% 0}to{background-position:-120% 0}}
+@media (prefers-reduced-motion:reduce){.info-photo.carregando::after{animation:none}}
 .info-thumbs{position:absolute;left:10px;bottom:10px;display:flex;gap:6px}
 .info-thumbs button{width:56px;height:40px;border-radius:6px;border:2px solid rgba(255,255,255,.6);padding:0;overflow:hidden;background:#000}
 .info-thumbs button.on{border-color:var(--vermelho)}
@@ -267,6 +272,8 @@ body.touch .hint-bar{display:none}
 .m-mira:after{top:50%;left:0;height:4px;width:100%;margin-top:-2px}
 .m-mira.on:before,.m-mira.on:after{background:var(--amarelo)}
 .m-mira.ok:before,.m-mira.ok:after{background:var(--verde)}
+/* giroscópio: a mira grudou no ponto (fica um pouco maior) */
+.m-mira.ima{transform:scale(1.25);transition:transform .12s}
 .m-splash{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.9);text-align:center;opacity:0;transition:opacity .4s,transform .4s;background:rgba(22,40,79,.9);padding:22px 34px;border-radius:18px;border-bottom:5px solid var(--vermelho);max-width:calc(100vw - 40px)}
 .m-splash.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .m-splash .logo{width:44px;height:44px}
@@ -283,12 +290,19 @@ body.touch .hint-bar{display:none}
 .m-alerta.ok{background:var(--verde);box-shadow:0 0 30px rgba(47,191,113,.6);animation:none}
 @keyframes pisca{50%{opacity:.25}}
 .m-sair{border:0;border-radius:10px;background:rgba(22,40,79,.88);color:#fff;font-weight:700;font-size:14px;padding:10px 14px}
-.m-alvos{position:absolute;right:3vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;background:rgba(22,40,79,.82);padding:12px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px}
+.m-alvos{position:fixed;right:3vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;color:#fff;background:rgba(22,40,79,.82);padding:12px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px}
 .m-alvos b{font-size:17px;font-weight:700;letter-spacing:0}
+.m-grupo{display:flex;flex-direction:column;align-items:center;gap:6px}
 .m-luzes{display:flex;flex-direction:column;gap:6px}
 .m-luzes i{width:22px;height:22px;border-radius:50%;background:#5a1a1d;border:2px solid #e3262b}
 .m-luzes i.on{background:var(--verde);border-color:#9be37a;box-shadow:0 0 12px var(--verde)}
-.m-baixo{position:absolute;left:0;right:0;bottom:4vh;display:flex;justify-content:center;padding:0 12px}
+/* barra de combustível: esvazia até o limite de tempo (40 s, ou 55 s com combustível extra) */
+.m-comb{width:26px;height:90px;border-radius:7px;background:#0b1730;border:2px solid #8da2c9;position:relative;overflow:hidden}
+.m-comb i{position:absolute;left:0;bottom:0;width:100%;height:var(--n,100%);background:var(--verde);transition:background-color .3s}
+.m-comb.amarelo i{background:#f2b632}
+.m-comb.vermelho i{background:#e3262b}
+.m-comb.vermelho{animation:pisca .6s steps(1) infinite}
+.m-baixo{position:absolute;left:0;right:0;bottom:4vh;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 12px}
 .m-dica{background:rgba(22,40,79,.88);color:#fff;font-weight:600;font-size:17px;padding:10px 18px;border-radius:12px;text-align:center;max-width:640px}
 .m-dica:empty{display:none}
 
@@ -315,8 +329,27 @@ body.touch .hint-bar{display:none}
   .cm-foto{min-height:150px}
   .banner-botoes{grid-template-columns:1fr}
   .equipe-nomes{grid-template-columns:1fr}
-  .m-alvos{top:auto;bottom:110px;transform:none}
   .m-titulo b{font-size:13px}
   .m-top{flex-wrap:wrap}
 }
+/* Fase 1 no celular (tela estreita OU deitada e baixa): o painel vira uma faixa horizontal
+   embaixo, logo acima da dica, para não cobrir o espaço onde ficam os pontos. */
+@media (max-width:820px),(max-height:520px){
+  .m-alvos{position:static;transform:none;flex-direction:row;align-items:center;gap:14px;padding:8px 14px;font-size:9px;max-width:100%}
+  .m-grupo{gap:4px}
+  .m-luzes{flex-direction:row;gap:5px}
+  .m-luzes i{width:18px;height:18px}
+  .m-alvos b{font-size:15px;line-height:1}
+  .m-bonus{font-size:10px}
+  .m-comb{width:clamp(70px,24vw,120px);height:16px}
+  .m-comb i{height:100%;width:var(--n,100%)}
+  .m-baixo{bottom:max(10px,env(safe-area-inset-bottom))}
+  .m-dica{font-size:14px;padding:7px 12px}
+  .m-top{top:8px;left:8px;right:8px;gap:6px}
+  .m-titulo{padding:6px 10px}
+  .m-titulo small{font-size:9px}
+  .m-alerta{padding:7px 10px}
+  .m-sair{padding:8px 10px;font-size:13px}
+}
+@media (max-height:520px){.m-splash{padding:12px 22px;top:42%}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
