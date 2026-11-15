@@ -349,11 +349,13 @@ function astronauta(cfg) {
     // Cabelo liso que cobre a cabeça inteira (sem falhas no topo).
     // 'liso' = curto padrão (masculino e Marcos) · 'chanel' = liso e curto até o queixo (feminino)
     const m = mat(cfg.corCabelo || '#2b1a12');
-    const topo = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.66, 0.3, 22), m); topo.position.set(0, 5.45, 0); topo.castShadow = true; g.add(topo);
-    caixa(1.3, 0.72, 0.26, m, g, 0, 5.08, -0.56);                                   // nuca
-    caixa(0.2, 0.6, 0.9, m, g, -0.64, 5.14, -0.1); caixa(0.2, 0.6, 0.9, m, g, 0.64, 5.14, -0.1); // laterais
-    caixa(1.14, 0.2, 0.2, m, g, 0, 5.36, 0.54);                                     // franja
-    if (cfg.cabelo === 'chanel') { // parte de baixo do chanel: some quando o capacete está na cabeça
+    // Dentro do capacete ficam só o topo e a franja (cabem inteiros na bolha de vidro);
+    // nuca, laterais e a parte de baixo do chanel ficam em "cabeloLongo" e somem com o capacete.
+    const topo = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.64, 0.28, 22), m); topo.position.set(0, 5.44, 0); topo.castShadow = true; g.add(topo);
+    caixa(0.98, 0.18, 0.18, m, g, 0, 5.36, 0.52);                                    // franja
+    caixa(1.3, 0.72, 0.26, m, cabeloLongo, 0, 5.08, -0.56);                         // nuca
+    caixa(0.2, 0.6, 0.9, m, cabeloLongo, -0.64, 5.14, -0.1); caixa(0.2, 0.6, 0.9, m, cabeloLongo, 0.64, 5.14, -0.1); // laterais
+    if (cfg.cabelo === 'chanel') { // parte de baixo do chanel
       caixa(1.3, 0.62, 0.26, m, cabeloLongo, 0, 4.46, -0.56);
       caixa(0.2, 0.62, 0.82, m, cabeloLongo, -0.66, 4.56, -0.14); caixa(0.2, 0.62, 0.82, m, cabeloLongo, 0.66, 4.56, -0.14);
     }
@@ -489,12 +491,26 @@ bloco(-11, 11, 0, 3.4, -12, -9, '#ffffff');
 bloco(-11.05, 11.05, 1.6, 1.85, -9.08, -8.92, VERMELHO, { solido: false, neon: true });
 bloco(-11.3, 11.3, 3.4, 3.8, -12.3, -8.7, '#c8d3e2');
 placa([{ t: P_.recepcao, tam: 64 }, { t: P_.programa, tam: 34, cor: '#ffcf3f', peso: 800 }], 12, 2.6, { pos: [0, 2.2, -8.9] });
-const globo = new THREE.Mesh(new THREE.SphereGeometry(2.2, 24, 16), new THREE.MeshLambertMaterial({ color: '#3d8de0', emissive: '#16284f', emissiveIntensity: 0.35 }));
-globo.position.set(-7, 6.8, -10.5); globo.castShadow = true; scene.add(globo);
-globo.add(new THREE.Mesh(new THREE.SphereGeometry(2.25, 12, 8, 0, 2, 0.6, 1.6), mat('#3ad07a')));
-const anelGlobo = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.12, 8, 48), mat(VERMELHO, { neon: true }));
-anelGlobo.position.copy(globo.position); anelGlobo.rotation.x = 1.2; scene.add(anelGlobo);
+// globo terrestre de mesa: mapa desenhado, eixo inclinado, sem anel
+const texGlobo = new THREE.CanvasTexture(cv(512, 256, (g, w, h) => {
+  g.fillStyle = '#2a73c9'; g.fillRect(0, 0, w, h);
+  const blob = (pts, cor) => { g.fillStyle = cor; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * w, y * h) : g.moveTo(x * w, y * h)); g.closePath(); g.fill(); };
+  const verde = '#4caf5a', seco = '#b9a35a';
+  blob([[.06, .22], [.16, .14], [.27, .18], [.31, .3], [.26, .42], [.2, .47], [.15, .4], [.1, .33]], verde);      // América do Norte
+  blob([[.24, .5], [.31, .52], [.35, .62], [.31, .78], [.27, .9], [.25, .74], [.22, .6]], verde);                 // América do Sul
+  blob([[.46, .18], [.55, .14], [.6, .2], [.56, .3], [.48, .32]], verde);                                         // Europa
+  blob([[.46, .36], [.57, .35], [.62, .48], [.58, .66], [.52, .78], [.48, .6], [.44, .46]], seco);                // África
+  blob([[.58, .14], [.76, .1], [.9, .18], [.92, .3], [.8, .42], [.7, .44], [.62, .34]], verde);                    // Ásia
+  blob([[.8, .62], [.9, .6], [.93, .72], [.85, .78], [.79, .72]], seco);                                           // Oceania
+  g.fillStyle = '#eef3f7'; g.fillRect(0, 0, w, 10); g.fillRect(0, h - 14, w, 14);                                  // polos
+  g.fillStyle = 'rgba(255,255,255,.55)';
+  for (let i = 0; i < 16; i++) { g.beginPath(); g.ellipse((i * 37) % w, 30 + (i * 53) % (h - 60), 26, 6, 0, 0, 7); g.fill(); }
+}));
+const globo = new THREE.Mesh(new THREE.SphereGeometry(2.2, 32, 24), new THREE.MeshLambertMaterial({ map: texGlobo }));
+const eixoGlobo = new THREE.Group(); eixoGlobo.position.set(-7, 6.8, -10.5); eixoGlobo.rotation.z = 0.41; scene.add(eixoGlobo); // 23,5°
+globo.castShadow = true; eixoGlobo.add(globo);
 cil(0.8, 1.1, 2.3, '#c8d3e2', -7, 3.8, -10.5);
+cil(0.12, 0.12, 0.9, '#9aa1ad', -7, 4.1, -10.5);
 const telao = placa([{ t: ' ', tam: 50 }], 26, 7.5, { pos: [0, 16.4, -24.4] });
 function desenharTelao() {
   const c = telao.userData.canvas, g = c.getContext('2d'), cw = c.width, ch = c.height;
@@ -514,6 +530,70 @@ planta(-27, -22); planta(27, -22); planta(-27, 21); planta(27, 21);
 for (const [x, z] of [[-22, 6], [22, 6], [-22, 15], [22, 15]]) bloco(x - 0.8, x + 0.8, 0, 1.5, z - 3, z + 3, MARINHO, { stud: true });
 placa([{ t: P_.poster1a, tam: 40, cor: MARINHO }, { t: P_.poster1b, tam: 48, cor: VERMELHO }], 10, 6, { pos: [-29.4, 10, -6], rot: Math.PI / 2, fundo: '#f1efe9', borda: MARINHO });
 placa([{ t: P_.poster2a, tam: 44, cor: MARINHO }, { t: P_.poster2b, tam: 44, cor: VERMELHO }], 10, 6, { pos: [29.4, 10, -6], rot: -Math.PI / 2, fundo: '#f1efe9', borda: MARINHO });
+/* ---------- quadros decorativos (arte original: céu, Lua e afins) ---------- */
+function quadroDecor(x, y, z, rot, w, h, pintar) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot; scene.add(g);
+  const moldura = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, h + 0.6, 0.25), mat('#2b2f3a')); g.add(moldura);
+  const filete = new THREE.Mesh(new THREE.BoxGeometry(w + 0.18, h + 0.18, 0.27), mat('#c9a246')); g.add(filete);
+  const tela = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv(Math.round(256 * w / h), 256, pintar)) }));
+  tela.position.z = 0.15; g.add(tela);
+  bloco(-0.2 + x, 0.2 + x, y - h / 2 - 0.9, y - h / 2 - 0.5, z - 0.2, z + 0.2, '#f4fbff', { neon: true, solido: false }); // luz de galeria
+}
+const estrelasCeu = (g, w, h, n, max = 2.2) => { for (let i = 0; i < n; i++) { g.fillStyle = `rgba(255,255,255,${0.4 + Math.random() * 0.6})`; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, Math.random() * max, 0, 7); g.fill(); } };
+const fundoNoite = (g, w, h, a, b) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, a); gr.addColorStop(1, b); g.fillStyle = gr; g.fillRect(0, 0, w, h); };
+// 1) Lua cheia
+quadroDecor(-29.75, 10, 7, Math.PI / 2, 6.5, 5, (g, w, h) => {
+  fundoNoite(g, w, h, '#0a1230', '#1c2a5c'); estrelasCeu(g, w, h, 70);
+  const cx = w * 0.55, cy = h * 0.48, r = h * 0.32;
+  const gl = g.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 1.6); gl.addColorStop(0, 'rgba(255,250,220,.35)'); gl.addColorStop(1, 'rgba(255,250,220,0)'); g.fillStyle = gl; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#ecebe2'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
+  g.fillStyle = 'rgba(120,120,128,.35)';
+  for (const [dx, dy, rr] of [[-.3, -.2, .22], [.25, .1, .28], [-.1, .35, .15], [.35, -.35, .12], [-.45, .2, .1], [.05, -.05, .1]]) { g.beginPath(); g.arc(cx + dx * r, cy + dy * r, rr * r, 0, 7); g.fill(); }
+});
+// 2) Céu estrelado com a Via Láctea
+quadroDecor(-29.75, 10, 17, Math.PI / 2, 6.5, 5, (g, w, h) => {
+  fundoNoite(g, w, h, '#05070f', '#14204a');
+  g.save(); g.translate(w / 2, h / 2); g.rotate(-0.5);
+  const vl = g.createLinearGradient(0, -h * 0.25, 0, h * 0.25); vl.addColorStop(0, 'rgba(160,140,255,0)'); vl.addColorStop(0.5, 'rgba(210,200,255,.35)'); vl.addColorStop(1, 'rgba(160,140,255,0)');
+  g.fillStyle = vl; g.fillRect(-w, -h * 0.25, w * 2, h * 0.5); g.restore();
+  estrelasCeu(g, w, h, 220, 1.6); estrelasCeu(g, w, h, 12, 3);
+  g.fillStyle = '#0b0f1e'; g.beginPath(); g.moveTo(0, h); g.lineTo(0, h * 0.82); g.quadraticCurveTo(w * 0.3, h * 0.72, w * 0.55, h * 0.84); g.quadraticCurveTo(w * 0.8, h * 0.76, w, h * 0.8); g.lineTo(w, h); g.fill(); // morros
+});
+// 3) Planeta com anéis
+quadroDecor(29.75, 10, 7, -Math.PI / 2, 6.5, 5, (g, w, h) => {
+  fundoNoite(g, w, h, '#1a0f2e', '#0a1230'); estrelasCeu(g, w, h, 80);
+  const cx = w * 0.5, cy = h * 0.52, r = h * 0.24;
+  g.strokeStyle = 'rgba(230,200,150,.85)'; g.lineWidth = 10; g.beginPath(); g.ellipse(cx, cy, r * 2, r * 0.55, -0.25, Math.PI, 2 * Math.PI); g.stroke();
+  const pl = g.createLinearGradient(cx, cy - r, cx, cy + r); pl.addColorStop(0, '#f2d49b'); pl.addColorStop(0.5, '#d9a35f'); pl.addColorStop(1, '#a8743c');
+  g.fillStyle = pl; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 5; for (const k of [-.4, 0, .4]) { g.beginPath(); g.moveTo(cx - r, cy + k * r); g.lineTo(cx + r, cy + k * r); g.stroke(); }
+  g.strokeStyle = 'rgba(230,200,150,.85)'; g.lineWidth = 10; g.beginPath(); g.ellipse(cx, cy, r * 2, r * 0.55, -0.25, 0, Math.PI); g.stroke();
+});
+// 4) Nascer da Terra visto da Lua
+quadroDecor(29.75, 10, 17, -Math.PI / 2, 6.5, 5, (g, w, h) => {
+  g.fillStyle = '#04060c'; g.fillRect(0, 0, w, h); estrelasCeu(g, w, h, 50, 1.3);
+  const cx = w * 0.6, cy = h * 0.38, r = h * 0.17;
+  g.fillStyle = '#2f7fd6'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
+  g.fillStyle = '#4caf5a'; g.beginPath(); g.ellipse(cx - r * 0.2, cy - r * 0.1, r * 0.4, r * 0.25, 0.4, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.ellipse(cx + r * 0.25, cy + r * 0.3, r * 0.5, r * 0.12, -0.3, 0, 7); g.fill();
+  g.fillStyle = 'rgba(4,6,12,.75)'; g.beginPath(); g.arc(cx - r * 0.55, cy, r * 1.02, 0, 7); g.fill(); // sombra (fase)
+  g.fillStyle = '#8d8d8a'; g.beginPath(); g.moveTo(0, h); g.lineTo(0, h * 0.7); g.quadraticCurveTo(w * 0.5, h * 0.6, w, h * 0.72); g.lineTo(w, h); g.fill();
+  g.fillStyle = 'rgba(60,60,60,.45)'; for (const [x, y, rr] of [[.2, .82, 22], [.55, .9, 30], [.8, .8, 16]]) { g.beginPath(); g.ellipse(x * w, y * h, rr, rr * 0.35, 0, 0, 7); g.fill(); }
+});
+// 5) Nebulosa colorida  ·  6) Cruzeiro do Sul (parede do telão)
+quadroDecor(-21, 13, -24.4, 0, 5, 6.2, (g, w, h) => {
+  g.fillStyle = '#05040d'; g.fillRect(0, 0, w, h);
+  for (const [x, y, r, c] of [[.4, .4, .45, 'rgba(227,38,43,.45)'], [.6, .55, .45, 'rgba(90,110,255,.45)'], [.5, .3, .3, 'rgba(255,170,60,.35)'], [.45, .7, .35, 'rgba(180,80,220,.4)']]) {
+    const gr = g.createRadialGradient(x * w, y * h, 0, x * w, y * h, r * w); gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  }
+  estrelasCeu(g, w, h, 120, 1.8);
+});
+quadroDecor(21, 13, -24.4, 0, 5, 6.2, (g, w, h) => {
+  fundoNoite(g, w, h, '#06102a', '#173a6e'); estrelasCeu(g, w, h, 90, 1.4);
+  const est = (x, y, r) => { g.fillStyle = '#fff'; g.shadowColor = '#bcd6ff'; g.shadowBlur = 12; g.beginPath(); g.arc(x * w, y * h, r, 0, 7); g.fill(); g.shadowBlur = 0; };
+  est(.5, .2, 7); est(.5, .78, 8); est(.28, .48, 6.5); est(.72, .42, 6); est(.6, .6, 4);
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 2; g.beginPath(); g.moveTo(.5 * w, .2 * h); g.lineTo(.5 * w, .78 * h); g.moveTo(.28 * w, .48 * h); g.lineTo(.72 * w, .42 * h); g.stroke();
+});
 totem(-18, -4, Math.PI / 4, 'pontes');
 totem(18, -4, -Math.PI / 4, 'recepcao');
 
@@ -704,7 +784,7 @@ totem(10, -126, 0, 'saturnv');
 
 /* ---------- CORREDOR 2 → HANGAR (parede oposta) ---------- */
 corredor(-175, -145, '#ff8a2a',
-  [{ t: P_.c2a1, tam: 32, cor: '#ffcf3f' }, { t: 'HANGAR 01', tam: 66 }],
+  [{ t: P_.c2a1, tam: 32, cor: '#ffcf3f' }, { t: 'HANGAR', tam: 66 }],
   [{ t: 'RR-01', tam: 66 }, { t: P_.c2b2, tam: 34, cor: '#ff8a2a', peso: 700 }]);
 
 /* ---------- HANGAR ---------- */
@@ -715,7 +795,7 @@ sala({ x0: -40, x1: 40, z0: -235, z1: -175, h: 60, chao: '#596273', chaoLado: '#
     for (let x = 0; x < cw; x += 24) { g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x, 0, 4, ch); }
     for (let x = -ch; x < cw; x += 60) { g.fillStyle = '#ffcf3f'; g.beginPath(); g.moveTo(x, ch); g.lineTo(x + 30, ch); g.lineTo(x + 60, ch - 30); g.lineTo(x + 30, ch - 30); g.fill(); }
     logoCanvas(g, cw / 2 - 150, 40, 60);
-    g.fillStyle = '#fff'; g.font = `44px ${TIT}`; g.textAlign = 'center'; g.fillText('HANGAR 01', cw / 2 + 30, 92);
+    g.fillStyle = '#fff'; g.font = `44px ${TIT}`; g.textAlign = 'center'; g.fillText('HANGAR', cw / 2 + 30, 92);
   });
   const p = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(c) }));
   p.position.set(0, 15, -234.4); scene.add(p);
@@ -1221,9 +1301,11 @@ function embarcar() {
   else setTimeout(comecarMissao, primeira ? 1100 : 0);
 }
 // Estrelas pelo tempo (M.t) até estabilizar a nave
-const LIMITE_ESTRELAS = [13.0, 25.0, 40.0]; // ≤13 s = 3 · ≤25 s = 2 · ≤40 s = 1 · acima = 0 (falhou)
+const LIMITE_ESTRELAS = [10.0, 17.0, 25.0]; // ≤10 s = 3 · ≤17 s = 2 · ≤25 s = 1 · acima de 25 s = 0 (falhou)
+const LIMITE_TEMPO = 40.0;                   // aos 40 s a missão é encerrada automaticamente como falha
+const arred = s => Math.round(s * 10) / 10; // mesma precisão do cronômetro da tela
 function calcularEstrelas(tempo) {
-  const t = Math.round(tempo * 10) / 10; // mesma precisão do cronômetro da tela
+  const t = arred(tempo);
   if (t <= LIMITE_ESTRELAS[0]) return 3;
   if (t <= LIMITE_ESTRELAS[1]) return 2;
   if (t <= LIMITE_ESTRELAS[2]) return 1;
@@ -1285,7 +1367,7 @@ function fimMissao() {
   } else { // 0 estrelas: missão falhou, sem card e sem selo
     $('mf-topo').className = 'banner-topo falha'; $('mf-selo').textContent = '✕';
     $('mf-titulo').textContent = t.falhou_titulo;
-    $('mf-novo').textContent = t.falhou_txt; card.hidden = true;
+    $('mf-novo').textContent = arred(M.t) > LIMITE_TEMPO ? t.falhou_txt : t.falhou_lento; card.hidden = true;
     $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = sairMissao;
     $('mf-proxima').textContent = '↻ ' + t.tentar; $('mf-proxima').onclick = () => { $('m-fim').close(); comecarMissao(); };
     bip(160, 0.6, 'sawtooth', 0.06);
@@ -1306,7 +1388,7 @@ $('m-fim').addEventListener('close', () => setTimeout(() => { if (M.ativa && M.f
 
 function atualizarMissao(dt) {
   // segurança: passou de 40 s na mira = 0 estrelas, mostra a tela de falha na hora
-  if (M.fase === 'mira' && calcularEstrelas(M.t) === 0) { fimMissao(); return; }
+  if (M.fase === 'mira' && arred(M.t) > LIMITE_TEMPO) { fimMissao(); return; }
   if (Math.abs(cam2.aspect - innerWidth / innerHeight) > 0.001) { cam2.aspect = innerWidth / innerHeight; cam2.updateProjectionMatrix(); }
   const t = LM(); M.tFase += dt;
   if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(toque ? t.dica_toque : t.dica); }
@@ -1325,14 +1407,14 @@ function atualizarMissao(dt) {
   exterior.rotation.z = Math.sin(M.t * 0.25) * 0.04; exterior.userData.terra.rotation.y += dt * 0.02;
   // mira "+" sobre os pontos
   if (M.fase === 'mira') {
-    const frente = dirDe(yaw, pitch); let naMira = false, feitos = 0;
-    M.pontos.forEach((p, i) => {
-      if (p.ok) { feitos++; return; }
+    const frente = dirDe(yaw, pitch); let naMira = false;
+    M.pontos.forEach(p => {
+      if (p.ok) return;
       if (frente.angleTo(p.dir) < AJ.raio) {
         naMira = true; p.prog += dt;
         if (p.prog >= AJ.segurar) {
-          p.ok = true; feitos++; p.nucleo.material = matVerde; p.brilho.visible = false; p.arco.visible = false;
-          document.querySelectorAll('#m-luzes i')[feitos - 1].classList.add('on'); bip(990, 0.12, 'sine', 0.07);
+          p.ok = true; p.nucleo.material = matVerde; p.brilho.visible = false; p.arco.visible = false;
+          bip(990, 0.12, 'sine', 0.07);
         }
       } else p.prog = Math.max(0, p.prog - dt * 1.5);
       const f = Math.min(1, p.prog / AJ.segurar), passo = Math.round(f * 48);
@@ -1341,6 +1423,9 @@ function atualizarMissao(dt) {
         if (passo > 0) { p.arco.geometry.dispose(); p.arco.geometry = new THREE.RingGeometry(2.2, 2.65, 48, 1, Math.PI / 2, -Math.PI * 2 * f); }
       }
     });
+    // luzes laterais: contadas DEPOIS de checar todos os pontos, então a ordem em que o jogador trava os pontos não importa
+    const feitos = M.pontos.filter(p => p.ok).length;
+    document.querySelectorAll('#m-luzes i').forEach((l, i) => l.classList.toggle('on', i < feitos));
     if (naMira !== M.naMira) { M.naMira = naMira; $('m-mira').classList.toggle('on', naMira); dica(naMira ? t.segure : (toque ? t.dica_toque : t.dica)); }
     if (feitos >= M.pontos.length) { // piloto automático volta
       M.fase = 'ok'; M.tFase = 0; $('m-alerta').textContent = t.restaurado; $('m-alerta').className = 'm-alerta ok';
@@ -1519,7 +1604,7 @@ function quadro(t) {
   else marcos.userData.bracoD.rotation.z = 0;
   if (fala >= 0 && dm > 26) { fala = -1; balao.style.display = 'none'; marcos.userData.acenando = false; itMarcos.rotulo = L.prompt.conversar; }
   if (!reduz) {
-    globo.rotation.y += dt * 0.4; anelGlobo.rotation.z += dt * 0.6;
+    globo.rotation.y += dt * 0.4;
     const pulso = 1 + Math.sin(tempo * 3) * 0.06;
     totens.forEach(tt => tt.anel.scale.set(pulso, pulso, 1));
     luzEscotilha.visible = Math.sin(tempo * 4) > 0;
@@ -1552,6 +1637,7 @@ if (h.has('missao')) setTimeout(() => { // #missao abre a fase 1 · #missao=fim 
   if (h.get('missao') === 'fim') { M.t = parseFloat(h.get('t')) || 11.4; fimMissao(); } // ex.: #missao=fim&t=30 (1 estrela) · &t=41 (falha)
   if (h.get('missao') === 'escolha') { sairMissao(); if (!estado.estrelas) estado.estrelas = 2; if (!missaoFeita()) estado.feitas.push('missao1'); abrirEscolha(); }
 }, 300);
+if (h.has('capacete')) estado.capacete = true; // atalho: já chega com o capacete liberado (aparece na plataforma de cima)
 if (h.has('album')) setTimeout(abrirAlbum, 300);
 if (h.has('roblox')) setTimeout(abrirRoblox, 300);
 if (L.expos[h.get('expo')]) abrirExpo(h.get('expo'));

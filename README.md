@@ -35,16 +35,19 @@ Ao embarcar pela escotilha, o **capacete aparece sozinho** e a cabine abre **em 
 
    | Tempo | Estrelas |
    |-------|----------|
-   | até 13,0 s | ⭐⭐⭐ |
-   | 13,1 a 25,0 s | ⭐⭐ |
-   | 25,1 a 40,0 s | ⭐ |
-   | mais de 40,0 s | nenhuma: a missão falha na hora |
+   | até 10,0 s | ⭐⭐⭐ |
+   | 10,1 a 17,0 s | ⭐⭐ |
+   | 17,1 a 25,0 s | ⭐ |
+   | 25,1 a 40,0 s | nenhuma: missão falhou ("demorou demais") |
+   | mais de 40,0 s | nenhuma: a missão é encerrada na hora |
 
 6. **Com 1 a 3 estrelas:** banner **Missão concluída com sucesso!**, estrelas douradas, **card da missão real** (Friendship 7, 1962: objetivo, o que aconteceu e foto oficial da NASA) e selo. O card entra no **Álbum espacial**. **Voltar a explorar** volta ao mapa e **Próxima fase** abre o banner **A aventura continua no Roblox!**.
 7. **Com 0 estrelas:** **MISSÃO FALHOU** em vermelho, estrelas apagadas, sem card e sem selo. **Tentar novamente** reinicia a fase com o tempo zerado; **Sair para o mapa** volta ao hangar.
 8. Embarcar de novo depois de concluir a Fase 1 mostra o melhor resultado em estrelas e as opções **Refazer fase 1** e **Próxima fase** (Roblox).
 
-Os limites das estrelas ficam em `LIMITE_ESTRELAS`, no [jogo.js](jogo.js).
+Os limites ficam no [jogo.js](jogo.js): `LIMITE_ESTRELAS` (10 / 17 / 25 s) e `LIMITE_TEMPO` (40 s, quando a missão é encerrada).
+
+A recepção tem seis quadros decorativos (Lua cheia, céu estrelado, planeta com anéis, nascer da Terra, nebulosa e Cruzeiro do Sul). São ilustrações originais, sem dados científicos.
 
 O capacete sai da cabeça quando o jogador desce da plataforma de cima (pulando ou de elevador) e volta quando ele sobe de novo.
 

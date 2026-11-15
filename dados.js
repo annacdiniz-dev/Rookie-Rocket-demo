@@ -165,8 +165,9 @@ const DADOS = {
         segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO',
         sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'Novo card no seu Álbum Espacial',
         voltar: 'Voltar a explorar', proxima: 'Próxima fase',
-        // estrelas: 3 ≤ 13 s · 2 ≤ 25 s · 1 ≤ 40 s · 0 = falhou
+        // estrelas: 3 ≤ 10 s · 2 ≤ 17 s · 1 ≤ 25 s · mais que isso = falhou (aos 40 s a missão é encerrada)
         falhou_titulo: 'MISSÃO FALHOU', falhou_txt: 'O tempo passou de 40 segundos e a nave ficou fora de controle.',
+        falhou_lento: 'Você estabilizou a nave, mas levou mais de 25 segundos. Seja mais rápido para ganhar estrelas!',
         tentar: 'Tentar novamente', sair_mapa: 'Sair para o mapa',
         estrelas_txt: '{n} de 3 estrelas · {t}',
         escolha_titulo: 'Fase 1 concluída!', escolha_txt: 'Seu melhor resultado:', refazer: 'Refazer fase 1'
@@ -302,8 +303,9 @@ const DADOS = {
         segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME',
         sucesso_titulo: 'Mission accomplished!', novo_card: 'New card in your Space Album',
         voltar: 'Keep exploring', proxima: 'Next phase',
-        // stars: 3 ≤ 13 s · 2 ≤ 25 s · 1 ≤ 40 s · 0 = failed
+        // stars: 3 ≤ 10 s · 2 ≤ 17 s · 1 ≤ 25 s · slower = failed (the mission ends at 40 s)
         falhou_titulo: 'MISSION FAILED', falhou_txt: 'Time went past 40 seconds and the spacecraft went out of control.',
+        falhou_lento: 'You stabilized the spacecraft, but it took more than 25 seconds. Be faster to earn stars!',
         tentar: 'Try again', sair_mapa: 'Back to the map',
         estrelas_txt: '{n} of 3 stars · {t}',
         escolha_titulo: 'Phase 1 complete!', escolha_txt: 'Your best result:', refazer: 'Replay Phase 1'
