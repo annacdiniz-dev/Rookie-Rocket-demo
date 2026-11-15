@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css?v=12">
+<link rel="stylesheet" href="estilo.css?v=13">
 </head>
 <body class="inicio">
 
@@ -58,6 +58,11 @@
     <button class="m-sair" id="m-sair"></button>
   </div>
   <div class="m-baixo">
+    <!-- barra das estrelas: esvazia com o tempo e mostra quantas estrelas ainda dá para ganhar -->
+    <div class="m-estbar e3" id="m-estbar" role="meter" aria-valuemin="0" aria-valuemax="3">
+      <div class="mb-estrelas" id="mb-estrelas" aria-hidden="true"><span>★</span><span>★</span><span>★</span></div>
+      <div class="mb-trilho"><i></i><em style="left:33.33%"></em><em style="left:66.66%"></em></div>
+    </div>
     <!-- painel da missão: coluna à direita no computador, faixa horizontal embaixo no celular -->
     <div class="m-alvos">
       <div class="m-grupo"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div></div>
@@ -214,7 +219,7 @@
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js?v=12"></script>
-<script src="jogo.js?v=12"></script>
+<script src="dados.js?v=13"></script>
+<script src="jogo.js?v=13"></script>
 </body>
 </html>

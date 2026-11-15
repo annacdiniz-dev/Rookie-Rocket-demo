@@ -57,8 +57,9 @@ A cabine é **em primeira pessoa**, já com o piloto automático desligado. Na t
 2. Há um **+** no centro da visão e **4 pontos vermelhos no espaço**, fora da nave.
 3. O jogador move a câmera (mouse, setas/WASD ou arrastar no celular) até o + ficar sobre um ponto e **segura 2 s**. Um **círculo branco** em volta do ponto mostra o tempo.
 4. No painel da direita, a **barra de combustível** esvazia com o tempo: verde, depois amarela (≤ 45%) e vermelha piscando (≤ 20%). Vazia, a missão falha por tempo (40 s, ou 55 s com o combustível extra).
-5. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
-6. A nota vem em **estrelas**, pelo **tempo final** (cronômetro `M.t` menos o bônus de leveza):
+5. A **barra das estrelas** (no alto, no computador; embaixo, no celular) mostra quantas estrelas ainda dá para ganhar. Ela tem 3 trechos e esvazia com o **tempo final** (cronômetro menos o bônus de leveza): cheia até 2/3 nos primeiros 10 s (⭐⭐⭐), de 2/3 a 1/3 até 17 s (⭐⭐) e de 1/3 a vazia até 25 s (⭐). Quando uma estrela é perdida, a barra dá um tranco, toca um som e o celular vibra.
+6. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
+7. A nota vem em **estrelas**, pelo **tempo final** (cronômetro `M.t` menos o bônus de leveza):
 
    | Tempo final | Estrelas |
    |-------|----------|
@@ -117,7 +118,8 @@ O nome do desafio (**Space Mission Design Game**) aparece em destaque no botão 
 
 - **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo.
 - **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom, de 48 até 6 studs. No mínimo, mais um passo da roda entra em **primeira pessoa**; rolar para trás volta.
-- **Clique** em personagens, totens, Atlantis, Saturn V ou na nave para abrir as informações.
+- **Clique** em personagens, totens, Atlantis ou Saturn V para abrir as informações. A nave do hangar não é clicável (as informações dela ficam no totem ao lado).
+- Os textos da interface não são selecionáveis nem copiáveis; só o campo do nome aceita edição.
 - **Celular**: joystick, botão de pulo e toque nos prompts. Um dedo gira a câmera. **Pinça com dois dedos** dá zoom: afastar os dedos aproxima até a primeira pessoa, juntar os dedos volta. Não há botão para isso.
 - Em primeira pessoa o boneco some, o corpo acompanha o olhar e dá para olhar para cima.
 

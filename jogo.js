@@ -868,7 +868,7 @@ const nave = new THREE.Group(); scene.add(nave);
   colisor(x - 8.5, x + 8.5, 1, 35, z - 4.5, z + 4.5);
   colisor(x - 4.5, x + 4.5, 35, 56, z - 4.5, z + 4.5);
 }
-soClique(nave, new THREE.Vector3(NAVE.x, 20, NAVE.z), () => abrirExpo('artemis'));
+// a nave NÃO é clicável: as informações da exposição ficam só no totem ao lado
 totem(-24, -190, Math.PI / 4, 'artemis');
 placa([{ t: P_.nave1, tam: 46 }, { t: P_.nave2, tam: 30, cor: '#ffcf3f', peso: 700 }], 14, 2.6, { pos: [-8, 2.6, -197.9] });
 
@@ -1510,6 +1510,7 @@ function comecarMissao() {
   exterior.position.y = 0;
   $('m-tempo').textContent = tempoTxt(0);
   $('m-comb-l').textContent = t.combustivel; atualizarCombustivel();
+  M.estrelasBarra = undefined; atualizarBarraEstrelas(); $('m-estbar').setAttribute('aria-label', t.barra_estrelas);
   $('m-bonus').textContent = M.bonus > 0 ? `${t.bonus_hud} −${M.bonus} s` : '';
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
   M.pontos.forEach(p => { p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
@@ -1593,8 +1594,24 @@ function atualizarCombustivel() {
   $('m-comb').className = 'm-comb' + (resta <= 0.2 ? ' vermelho' : resta <= 0.45 ? ' amarelo' : '');
   $('m-comb').setAttribute('aria-valuenow', pct);
 }
+// Barra das estrelas: mostra quantas estrelas ainda dá para ganhar com o tempo final (tempo − bônus de leveza).
+// Cada terço da barra vale uma estrela e dura o intervalo daquela estrela (LIMITE_ESTRELAS):
+// cheia → 2/3 nos primeiros 10 s (3★) · 2/3 → 1/3 até 17 s (2★) · 1/3 → vazia até 25 s (1★).
+function atualizarBarraEstrelas() {
+  const tf = Math.max(0, M.t - M.bonus), [a, b, c] = LIMITE_ESTRELAS;
+  const resta = tf <= a ? 1 - (tf / a) / 3 : tf <= b ? 2 / 3 - ((tf - a) / (b - a)) / 3 : tf <= c ? 1 / 3 - ((tf - b) / (c - b)) / 3 : 0;
+  const n = calcularEstrelas(tf), barra = $('m-estbar');
+  barra.style.setProperty('--n', (resta * 100) + '%');
+  if (n === M.estrelasBarra) return;
+  // mudou o número de estrelas possíveis: atualiza ícones e cor; se perdeu uma durante a mira, avisa com som, vibração e um tranco
+  const perdeu = M.estrelasBarra !== undefined && n < M.estrelasBarra && M.fase === 'mira';
+  M.estrelasBarra = n;
+  barra.className = 'm-estbar e' + n; barra.setAttribute('aria-valuenow', n);
+  document.querySelectorAll('#mb-estrelas span').forEach((s, i) => s.classList.toggle('off', i >= n));
+  if (perdeu) { bip(300, 0.18, 'square', 0.05); vibrar(35); void barra.offsetWidth; barra.classList.add('perdeu'); }
+}
 function sairMissao() {
-  restaurarEquipamentos();                                  // AJ e limite de tempo voltam ao normal
+  restaurarEquipamentos();                                 // AJ e limite de tempo voltam ao normal
   M.ativa = false; M.fase = ''; M.pesado = false; exterior.position.y = 0;
   if ($('m-fim').open) $('m-fim').close();
   document.body.classList.remove('em-missao'); $('missao').hidden = true;
@@ -1676,7 +1693,7 @@ function atualizarMissao(dt) {
     }
   } else if (M.fase === 'ok' && M.tFase > 1.7) fimMissao();
   $('m-tempo').textContent = M.t.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
-  atualizarCombustivel();
+  atualizarCombustivel(); atualizarBarraEstrelas();
   const pisca = Math.sin(M.tFase * 10) > 0;
   luzesAlarme.forEach((l, i) => l.visible = falha ? (pisca ? i % 2 === 0 : i % 2 === 1) : false);
   luzCabine.intensity = falha ? 0.8 + (pisca ? 0.5 : 0) : 0.9;
