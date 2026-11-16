@@ -70,8 +70,8 @@ const DADOS = {
     { id: 'giroscopio', icone: '🧭', peso: 15, task: 1, efeito: { segurar: 1.2, ima: 1 } },
     // efeito.limiteT2: tempo máximo da Task 2 em segundos (o normal é 30) · destaque: marca o código na prancheta
     { id: 'manual', icone: '📘', peso: 20, task: 2, efeito: { limiteT2: 45, destaque: true } },
-    // efeito.segurarT3: segundos segurando o retropack na Task 3 (o normal é 10) · tremorT3: multiplica o tremor (0.4 = 60% menos)
-    { id: 'escudo', icone: '🛡️', peso: 25, task: 3, efeito: { segurarT3: 6, tremorT3: 0.4 } }
+    // efeito.segurarT3: segundos segurando o retropack na Task 3 (o normal é 10) · tremorT3: multiplica o tremor (0.5 = metade, igual ao jogo)
+    { id: 'escudo', icone: '🛡️', peso: 25, task: 3, efeito: { segurarT3: 6, tremorT3: 0.5 } }
   ],
   missao1: {
     contagem: 12,              // s: contagem regressiva do lançamento (dá para pular)
@@ -197,9 +197,9 @@ const DADOS = {
         fase: 'FASE 1 · PROJETO MERCURY', sair: 'Sair', task_n: 'TASK {n}/3',
         // as 3 tasks: nome, alerta que pisca, aviso de sucesso e resumo (guia do manifesto de voo)
         tasks: {
-          t1: { nome: 'A Falha do Piloto Automático', alerta: '⚠ FALHA NO CONTROLE AUTOMÁTICO', ok: '✔ CONTROLE AUTOMÁTICO RESTAURADO', guia: 'Leve a mira + até os 4 pontos vermelhos e segure em cada um.' },
-          t2: { nome: 'O Blackout de Comunicação', alerta: '⚠ PERDA DE CONTATO COM A TERRA', ok: '✔ CONTATO RESTABELECIDO', guia: 'Leia o código na prancheta e digite no rádio. Não ejete!' },
-          t3: { nome: 'O Alarme do Escudo Térmico', alerta: '⚠ PERIGO: SENSOR DO ESCUDO TÉRMICO INSTÁVEL', ok: '✔ REENTRADA CONCLUÍDA', guia: 'Decida rápido: ejetar a cápsula ou manter o retropack.' }
+          t1: { nome: 'A Falha do Piloto Automático', alerta: '⚠ FALHA NO CONTROLE AUTOMÁTICO', ok: '✔ CONTROLE AUTOMÁTICO RESTAURADO', guia: 'Mantenha o + nos marcadores vermelhos até cada círculo encher.' },
+          t2: { nome: 'O Blackout de Comunicação', alerta: '⚠ PERDA DE CONTATO COM A TERRA', ok: '✔ CONTATO RESTABELECIDO', guia: 'Leia o código na prancheta e digite no rádio.' },
+          t3: { nome: 'O Alarme do Escudo Térmico', alerta: '⚠ PERIGO: SENSOR DO ESCUDO TÉRMICO INSTÁVEL', ok: '✔ REENTRADA CONCLUÍDA', guia: 'Segure o botão do retropack até a barra encher.' }
         },
         contagem: 'LANÇAMENTO EM', decolagem: 'DECOLAGEM!', pular: 'Pular ▶',
         alerta_peso: '⚠ PESO ACIMA DO LIMITE · LANÇAMENTO CANCELADO', dica_peso: 'O foguete está pesado demais para decolar!',
@@ -221,18 +221,18 @@ const DADOS = {
         t3_manter: 'MANTER RETROPACK', t3_barra: 'RETROPACK',
         t3_segure: 'Segure o botão verde até a barra encher', t3_segurando: 'Segurando… não solte!', t3_pausado: 'Pausado: segure de novo!',
         // fim: parabéns + aprendizado, depois o resultado
-        parabens_titulo: 'Parabéns, {nome}!', parabens_sub: 'O que esta missão ensinou', ciencia: 'Ciência: ', fato: 'Fato real: ', ver_resultado: 'Ver resultado ▶',
-        // Textos de aprendizado escritos para a demo; os "fatos reais" são os conferidos na NASA (Friendship 7).
+        parabens_titulo: 'Parabéns, {nome}!', parabens_sub: 'Você concluiu sua primeira missão! Cada task usou ciência e engenharia de verdade. Veja o que você praticou hoje:', ciencia: 'Ciência: ', fato: 'Fato real: ', ver_resultado: 'Ver resultado ▶',
+        // Tradução dos textos do jogo no Roblox (rookie-rocket-roblox/build/rookie/shared/Missoes.luau, Aprendizado).
         aprender: {
-          t1: { areas: 'Física (inércia e mecânica) · Engenharia de Automação e Controle',
-            ciencia: 'No espaço quase não há ar para frear a nave. Pela inércia, se a cápsula começa a girar, ela continua girando até que um jato a empurre no sentido contrário. O controle automático faz isso sozinho; quando ele falha, o piloto assume.',
-            fato: 'Na Friendship 7, a cápsula saiu da posição correta e John Glenn a guiou à mão.' },
+          t1: { areas: 'Física (inércia / mecânica) · Engenharia de Automação e Controle',
+            ciencia: 'No espaço nada freia um giro: pela inércia, um pequeno desvio continua crescendo até que um jato empurre de volta. Um sistema de controle fecha o ciclo: sensor → decisão → jato.',
+            fato: 'Na Friendship 7, quando a cápsula saiu de atitude, John Glenn a guiou de volta à mão.' },
           t2: { areas: 'Física (ondas eletromagnéticas) · Engenharia de Telecomunicações',
-            ciencia: 'O rádio leva a voz por ondas eletromagnéticas. Na reentrada, o ar em volta da cápsula esquenta tanto que vira plasma, um gás eletrizado que bloqueia essas ondas.',
-            fato: 'John Glenn ficou 4 min 20 s sem contato por rádio durante a reentrada.' },
+            ciencia: 'Na reentrada, o ar em volta da cápsula vira um gás quente e ionizado (plasma), que bloqueia as ondas de rádio até a cápsula perder velocidade.',
+            fato: 'O apagão de rádio previsto para o voo de Glenn durou 4 minutos e 20 segundos.' },
           t3: { areas: 'Física (termodinâmica) · Engenharia de Materiais',
-            ciencia: 'Ao reentrar, a cápsula comprime o ar à sua frente, e a energia do movimento vira calor. O escudo térmico é feito de materiais que aguentam esse calor e protegem o astronauta.',
-            fato: 'O aviso de escudo solto vinha de um interruptor com defeito. Por segurança, o retropack ficou preso à cápsula durante a reentrada.' }
+            ciencia: 'O ar comprimido na frente da cápsula fica extremamente quente. O escudo térmico é feito para absorver esse calor e levá-lo embora enquanto sua superfície queima aos poucos.',
+            fato: 'Um sinal com defeito indicou que o escudo térmico estava solto, então os controladores mantiveram o retropack preso durante a reentrada. O sinal era falso.' }
         },
         sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'A missão real · novo card no seu Álbum Espacial',
         voltar: 'Voltar a explorar', proxima: 'Próxima fase',
@@ -259,7 +259,7 @@ const DADOS = {
       preparo: {
         titulo: 'Manifesto de voo',
         aba_missao: '1 · Missão', aba_itens: '2 · Equipamentos',
-        descricao: 'Em 20 de fevereiro de 1962, John Glenn deu 3 voltas na Terra a bordo da Friendship 7. Reviva os três momentos mais tensos desse voo.',
+        descricao: 'Em 1962, John Glenn se tornou o primeiro americano a orbitar a Terra, a bordo da Friendship 7. Durante o voo ele guiou a cápsula à mão, atravessou um apagão de rádio e enfrentou um alarme do escudo térmico.',
         continuar: 'Escolher equipamentos ▶', voltar: '◀ Missão',
         nave: 'Peso da nave: {n} kg', limite: 'Limite do foguete: {n} kg',
         peso: 'Peso: {p} / {l} kg · Livre: {f} kg', acima: 'Peso: {p} / {l} kg · {x} kg acima do limite!',
@@ -408,9 +408,9 @@ const DADOS = {
       missao: {
         fase: 'PHASE 1 · PROJECT MERCURY', sair: 'Exit', task_n: 'TASK {n}/3',
         tasks: {
-          t1: { nome: 'The Autopilot Failure', alerta: '⚠ AUTOMATIC CONTROL FAILURE', ok: '✔ AUTOMATIC CONTROL RESTORED', guia: 'Put the + crosshair on the 4 red dots and hold on each one.' },
-          t2: { nome: 'The Communication Blackout', alerta: '⚠ LOSS OF CONTACT WITH EARTH', ok: '✔ CONTACT RESTORED', guia: 'Read the code on the clipboard and type it into the radio. Do not eject!' },
-          t3: { nome: 'The Heat Shield Alarm', alerta: '⚠ DANGER: HEAT SHIELD SENSOR UNSTABLE', ok: '✔ REENTRY COMPLETE', guia: 'Decide fast: eject the capsule or hold the retropack.' }
+          t1: { nome: 'The Autopilot Failure', alerta: '⚠ AUTOMATIC CONTROL FAILURE', ok: '✔ AUTOMATIC CONTROL RESTORED', guia: 'Keep the + on the red markers until each circle fills.' },
+          t2: { nome: 'The Communication Blackout', alerta: '⚠ LOSS OF CONTACT WITH EARTH', ok: '✔ CONTACT RESTORED', guia: 'Read the code on the clipboard and type it on the radio.' },
+          t3: { nome: 'The Heat Shield Alarm', alerta: '⚠ DANGER: HEAT SHIELD SENSOR UNSTABLE', ok: '✔ REENTRY COMPLETE', guia: 'Hold the retropack button until the bar fills.' }
         },
         contagem: 'LAUNCH IN', decolagem: 'LIFTOFF!', pular: 'Skip ▶',
         alerta_peso: '⚠ OVER WEIGHT LIMIT · LAUNCH ABORTED', dica_peso: 'The rocket is too heavy to lift off!',
@@ -428,17 +428,18 @@ const DADOS = {
         t3_decida: 'Decide in {s} s: eject the capsule or hold the retropack?',
         t3_manter: 'HOLD RETROPACK', t3_barra: 'RETROPACK',
         t3_segure: 'Hold the green button until the bar fills', t3_segurando: 'Holding… don\'t let go!', t3_pausado: 'Paused: hold again!',
-        parabens_titulo: 'Congratulations, {nome}!', parabens_sub: 'What this mission taught', ciencia: 'Science: ', fato: 'Real fact: ', ver_resultado: 'See result ▶',
+        parabens_titulo: 'Congratulations, {nome}!', parabens_sub: 'You completed your first mission! Every task you solved uses real science and engineering. Here is what you practiced today:', ciencia: 'Science: ', fato: 'Real fact: ', ver_resultado: 'See result ▶',
+        // Same texts as the Roblox game (rookie-rocket-roblox/build/rookie/shared/Missoes.luau, Aprendizado).
         aprender: {
-          t1: { areas: 'Physics (inertia and mechanics) · Automation and Control Engineering',
-            ciencia: 'In space there is almost no air to slow a spacecraft down. Because of inertia, a capsule that starts to spin keeps spinning until a thruster pushes it the other way. The automatic control does that by itself; when it fails, the pilot takes over.',
-            fato: 'On Friendship 7 the capsule drifted out of attitude and John Glenn flew it by hand.' },
-          t2: { areas: 'Physics (electromagnetic waves) · Telecommunications Engineering',
-            ciencia: 'Radio carries voices on electromagnetic waves. During reentry the air around the capsule gets so hot that it becomes plasma, an electrified gas that blocks those waves.',
-            fato: 'John Glenn spent 4 min 20 s without radio contact during reentry.' },
-          t3: { areas: 'Physics (thermodynamics) · Materials Engineering',
-            ciencia: 'During reentry the capsule squeezes the air in front of it, and the energy of motion turns into heat. The heat shield is made of materials that withstand that heat and protect the astronaut.',
-            fato: 'The loose heat shield warning came from a faulty switch. To be safe, the retropack stayed strapped to the capsule during reentry.' }
+          t1: { areas: 'Physics (Inertia / Mechanics) · Automation and Control Engineering',
+            ciencia: 'In space nothing slows a spin: by inertia, a small drift keeps growing until a thruster pushes back. A control system closes the loop: sensor → decision → thruster.',
+            fato: 'On Friendship 7, when the capsule drifted out of attitude, John Glenn steered it back by hand.' },
+          t2: { areas: 'Physics (Electromagnetic Waves) · Telecommunications Engineering',
+            ciencia: 'During reentry the air around the capsule turns into hot ionized gas (plasma), which blocks radio waves until the capsule slows down.',
+            fato: 'Glenn\'s planned radio blackout lasted 4 minutes and 20 seconds.' },
+          t3: { areas: 'Physics (Thermodynamics) · Materials Engineering',
+            ciencia: 'Air squeezed in front of the capsule gets extremely hot. The heat shield is made to absorb that heat and carry it away as its surface burns off slowly.',
+            fato: 'A faulty signal suggested the heat shield was loose, so controllers kept the retropack strapped on during reentry. The signal was false.' }
         },
         sucesso_titulo: 'Mission accomplished!', novo_card: 'The real mission · new card in your Space Album',
         voltar: 'Keep exploring', proxima: 'Next phase',
@@ -463,7 +464,7 @@ const DADOS = {
       preparo: {
         titulo: 'Mission Flight Manifest',
         aba_missao: '1 · Mission', aba_itens: '2 · Equipment',
-        descricao: 'On February 20, 1962, John Glenn orbited the Earth 3 times aboard Friendship 7. Relive the three tensest moments of that flight.',
+        descricao: 'In 1962, John Glenn became the first American to orbit Earth on Friendship 7. During the flight he steered the capsule by hand, flew through a radio blackout and faced a heat shield alarm.',
         continuar: 'Choose equipment ▶', voltar: '◀ Mission',
         nave: 'Spacecraft weight: {n} kg', limite: 'Rocket limit: {n} kg',
         peso: 'Weight: {p} / {l} kg · Free: {f} kg', acima: 'Weight: {p} / {l} kg · {x} kg over the limit!',

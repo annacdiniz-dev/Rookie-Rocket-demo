@@ -144,7 +144,9 @@ Todos os números ficam no [dados.js](dados.js): `regrasPeso`, `equipamentos` e 
 - **Andar dentro da cápsula:** as estações da Task 2 são abas, e a câmera vira sozinha para cada uma.
 - **Ana, armário do traje e cutscene da decolagem:** o Manifesto de voo abre direto na escotilha, o jogador já está de traje e a decolagem acontece vista de dentro da cabine.
 
-**Fontes do card e dos fatos:** foto do registro NASA 9248362 e relatório oficial no NTRS (20040110111). Fatos usados: Friendship 7 em 20/02/1962, 3 órbitas em 4 h 55 min; Glenn guiou a cápsula à mão quando ela saiu de atitude; apagão de rádio de 4 min 20 s; o sinal de escudo solto era um interruptor com defeito e o retropack ficou preso. Os textos de "ciência" da tela de aprendizado foram escritos para a demo.
+**Fontes do card e dos fatos:** foto do registro NASA 9248362 e relatório oficial no NTRS (20040110111). Fatos usados: Friendship 7 em 20/02/1962, 3 órbitas em 4 h 55 min; Glenn guiou a cápsula à mão quando ela saiu de atitude; apagão de rádio de 4 min 20 s; o sinal de escudo solto era um interruptor com defeito e o retropack ficou preso. A descrição da missão, o guia das tasks e os textos da tela de aprendizado são os do jogo no Roblox (`rookie-rocket-roblox/build/rookie/shared/Missoes.luau`): em inglês, iguais; em português, traduzidos.
+
+A pasta [rookie-rocket-roblox/](rookie-rocket-roblox/) guarda o projeto do Roblox (scripts Luau, specs e o place). A demo web não depende dela.
 
 ## Link do Roblox
 
