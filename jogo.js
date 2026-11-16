@@ -1364,7 +1364,8 @@ for (const [yaw, pitch] of PONTOS_M) {
   M.pontos.push({ yaw, pitch, dir, g, nucleo, brilho, arco, prog: 0, ok: false, desenhado: -1 });
 }
 function desenharMostrador() { // instrumento decorativo: horizonte balançando e aviso AUTO
-  const g = texMostrador.image.getContext('2d'), W = 512, R = 240, falha = M.fase === 'intro' || M.fase === 'mira';
+  const g = texMostrador.image.getContext('2d'), W = 512, R = 240, falha = !!M.alarme; // alarme ligado = alguma task em andamento
+  M.t = (M.t || 0) + (falha ? 0.033 : 0);                    // relógio só da animação do instrumento
   g.clearRect(0, 0, W, W);
   g.save(); g.translate(256, 256); g.beginPath(); g.arc(0, 0, R, 0, 7); g.clip();
   g.save(); g.rotate(falha ? Math.sin(M.t * 1.7) * 0.5 + Math.sin(M.t * 4.1) * 0.12 : 0);
@@ -1397,45 +1398,72 @@ function embarcar() {
   if (primeira) { estado.capacete = true; salvar(); falarSistema(L.msg.capacete); bip(660, 0.15, 'sine', 0.06); } // capacete aparece sozinho
   if (missaoFeita()) abrirEscolha();         // fase 1 já concluída: refazer ou ir para a próxima (Roblox)
   else if (primeira) setTimeout(() => abrirPreparo(), 1100); // espera o capacete aparecer
-  else abrirPreparo();                       // a fase não começa direto: antes vem a Preparação
+  else abrirPreparo();                       // a missão não começa direto: antes vem o Manifesto de voo
 }
 
-/* ---------------- Preparação: equipamentos x peso ----------------
-   Todos os números (pesos, limite, efeitos, bônus) vêm de DADOS.regrasPeso e DADOS.equipamentos. */
-const RP = DADOS.regrasPeso;
+/* ================================================================
+   MISSÃO 1 · PROJETO MERCURY (FRIENDSHIP 7)
+   Fluxo: Manifesto de voo (missão → equipamentos) → contagem de 12 s →
+   Task 1 (mira) → Task 2 (rádio) → Task 3 (reentrada) → parabéns e
+   aprendizado → resultado com estrelas → card da missão real.
+   Todos os números vêm do dados.js: DADOS.regrasPeso, DADOS.equipamentos e DADOS.missao1.
+   ================================================================ */
+const RP = DADOS.regrasPeso, CFG = DADOS.missao1;
 const equipPorId = id => DADOS.equipamentos.find(e => e.id === id);
 const pesoTotal = sel => RP.pesoNave + sel.reduce((soma, id) => soma + equipPorId(id).peso, 0);
 const kgLivres = sel => RP.limite - pesoTotal(sel);                         // negativo = acima do limite
 const bonusLeveza = sel => Math.floor(Math.max(0, kgLivres(sel)) / RP.kgPorBonus) * RP.segundosPorBonus; // em segundos
-let selPreparo = [];                                                         // escolhas marcadas no painel aberto
 const fmtNum = n => String(n).replace('.', L.codigo === 'pt-BR' ? ',' : '.');
-function abrirPreparo(selInicial) {
-  selPreparo = (selInicial || estado.equip).slice();
-  const p = L.preparo;
-  $('pr-fase').textContent = LM().fase; $('pr-titulo').textContent = p.titulo;
-  $('pr-task').textContent = LM().task; $('pr-obj').textContent = p.objetivo;
+const tempoTxt = s => s.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
+const txTask = n => LM().tasks['t' + n];                                    // textos da task n (nome, alerta, ok, guia)
+const rotuloTask = n => LM().task_n.replace('{n}', n);                      // "TASK 2/3"
+
+/* ---------------- Manifesto de voo (2 abas) ---------------- */
+let selPreparo = [];                                                         // escolhas marcadas no painel aberto
+function passoPreparo(n) { // 1 = missão e guia das tasks · 2 = equipamentos
+  $('pr-passo1').hidden = n !== 1; $('pr-passo2').hidden = n !== 2;
+  $('pr-aba1').setAttribute('aria-pressed', String(n === 1)); $('pr-aba2').setAttribute('aria-pressed', String(n === 2));
+}
+function abrirPreparo(selInicial, passo = 1) {
+  selPreparo = (selInicial || estado.equip).filter(equipPorId).slice();
+  const p = L.preparo, t = LM();
+  $('pr-fase').textContent = t.fase; $('pr-titulo').textContent = p.titulo;
+  $('pr-aba1').textContent = p.aba_missao; $('pr-aba2').textContent = p.aba_itens;
+  // aba 1: a missão e o guia das 3 tasks
+  $('pr-task').textContent = 'Friendship 7'; $('pr-obj').textContent = p.descricao;
+  const guia = $('pr-guia'); guia.innerHTML = '';
+  [1, 2, 3].forEach(n => {
+    const li = document.createElement('li'), s = document.createElement('small'), b = document.createElement('b'), sp = document.createElement('span');
+    s.textContent = rotuloTask(n); b.textContent = txTask(n).nome; sp.textContent = txTask(n).guia;
+    li.append(s, b, sp); guia.appendChild(li);
+  });
+  $('pr-continuar').textContent = p.continuar; $('pr-voltar').textContent = p.voltar; $('pr-lancar').textContent = p.lancar;
+  // aba 2: equipamentos (clicar liga/desliga), peso e checklist
   $('pr-nave').textContent = p.nave.replace('{n}', RP.pesoNave); $('pr-limite').textContent = p.limite.replace('{n}', RP.limite);
-  $('pr-dica').textContent = p.dica.replace('{kg}', RP.kgPorBonus).replace('{s}', RP.segundosPorBonus);
-  $('pr-lancar').textContent = p.lancar;
-  // cards de equipamento: clicar liga/desliga
   const box = $('pr-itens'); box.innerHTML = '';
   DADOS.equipamentos.forEach(eq => {
     const tx = p.itens[eq.id], b = document.createElement('button');
     b.type = 'button'; b.className = 'pr-item'; b.dataset.id = eq.id;
     const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = eq.icone;
     const kg = document.createElement('span'); kg.className = 'kg'; kg.textContent = '+' + eq.peso + ' kg';
+    const tk = document.createElement('span'); tk.className = 'task'; tk.textContent = rotuloTask(eq.task).replace('/3', '');
     const nome = document.createElement('b'); nome.textContent = tx.nome;
     const desc = document.createElement('p'); desc.textContent = tx.txt;
     const ck = document.createElement('span'); ck.className = 'check';
-    b.append(ico, kg, nome, desc, ck);
-    b.onclick = () => { selPreparo = selPreparo.includes(eq.id) ? selPreparo.filter(x => x !== eq.id) : [...selPreparo, eq.id]; atualizarPreparo(); };
+    b.append(ico, kg, tk, nome, desc, ck);
+    b.onclick = () => {
+      if (selPreparo.includes(eq.id)) selPreparo = selPreparo.filter(x => x !== eq.id);
+      else if (selPreparo.length >= RP.maxItens) { atualizarPreparo(true); bip(200, 0.15, 'square', 0.05); return; } // já tem 2: avisa e não marca
+      else selPreparo = [...selPreparo, eq.id];
+      atualizarPreparo();
+    };
     box.appendChild(b);
   });
-  atualizarPreparo();
+  atualizarPreparo(); passoPreparo(passo);
   limparTeclas();
   if (!$('preparo').open) $('preparo').showModal();
 }
-function atualizarPreparo() {
+function atualizarPreparo(avisoMax) {
   const p = L.preparo, peso = pesoTotal(selPreparo), livre = kgLivres(selPreparo);
   const escala = RP.pesoNave + DADOS.equipamentos.reduce((s, e) => s + e.peso, 0); // barra vai até "tudo marcado"
   const cor = peso > RP.limite ? 'vermelho' : peso > RP.faixaVerde ? 'amarelo' : 'verde';
@@ -1447,33 +1475,44 @@ function atualizarPreparo() {
   const b = bonusLeveza(selPreparo);
   if (b > 0) { const s = document.createElement('small'); s.textContent = p.bonus.replace('{b}', b); linha.appendChild(s); }
   document.querySelectorAll('#pr-itens .pr-item').forEach(el => el.setAttribute('aria-pressed', String(selPreparo.includes(el.dataset.id))));
+  // checklist: traje (o jogador já está vestido), itens e peso
+  const ck = $('pr-check'); ck.innerHTML = '';
+  [[p.check_traje, true], [p.check_itens.replace('{n}', selPreparo.length).replace('{max}', RP.maxItens), true], [livre >= 0 ? p.check_peso_ok : p.check_peso_ruim, livre >= 0]]
+    .forEach(([txt, ok]) => { const li = document.createElement('li'); li.textContent = txt; if (!ok) li.className = 'ruim'; ck.appendChild(li); });
+  const dicaEl = $('pr-dica'); dicaEl.className = 'pr-dica' + (avisoMax ? ' aviso' : '');
+  dicaEl.textContent = (avisoMax ? p.max_itens : p.dica).replace('{max}', RP.maxItens).replace('{kg}', RP.kgPorBonus).replace('{s}', RP.segundosPorBonus);
 }
-// Lançar fica sempre habilitado: errar o peso faz parte do aprendizado
+$('pr-aba1').onclick = $('pr-voltar').onclick = () => passoPreparo(1);
+$('pr-aba2').onclick = $('pr-continuar').onclick = () => passoPreparo(2);
+// Embarcar fica sempre habilitado: errar o peso faz parte do aprendizado
 $('pr-lancar').onclick = () => {
   estado.equip = selPreparo.slice(); salvar();            // pré-marca na próxima vez
   $('preparo').close();
-  comecarMissao(); // acima do limite também entra na cabine: a falha acontece lá dentro (ver atualizarMissao)
+  comecarMissao();                                        // acima do limite também entra na cápsula: o lançamento é cancelado lá dentro
 };
+
+/* ---------------- equipamentos, tempos e estrelas ---------------- */
 // Liga os efeitos escolhidos SÓ nesta tentativa (sempre partindo dos valores originais)
 function aplicarEquipamentos(sel) {
-  Object.assign(AJ, AJ_BASE); M.limiteTempo = LIMITE_TEMPO;
+  Object.assign(AJ, AJ_BASE); AJ.segurar = CFG.t1.segurar;
+  M.cfg = { limiteT2: CFG.t2.limite, destaque: false, segurarT3: CFG.t3.segurar, tremorT3: 1 };
   sel.forEach(id => {
     const ef = equipPorId(id).efeito;
-    if (ef.tremorFator) AJ.tremor = AJ_BASE.tremor * ef.tremorFator;
-    if (ef.raioFator) AJ.raio = AJ_BASE.raio * ef.raioFator;
     if (ef.segurar) AJ.segurar = ef.segurar;
     if (ef.ima) AJ.ima = ef.ima;
-    if (ef.limiteTempo) M.limiteTempo = ef.limiteTempo;
+    if (ef.limiteT2) M.cfg.limiteT2 = ef.limiteT2;
+    if (ef.destaque) M.cfg.destaque = true;
+    if (ef.segurarT3) M.cfg.segurarT3 = ef.segurarT3;
+    if (ef.tremorT3) M.cfg.tremorT3 = ef.tremorT3;
   });
   M.equip = sel.slice(); M.peso = pesoTotal(sel); M.bonus = bonusLeveza(sel);
 }
-function restaurarEquipamentos() { Object.assign(AJ, AJ_BASE); M.limiteTempo = LIMITE_TEMPO; }
-// Estrelas pelo tempo (M.t) até estabilizar a nave
-const LIMITE_ESTRELAS = [10.0, 17.0, 25.0]; // ≤10 s = 3 · ≤17 s = 2 · ≤25 s = 1 · acima de 25 s = 0 (falhou)
-const LIMITE_TEMPO = 40.0;                   // aos 40 s a missão é encerrada automaticamente como falha
-const arred = s => Math.round(s * 10) / 10; // mesma precisão do cronômetro da tela
-// valores padrão da tentativa (sem equipamentos), trocados por aplicarEquipamentos()
-Object.assign(M, { limiteTempo: LIMITE_TEMPO, bonus: 0, equip: [], peso: DADOS.regrasPeso.pesoNave });
+function restaurarEquipamentos() { Object.assign(AJ, AJ_BASE); }
+const LIMITE_ESTRELAS = CFG.estrelas;        // tempo final: ≤45 s = 3 · ≤70 s = 2 · ≤100 s = 1 · acima = 0 (falhou)
+const arred = s => Math.round(s * 10) / 10;  // mesma precisão do cronômetro da tela
+Object.assign(M, { task: 0, tempos: [0, 0, 0], bonus: 0, equip: [], peso: RP.pesoNave, cfg: {}, t2: {}, t3: {} });
+const tempoTotal = () => M.tempos[0] + M.tempos[1] + M.tempos[2];           // T1 + T2 + T3
+const tempoFinal = () => Math.max(0, tempoTotal() - M.bonus);               // menos o bônus de leveza
 function calcularEstrelas(tempo) {
   const t = arred(tempo);
   if (t <= LIMITE_ESTRELAS[0]) return 3;
@@ -1489,7 +1528,6 @@ function desenharEstrelas(alvoId, n) {
     box.appendChild(s);
   }
 }
-const tempoTxt = s => s.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
 function abrirEscolha() {
   const t = LM();
   $('me-titulo').textContent = t.escolha_titulo; $('me-txt').textContent = t.escolha_txt;
@@ -1500,208 +1538,397 @@ function abrirEscolha() {
 $('me-refazer').onclick = () => { $('m-escolha').close(); abrirPreparo(); };
 $('me-proxima').onclick = () => { $('m-escolha').close(); abrirRoblox(); };
 function dica(txt) { $('m-dica').textContent = txt; }
-const dicaMira = () => (toque ? LM().dica_toque : LM().dica).replace('{s}', fmtNum(AJ.segurar)); // "segure 2 s" ou "1,3 s"
+const dicaMira = () => (toque ? LM().dica_toque : LM().dica).replace('{s}', fmtNum(AJ.segurar)); // "segure 2 s" ou "1,2 s"
+
+/* ---------------- estática do rádio (Task 2) ---------------- */
+let estatica = null;
+function tocarEstatica() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const buf = audio.createBuffer(1, audio.sampleRate, audio.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;        // ruído branco
+    const src = audio.createBufferSource(), g = audio.createGain();
+    src.buffer = buf; src.loop = true; g.gain.value = 0.03; src.connect(g); g.connect(audio.destination); src.start();
+    estatica = src;
+  } catch (e) { /* sem áudio */ }
+}
+function pararEstatica() { try { if (estatica) estatica.stop(); } catch (e) { /* já parou */ } estatica = null; }
+
+/* ---------------- começo da missão e troca de task ---------------- */
+const CEU_PAD = new THREE.Color('#6fb7ff'), ESPACO = new THREE.Color('#02040a'), PLASMA = new THREE.Color('#ff6a1a'), corTmp = new THREE.Color();
 function comecarMissao() {
   const t = LM();
-  // zera o cronômetro (M.t) e o resto do estado: "Tentar de novo" sempre começa do zero
-  Object.assign(M, { ativa: true, fase: 'intro', t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null, ima: null, alertaPeso: false });
+  // zera tudo: a missão sempre começa da contagem, com os tempos das 3 tasks em 0
+  Object.assign(M, { ativa: true, fase: 'contagem', task: 0, tempos: [0, 0, 0], t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null, ima: null, alertaPeso: false, alarme: false, estrelasBarra: undefined });
   aplicarEquipamentos(estado.equip);                       // efeitos valem só nesta tentativa
-  M.pesado = M.peso > RP.limite;                           // acima do limite: a nave sai de controle antes da mira liberar
-  exterior.position.y = 0;
-  $('m-tempo').textContent = tempoTxt(0);
-  $('m-comb-l').textContent = t.combustivel; atualizarCombustivel();
-  M.estrelasBarra = undefined; atualizarBarraEstrelas(); $('m-estbar').setAttribute('aria-label', t.barra_estrelas);
-  $('m-bonus').textContent = M.bonus > 0 ? `${t.bonus_hud} −${M.bonus} s` : '';
+  M.pesado = M.peso > RP.limite;                           // acima do limite: o lançamento é cancelado na plataforma
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
-  M.pontos.forEach(p => { p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
-  document.body.classList.add('em-missao'); $('missao').hidden = false;
-  $('m-fase').textContent = t.fase; $('m-task').textContent = t.task; $('m-sair').textContent = '✕ ' + t.sair;
-  $('m-splash-fase').textContent = t.fase; $('m-splash-task').textContent = t.task; $('m-splash').classList.add('on');
-  $('m-alvos-l').textContent = t.pontos; $('m-tempo-l').textContent = t.tempo;
-  $('m-alerta').textContent = t.alerta; $('m-alerta').className = 'm-alerta pisca';
-  $('m-vermelho').classList.add('on'); $('m-mira').className = 'm-mira';
-  document.querySelectorAll('#m-luzes i').forEach(i => i.classList.remove('on'));
-  dica(''); luzCabine.color.set('#ff3030');
+  cena2.background.copy(CEU_PAD); exterior.visible = false; exterior.position.y = 0; luzCabine.color.set('#ffffff');
+  M.pontos.forEach(p => { p.g.visible = false; });
+  document.body.classList.add('em-missao'); $('missao').hidden = false; $('missao').className = '';
+  $('m-fase').textContent = t.fase; $('m-task').textContent = 'Friendship 7'; $('m-sair').textContent = '✕ ' + t.sair;
+  $('m-alvos-l').textContent = t.pontos; $('m-tempo-l').textContent = t.tempo; $('m-comb-l').textContent = t.limite;
+  $('m-bonus').textContent = M.bonus > 0 ? `${t.bonus_hud} −${M.bonus} s` : '';
+  $('m-estbar').setAttribute('aria-label', t.barra_estrelas);
+  $('m-alerta').textContent = ''; $('m-alerta').className = 'm-alerta';
+  $('m-vermelho').classList.remove('on'); $('m-plasma').className = 'm-plasma'; $('m-mira').className = 'm-mira'; $('m-mira').hidden = true;
+  $('m-splash').classList.remove('on'); $('m-t2').hidden = true; $('m-t3').hidden = true; $('m-grupo-pontos').hidden = true;
+  $('m-contagem').hidden = false; $('m-contagem').className = 'm-contagem';
+  $('m-cont-l').textContent = t.contagem; $('m-cont-n').textContent = CFG.contagem; $('m-cont-pular').textContent = t.pular; $('m-cont-pular').hidden = M.pesado;
+  dica(''); atualizarHud();
   limparTeclas(); cvs.focus({ preventScroll: true });
+  bip(440, 0.2, 'sine', 0.05);
+}
+$('m-cont-pular').onclick = () => { if (M.fase === 'contagem' && !M.pesado) M.tFase = CFG.contagem; };
+// Começa a task n do zero: o tempo dela volta a 0 (as outras ficam como estão) e os itens continuam
+function iniciarTask(n) {
+  const t = LM(), tx = txTask(n);
+  Object.assign(M, { task: n, fase: 'intro', tFase: 0, alarme: true, naMira: false, ima: null });
+  M.tempos[n - 1] = 0; pararEstatica();
+  cena2.background.copy(ESPACO); exterior.visible = true; exterior.position.y = 0;
+  $('missao').className = 'task' + n;
+  $('m-contagem').hidden = true; $('m-t2').hidden = true; $('m-t3').hidden = true;
+  $('m-task').textContent = `${rotuloTask(n)} · ${tx.nome}`;
+  $('m-splash-fase').textContent = rotuloTask(n); $('m-splash-task').textContent = tx.nome; $('m-splash').classList.add('on');
+  $('m-alerta').textContent = tx.alerta; $('m-alerta').className = 'm-alerta pisca';
+  $('m-vermelho').classList.add('on'); $('m-plasma').className = 'm-plasma'; luzCabine.color.set('#ff3030');
+  $('m-mira').className = 'm-mira'; $('m-mira').hidden = n !== 1; $('m-grupo-pontos').hidden = n !== 1;
+  M.pontos.forEach(p => { p.g.visible = n === 1; p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
+  document.querySelectorAll('#m-luzes i').forEach(i => i.classList.remove('on'));
+  M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
+  dica(''); atualizarHud();
+  limparTeclas(); M.teclas = {};
   bip(440, 0.25, 'sawtooth', 0.04);
 }
+// Fim do splash: a task começa de verdade e o cronômetro dela passa a correr
+function abrirTask() {
+  const t = LM();
+  M.fase = 'jogo'; M.tFase = 0; $('m-splash').classList.remove('on');
+  if (M.task === 1) dica(dicaMira());
+  if (M.task === 2) { montarT2(); $('m-t2').hidden = false; dica(''); tocarEstatica(); } // a dica desta task fica dentro do painel
+  if (M.task === 3) { montarT3(); $('m-t3').hidden = false; dica(''); }
+}
+function concluirTask() {
+  M.fase = 'ok'; M.tFase = 0; M.alarme = false; pararEstatica();
+  $('m-alerta').textContent = txTask(M.task).ok; $('m-alerta').className = 'm-alerta ok';
+  $('m-vermelho').classList.remove('on'); $('m-plasma').className = 'm-plasma'; luzCabine.color.set('#ffffff');
+  if (M.task === 1) $('m-mira').className = 'm-mira ok';
+  dica(''); bip(1320, 0.3, 'sine', 0.07); vibrar(60);
+}
+
+/* ---------------- Task 2: prancheta e rádio ---------------- */
+function montarT2() {
+  const t = LM(), n = CFG.t2.digitos;
+  const sortear = () => Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join('');
+  M.t2 = { codigo: sortear(), entrada: '' };
+  // linhas da prancheta: 4 códigos de distração + o do rádio, em ordem sorteada
+  const linhas = t.t2_linhas.map(rot => ({ rot, cod: sortear() }));
+  linhas.splice(Math.floor(Math.random() * (linhas.length + 1)), 0, { rot: t.t2_alvo, cod: M.t2.codigo, alvo: true });
+  $('t2-pr-titulo').textContent = t.t2_prancheta_titulo;
+  const ul = $('t2-linhas'); ul.innerHTML = '';
+  linhas.forEach(l => {
+    const li = document.createElement('li'), s = document.createElement('span'), c = document.createElement('code');
+    s.textContent = l.rot; c.textContent = l.cod; li.append(s, c);
+    if (l.alvo && M.cfg.destaque) { li.className = 'destaque'; const m = document.createElement('small'); m.textContent = t.t2_manual; s.appendChild(m); } // manual de bordo
+    ul.appendChild(li);
+  });
+  $('t2-dica').textContent = t.t2_dica;
+  $('t2-aba-prancheta').textContent = t.t2_aba_prancheta; $('t2-aba-radio').textContent = t.t2_aba_radio;
+  $('t2-ejetar').textContent = t.ejetar;
+  const tec = $('t2-teclado'); tec.innerHTML = '';
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok'].forEach(k => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = k === 'del' ? '⌫' : k === 'ok' ? t.t2_enviar : k; if (k === 'del') b.className = 'fn'; if (k === 'ok') b.className = 'ok';
+    b.onclick = () => teclaT2(k); tec.appendChild(b);
+  });
+  $('t2-msg').textContent = t.t2_estatica; $('t2-msg').className = 't2-msg neutro';
+  desenharVisorT2(); abaT2('radio');
+}
+function abaT2(qual) { // a visão da cabine vira para a estação escolhida
+  const pr = qual === 'prancheta';
+  $('t2-prancheta').hidden = !pr; $('t2-radio').hidden = pr;
+  $('t2-aba-prancheta').setAttribute('aria-pressed', String(pr)); $('t2-aba-radio').setAttribute('aria-pressed', String(!pr));
+  M.alvo.x = pr ? -0.55 : 0.55; M.alvo.y = 0.05;
+}
+$('t2-aba-prancheta').onclick = () => abaT2('prancheta');
+$('t2-aba-radio').onclick = () => abaT2('radio');
+function desenharVisorT2() {
+  const n = CFG.t2.digitos, v = $('t2-visor');
+  v.className = 't2-visor estatica'; v.textContent = (M.t2.entrada + '_'.repeat(n)).slice(0, n);
+}
+function teclaT2(k) {
+  if (M.fase !== 'jogo' || M.task !== 2) return;
+  const t = LM(), n = CFG.t2.digitos;
+  if (k === 'del') M.t2.entrada = M.t2.entrada.slice(0, -1);
+  else if (k === 'ok') {
+    if (M.t2.entrada === M.t2.codigo) { // acertou: a estática para e a Terra responde
+      concluirTask(); $('t2-visor').className = 't2-visor ok'; $('t2-visor').textContent = t.t2_ok; $('t2-msg').textContent = ''; abaT2('radio');
+      return;
+    }
+    M.t2.entrada = ''; $('t2-msg').textContent = t.t2_invalido; $('t2-msg').className = 't2-msg'; bip(180, 0.2, 'square', 0.05); vibrar(60); // errado: só "Código inválido"
+  } else if (M.t2.entrada.length < n) { M.t2.entrada += k; bip(700, 0.04, 'square', 0.03); }
+  desenharVisorT2();
+}
+$('t2-ejetar').onclick = () => { if (M.fase === 'jogo' && M.task === 2) falhar('ejetar'); };
+
+/* ---------------- Task 3: console de reentrada ---------------- */
+function montarT3() {
+  const t = LM();
+  M.t3 = { decidiu: false, prog: 0, botao: false, segurando: false };
+  $('t3-ejetar').textContent = t.ejetar; $('t3-manter').textContent = t.t3_manter; $('t3-manter').className = 'btn-manter';
+  $('t3-barra-l').textContent = t.t3_barra; $('t3-barra').style.setProperty('--n', '0%');
+  M.alvo.x = 0; M.alvo.y = 0.05;
+}
+{ // o botão verde é de SEGURAR: soltar só pausa
+  const b = $('t3-manter');
+  const soltar = () => { M.t3.botao = false; };
+  b.addEventListener('pointerdown', e => { e.preventDefault(); M.t3.botao = true; try { b.setPointerCapture(e.pointerId); } catch (err) { /* sem captura */ } });
+  b.addEventListener('pointerup', soltar); b.addEventListener('pointercancel', soltar); b.addEventListener('lostpointercapture', soltar);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+  // teclado: Enter ou espaço com o botão em foco também seguram
+  b.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); M.t3.botao = true; } });
+  b.addEventListener('keyup', soltar); b.addEventListener('blur', soltar);
+}
+$('t3-ejetar').onclick = () => { if (M.fase === 'jogo' && M.task === 3) falhar('ejetar'); };
+
+/* ---------------- falhas, aprendizado e resultado ---------------- */
 // Troca os marcadores de uma fala do Marcos pelos valores reais da tentativa
 function falaMarcos(chave, v = {}) {
   let s = fmt(L.marcosResultado[chave]); // {nome}, {o}, {a}
   for (const [k, val] of Object.entries(v)) s = s.split('{' + k + '}').join(val);
   return s;
 }
-// Escolhe UMA dica, a mais útil para esta tentativa
-function escolherDica(motivo) {
-  const tem = id => M.equip.includes(id);
-  const comb = equipPorId('combustivel');
-  if (motivo === 'tempo') return tem('combustivel') ? falaMarcos('dica_proximos')
-    : falaMarcos('dica_combustivel', { extra: comb.efeito.limiteTempo - LIMITE_TEMPO });
-  if (motivo === 'lento') return !tem('giroscopio') ? falaMarcos('dica_giroscopio')
-    : falaMarcos('dica_leveza', { bonusKg: RP.kgPorBonus, bonusS: RP.segundosPorBonus });
-  return ''; // peso: a própria fala já ensina o que fazer
-}
-// Monta o banner de resultado. motivo: undefined (fase jogada) ou 'peso' (não decolou)
-function fimMissao(motivo) {
-  M.fase = 'fim';
+function contaTxt(estrelas) { // "T1 12,0 s + T2 18,0 s + T3 15,0 s − 4 s de leveza = 41,0 s · ⭐⭐⭐"
   const t = LM();
-  let estrelas = 0, tempoFinal = 0;
-  if (motivo !== 'peso') {
-    tempoFinal = Math.max(0, M.t - M.bonus);                       // tempo final = tempo − bônus de leveza
-    const estourou = arred(M.t) > M.limiteTempo;                   // 40 s (ou 55 s com combustível extra)
-    estrelas = estourou ? 0 : calcularEstrelas(tempoFinal);
-    if (estrelas === 0) motivo = estourou ? 'tempo' : 'lento';
-    const e = estrelas > 0 ? '⭐'.repeat(estrelas) : t.sem_estrelas;
-    $('m-estrelas-txt').textContent = t.conta.replace('{t}', tempoTxt(M.t)).replace('{b}', M.bonus).replace('{f}', tempoTxt(tempoFinal)).replace('{e}', e);
-  } else {
-    $('m-estrelas-txt').textContent = t.conta_peso.replace('{p}', M.peso).replace('{l}', RP.limite);
+  return t.conta.replace('{a}', tempoTxt(M.tempos[0])).replace('{b}', tempoTxt(M.tempos[1])).replace('{c}', tempoTxt(M.tempos[2]))
+    .replace('{l}', M.bonus).replace('{f}', tempoTxt(tempoFinal())).replace('{e}', estrelas > 0 ? '⭐'.repeat(estrelas) : t.sem_estrelas);
+}
+// Qualquer falha interrompe a partida e o Marcos explica.
+// motivo: 'peso' (não decolou) · 'ejetar' (apertou EJETAR) · 'tempo' (estourou o limite da task) · 'lento' (tempo final acima de 100 s)
+function falhar(motivo) {
+  M.fase = 'fim'; M.alarme = false; pararEstatica();
+  const t = LM();
+  let fala;
+  if (motivo === 'peso') { fala = falaMarcos('peso', { peso: M.peso, limite: RP.limite }); $('m-estrelas-txt').textContent = t.conta_peso.replace('{p}', M.peso).replace('{l}', RP.limite); }
+  else if (motivo === 'lento') { fala = falaMarcos('lento', { tempo: tempoTxt(tempoFinal()), limiteEstrela: LIMITE_ESTRELAS[2] }); $('m-estrelas-txt').textContent = contaTxt(0); }
+  else {
+    $('m-estrelas-txt').textContent = t.conta_task.replace('{n}', M.task).replace('{nome}', txTask(M.task).nome);
+    if (motivo === 'ejetar') fala = falaMarcos('ejetar' + M.task);
+    else { // tempo: a dica depende de ter levado (ou não) o equipamento daquela task
+      const eq = DADOS.equipamentos.find(e => e.task === M.task);
+      fala = falaMarcos(M.equip.includes(eq.id) ? 'tempo_com' : 'tempo_sem', { equipamento: L.preparo.itens[eq.id].nome });
+    }
   }
-  desenharEstrelas('m-estrelas', estrelas);
-  const card = $('mf-card'); card.innerHTML = '';
-  $('mf-trocar').textContent = '🎒 ' + t.trocar;
-  $('mf-trocar').onclick = () => { if (M.ativa) sairMissao(); else $('m-fim').close(); abrirPreparo(); };
-  if (estrelas > 0) { // passou de fase: card da NASA, selo e Próxima fase → Roblox
-    $('mf-topo').className = 'banner-topo ok'; $('mf-selo').textContent = '✔';
-    $('mf-titulo').textContent = t.sucesso_titulo;
-    $('mf-fala').textContent = falaMarcos('sucesso', { tempo: tempoTxt(tempoFinal), estrelas }); $('mf-dica').textContent = '';
-    $('mf-novo').textContent = t.novo_card; card.hidden = false;
-    card.appendChild(cardMissao(DADOS.album[0], true));
-    $('mf-voltar').textContent = t.voltar; $('mf-voltar').onclick = sairMissao;
-    $('mf-trocar').hidden = true;
-    $('mf-proxima').hidden = false; $('mf-proxima').textContent = t.proxima + ' ▶'; $('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
-    estado.estrelas = Math.max(estado.estrelas, estrelas); salvar(); // guarda o melhor resultado
-    concluir('missao1');
-  } else { // 0 estrelas: missão falhou, Marcos explica o motivo e dá uma dica
-    $('mf-topo').className = 'banner-topo falha'; $('mf-selo').textContent = '✕';
-    $('mf-titulo').textContent = t.falhou_titulo;
-    $('mf-fala').textContent = falaMarcos(motivo, { peso: M.peso, limite: RP.limite, tempo: tempoTxt(tempoFinal), limiteEstrela: LIMITE_ESTRELAS[2] });
-    $('mf-dica').textContent = escolherDica(motivo);
-    $('mf-novo').textContent = ''; card.hidden = true;
-    $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = () => { if (M.ativa) sairMissao(); else $('m-fim').close(); };
-    $('mf-trocar').hidden = false;
-    // "Tentar de novo" repete com as mesmas escolhas. No peso não aparece: com a mesma carga o foguete falharia de novo.
-    $('mf-proxima').hidden = motivo === 'peso';
-    $('mf-proxima').textContent = '↻ ' + t.tentar; $('mf-proxima').onclick = () => { $('m-fim').close(); comecarMissao(); };
-    bip(160, 0.6, 'sawtooth', 0.06); vibrar([90, 60, 90]);
-  }
+  desenharEstrelas('m-estrelas', 0);
+  $('mf-topo').className = 'banner-topo falha'; $('mf-selo').textContent = '✕'; $('mf-titulo').textContent = t.falhou_titulo;
+  $('mf-fala').textContent = fala; $('mf-dica').textContent = '';
+  $('mf-novo').textContent = ''; $('mf-card').innerHTML = ''; $('mf-card').hidden = true;
+  $('m-t2').hidden = true; $('m-t3').hidden = true;         // os painéis das tasks saem de trás do banner
+  $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = sairMissao;
+  // Reiniciar missão: volta ao embarque (aba de equipamentos) e libera a troca de itens
+  $('mf-trocar').hidden = false; $('mf-trocar').textContent = '🎒 ' + t.reiniciar; $('mf-trocar').onclick = () => { sairMissao(); abrirPreparo(undefined, 2); };
+  // Repetir task: zera só o tempo da task e mantém os itens. Não existe no peso (nem decolou) nem no "demorou demais".
+  $('mf-proxima').hidden = motivo === 'peso' || motivo === 'lento';
+  $('mf-proxima').textContent = '↻ ' + t.tentar_task; $('mf-proxima').onclick = () => { const n = M.task; $('m-fim').close(); iniciarTask(n); };
+  bip(160, 0.6, 'sawtooth', 0.06); vibrar([90, 60, 90]);
   $('m-fim').showModal();
 }
-// Barra de combustível: cheia no começo, vazia no limite de tempo.
-// Sem o item ela dura 40 s; com o combustível extra, 55 s (esvazia mais devagar).
-function atualizarCombustivel() {
-  const resta = Math.max(0, 1 - M.t / M.limiteTempo), pct = Math.round(resta * 100);
-  $('m-comb').style.setProperty('--n', (resta * 100) + '%'); // o CSS usa --n como altura (computador) ou largura (celular)
-  $('m-comb').className = 'm-comb' + (resta <= 0.2 ? ' vermelho' : resta <= 0.45 ? ' amarelo' : '');
-  $('m-comb').setAttribute('aria-valuenow', pct);
+// As 3 tasks passaram: calcula as estrelas. Com 0 (acima de 100 s) é falha; senão vem o aprendizado.
+function finalizarMissao() {
+  M.fase = 'fim'; M.alarme = false; $('m-t2').hidden = true; $('m-t3').hidden = true;
+  if (calcularEstrelas(tempoFinal()) === 0) { falhar('lento'); return; }
+  const t = LM();
+  $('ap-titulo').textContent = fmt(t.parabens_titulo); $('ap-sub').textContent = t.parabens_sub; $('ap-continuar').textContent = t.ver_resultado;
+  const lista = $('ap-lista'); lista.innerHTML = '';
+  [1, 2, 3].forEach(n => { // ciência de cada task e o fato real ligado a ela
+    const a = t.aprender['t' + n], el = document.createElement('div'); el.className = 'ap-item';
+    const s = document.createElement('small'); s.textContent = rotuloTask(n);
+    const b = document.createElement('b'); b.textContent = txTask(n).nome;
+    const areas = document.createElement('em'); areas.textContent = a.areas;
+    el.append(s, b, areas);
+    for (const [rot, val] of [[t.ciencia, a.ciencia], [t.fato, a.fato]]) { const p = document.createElement('p'), sp = document.createElement('span'); sp.textContent = rot; p.append(sp, val); el.appendChild(p); }
+    lista.appendChild(el);
+  });
+  M.viuAprender = false; $('m-aprender').showModal();
 }
-// Barra das estrelas: mostra quantas estrelas ainda dá para ganhar com o tempo final (tempo − bônus de leveza).
-// Cada terço da barra vale uma estrela e dura o intervalo daquela estrela (LIMITE_ESTRELAS):
-// cheia → 2/3 nos primeiros 10 s (3★) · 2/3 → 1/3 até 17 s (2★) · 1/3 → vazia até 25 s (1★).
-function atualizarBarraEstrelas() {
-  const tf = Math.max(0, M.t - M.bonus), [a, b, c] = LIMITE_ESTRELAS;
-  const resta = tf <= a ? 1 - (tf / a) / 3 : tf <= b ? 2 / 3 - ((tf - a) / (b - a)) / 3 : tf <= c ? 1 / 3 - ((tf - b) / (c - b)) / 3 : 0;
+// fechar o aprendizado (botão ou Esc) sempre leva ao resultado, uma vez só
+function depoisDoAprender() { if (M.ativa && M.fase === 'fim' && !M.viuAprender) { M.viuAprender = true; mostrarResultado(); } }
+$('ap-continuar').onclick = () => { $('m-aprender').close(); depoisDoAprender(); };
+$('m-aprender').addEventListener('close', depoisDoAprender);
+function mostrarResultado() {
+  const t = LM(), estrelas = calcularEstrelas(tempoFinal());
+  $('m-estrelas-txt').textContent = contaTxt(estrelas); desenharEstrelas('m-estrelas', estrelas);
+  $('mf-topo').className = 'banner-topo ok'; $('mf-selo').textContent = '✔'; $('mf-titulo').textContent = t.sucesso_titulo;
+  $('mf-fala').textContent = falaMarcos('sucesso'); $('mf-dica').textContent = '';
+  const card = $('mf-card'); card.innerHTML = ''; card.hidden = false; $('mf-novo').textContent = t.novo_card;
+  card.appendChild(cardMissao(DADOS.album[0], true));            // The real mission: Friendship 7
+  $('mf-voltar').textContent = t.voltar; $('mf-voltar').onclick = sairMissao;
+  $('mf-trocar').hidden = true;
+  $('mf-proxima').hidden = false; $('mf-proxima').textContent = t.proxima + ' ▶'; $('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
+  estado.estrelas = Math.max(estado.estrelas, estrelas); salvar(); // guarda o melhor resultado
+  concluir('missao1');
+  $('m-fim').showModal();
+}
+function sairMissao() {
+  restaurarEquipamentos(); pararEstatica();                 // AJ volta ao normal e o rádio cala
+  M.ativa = false; M.fase = ''; M.pesado = false; M.viuAprender = true;
+  if ($('m-fim').open) $('m-fim').close();
+  if ($('m-aprender').open) $('m-aprender').close();
+  document.body.classList.remove('em-missao'); $('missao').hidden = true;
+  $('m-vermelho').classList.remove('on'); $('m-splash').classList.remove('on'); $('m-plasma').className = 'm-plasma';
+  cena2.background.copy(ESPACO); exterior.visible = true; exterior.position.y = 0;
+  teleportar('braco');
+}
+$('m-sair').onclick = sairMissao;
+// fechar o banner de resultado de qualquer jeito (Esc, clique fora) volta ao mapa
+$('m-fim').addEventListener('close', () => setTimeout(() => { if (M.ativa && M.fase === 'fim') sairMissao(); }, 0));
+
+/* ---------------- painel lateral: tempo, limite da task e estrelas ---------------- */
+function atualizarHud() {
+  $('m-tempo').textContent = tempoTxt(tempoTotal());
+  // barra LIMITE: quanto falta para a task atual falhar por tempo
+  let resta = 1;
+  const tt = M.task ? M.tempos[M.task - 1] : 0;
+  if (M.task === 1) resta = 1 - tt / CFG.t1.limite;
+  else if (M.task === 2) resta = 1 - tt / M.cfg.limiteT2;
+  else if (M.task === 3 && !M.t3.decidiu) resta = 1 - tt / CFG.t3.decidir;   // depois de decidir não há mais limite
+  resta = Math.max(0, Math.min(1, resta));
+  $('m-comb').style.setProperty('--n', (resta * 100) + '%');
+  $('m-comb').className = 'm-comb' + (resta <= 0.2 ? ' vermelho' : resta <= 0.45 ? ' amarelo' : '');
+  $('m-comb').setAttribute('aria-valuenow', Math.round(resta * 100));
+  // barra das estrelas: cada terço vale uma estrela e dura o intervalo dela (45 s, depois até 70 s, depois até 100 s)
+  const tf = tempoFinal(), [a, b, c] = LIMITE_ESTRELAS;
+  const frac = tf <= a ? 1 - (tf / a) / 3 : tf <= b ? 2 / 3 - ((tf - a) / (b - a)) / 3 : tf <= c ? 1 / 3 - ((tf - b) / (c - b)) / 3 : 0;
   const n = calcularEstrelas(tf), barra = $('m-estbar');
-  barra.style.setProperty('--n', (resta * 100) + '%');
+  barra.style.setProperty('--n', (frac * 100) + '%');
   if (n === M.estrelasBarra) return;
-  // mudou o número de estrelas possíveis: atualiza ícones e cor; se perdeu uma durante a mira, avisa com som, vibração e um tranco
-  const perdeu = M.estrelasBarra !== undefined && n < M.estrelasBarra && M.fase === 'mira';
+  // mudou o número de estrelas possíveis: se perdeu uma durante o jogo, avisa com som, vibração e um tranco
+  const perdeu = M.estrelasBarra !== undefined && n < M.estrelasBarra && M.fase === 'jogo';
   M.estrelasBarra = n;
   barra.className = 'm-estbar e' + n; barra.setAttribute('aria-valuenow', n);
   document.querySelectorAll('#mb-estrelas span').forEach((s, i) => s.classList.toggle('off', i >= n));
   if (perdeu) { bip(300, 0.18, 'square', 0.05); vibrar(35); void barra.offsetWidth; barra.classList.add('perdeu'); }
 }
-function sairMissao() {
-  restaurarEquipamentos();                                 // AJ e limite de tempo voltam ao normal
-  M.ativa = false; M.fase = ''; M.pesado = false; exterior.position.y = 0;
-  if ($('m-fim').open) $('m-fim').close();
-  document.body.classList.remove('em-missao'); $('missao').hidden = true;
-  $('m-vermelho').classList.remove('on'); $('m-splash').classList.remove('on');
-  teleportar('braco');
-}
-$('m-sair').onclick = sairMissao;
-// os botões do banner de fim (mf-voltar / mf-proxima) são configurados em fimMissao(), conforme as estrelas
-// fechar o banner de resultado de qualquer jeito (Esc, clique fora) volta ao mapa
-$('m-fim').addEventListener('close', () => setTimeout(() => { if (M.ativa && M.fase === 'fim') sairMissao(); }, 0));
 
+/* ---------------- loop da missão ---------------- */
 function atualizarMissao(dt) {
-  // segurança: passou do limite (40 s, ou 55 s com combustível extra) = falha por tempo, na hora
-  if (M.fase === 'mira' && arred(M.t) > M.limiteTempo) { fimMissao(); return; }
   if (Math.abs(cam2.aspect - innerWidth / innerHeight) > 0.001) { cam2.aspect = innerWidth / innerHeight; cam2.updateProjectionMatrix(); }
   const t = LM(); M.tFase += dt;
-  // PESO ACIMA DO LIMITE: o jogador entra na cabine, mas a mira nunca libera.
-  // 1,4 s depois da abertura o alarme muda, a cabine sacode forte e a Terra "sobe" na janela (nave caindo);
-  // aos 3,4 s o banner de falha abre por cima da própria cena.
-  if (M.fase === 'intro' && M.pesado) {
-    if (M.tFase > 1.4 && !M.alertaPeso) {
-      M.alertaPeso = true; $('m-splash').classList.remove('on');
-      $('m-alerta').textContent = t.alerta_peso; dica(t.dica_peso); bip(220, 0.5, 'sawtooth', 0.06);
+  let tremor = 0.0012;                                        // tremor da câmera neste quadro
+  if (M.fase === 'contagem') {
+    const resta = CFG.contagem - M.tFase;
+    $('m-cont-n').textContent = Math.max(0, Math.ceil(resta));
+    if (M.pesado) {
+      // PESO ACIMA DO LIMITE: o jogador está na cápsula, mas o foguete nem sai da plataforma.
+      // 1,4 s depois o alarme dispara e a contagem trava; aos 3,4 s o banner de falha abre por cima da cena.
+      if (M.tFase > 1.4 && !M.alertaPeso) {
+        M.alertaPeso = true; M.alarme = true; $('m-contagem').hidden = true; $('m-vermelho').classList.add('on'); luzCabine.color.set('#ff3030');
+        $('m-alerta').textContent = t.alerta_peso; $('m-alerta').className = 'm-alerta pisca'; dica(t.dica_peso); bip(220, 0.5, 'sawtooth', 0.06);
+      }
+      if (M.alertaPeso) tremor = 0.012;
+      if (M.tFase > 3.4) falhar('peso');
+    } else {
+      if (resta < 3) tremor = 0.004 + (3 - Math.max(0, resta)) * 0.006;   // os motores ligam nos 3 s finais
+      if (resta <= 0) { M.fase = 'subida'; M.tFase = 0; $('m-contagem').className = 'm-contagem decolou'; $('m-cont-l').textContent = ''; $('m-cont-n').textContent = t.decolagem; $('m-cont-pular').hidden = true; bip(110, 1.2, 'sawtooth', 0.07); vibrar(200); }
     }
-    if (M.tFase > 3.4) fimMissao('peso');
-  } else if (M.fase === 'intro' && M.tFase > AJ.intro) { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(dicaMira()); }
-  if (M.pesado) exterior.position.y = Math.min(14, Math.max(0, M.tFase - 1.4) * 6);
-  if (M.fase === 'mira') M.t += dt;
-  // câmera: teclado soma no alvo, mouse/toque definem o alvo; a visão segue suave
-  const kx = (M.teclas.arrowright || M.teclas.d ? 1 : 0) - (M.teclas.arrowleft || M.teclas.a ? 1 : 0), ky = (M.teclas.arrowup || M.teclas.w ? 1 : 0) - (M.teclas.arrowdown || M.teclas.s ? 1 : 0);
-  M.alvo.x = Math.max(-AJ.yawMax, Math.min(AJ.yawMax, M.alvo.x + kx * dt * 0.7));
-  M.alvo.y = Math.max(AJ.pitchMin, Math.min(AJ.pitchMax, M.alvo.y + ky * dt * 0.6));
-  // GIROSCÓPIO (ímã): se o jogador apontou perto de um ponto ainda vermelho, a visão pula para o centro dele.
-  // Ela fica presa ali enquanto o jogador não afastar a mira; depois que o ponto trava, solta sozinha.
+  } else if (M.fase === 'subida') {
+    // decolagem: a cabine sacode e o céu azul escurece até virar espaço
+    tremor = 0.022 * Math.max(0.2, 1 - M.tFase / 2.6);
+    cena2.background.copy(corTmp.copy(CEU_PAD).lerp(ESPACO, Math.min(1, M.tFase / 2.2)));
+    if (M.tFase > 2.6) iniciarTask(1);
+  } else if (M.fase === 'intro') {
+    tremor = AJ.tremor;
+    if (M.tFase > 2.2) abrirTask();
+  } else if (M.fase === 'jogo') {
+    M.tempos[M.task - 1] += dt;                               // o cronômetro só corre com a task ativa
+    const tt = M.tempos[M.task - 1];
+    if (M.task === 1) { tremor = AJ.tremor; if (arred(tt) > CFG.t1.limite) { falhar('tempo'); } }
+    else if (M.task === 2) { tremor = 0.002; if (arred(tt) > M.cfg.limiteT2) { falhar('tempo'); } }
+    else if (M.task === 3) tremor = atualizarT3(dt, tt);
+  } else if (M.fase === 'ok') {
+    tremor = Math.max(0, AJ.tremor * (1 - M.tFase));
+    if (M.tFase > 1.7) { if (M.task < 3) iniciarTask(M.task + 1); else finalizarMissao(); }
+  }
+  // câmera: na Task 1 o jogador move a mira (teclado soma no alvo, mouse/toque definem o alvo); nas outras ela vira sozinha para a estação
+  const mirando = M.task === 1 && M.fase === 'jogo';
+  if (mirando) {
+    const kx = (M.teclas.arrowright || M.teclas.d ? 1 : 0) - (M.teclas.arrowleft || M.teclas.a ? 1 : 0), ky = (M.teclas.arrowup || M.teclas.w ? 1 : 0) - (M.teclas.arrowdown || M.teclas.s ? 1 : 0);
+    M.alvo.x = Math.max(-AJ.yawMax, Math.min(AJ.yawMax, M.alvo.x + kx * dt * 0.7));
+    M.alvo.y = Math.max(AJ.pitchMin, Math.min(AJ.pitchMax, M.alvo.y + ky * dt * 0.6));
+  }
+  // GIROSCÓPIO (ímã): se o "+" encostou no círculo cinza de um ponto ainda vermelho, a visão pula para o centro dele.
   let ima = null;
-  if (M.fase === 'mira' && AJ.ima > 0) {
-    // alcance = círculo cinza + o braço do "+" (convertido de pixels para ângulo, então vale em qualquer tela)
-    const pxPorRad = (innerHeight / 2) / Math.tan(cam2.fov * Math.PI / 360);
+  if (mirando && AJ.ima > 0) {
+    const pxPorRad = (innerHeight / 2) / Math.tan(cam2.fov * Math.PI / 360); // converte o braço do "+" de pixels para ângulo
     let melhor = (Math.atan(RAIO_CIRCULO / AJ.dist) + BRACO_MIRA / pxPorRad) * AJ.ima;
     const quer = dirDe(M.alvo.x, M.alvo.y);
     M.pontos.forEach(p => { if (p.ok) return; const a = quer.angleTo(p.dir); if (a < melhor) { melhor = a; ima = p; } });
   }
   if (ima !== M.ima) { M.ima = ima; if (ima) { bip(1180, 0.06, 'sine', 0.05); vibrar(25); } $('m-mira').classList.toggle('ima', !!ima); }
   if (ima) { M.olhar.x = ima.yaw; M.olhar.y = ima.pitch; }
-  else { const s = Math.min(1, dt * 8); M.olhar.x += (M.alvo.x - M.olhar.x) * s; M.olhar.y += (M.alvo.y - M.olhar.y) * s; }
-  const falha = M.fase === 'intro' || M.fase === 'mira' || (M.pesado && M.fase === 'fim');
-  let tr = reduz ? 0 : (falha ? AJ.tremor : Math.max(0, AJ.tremor * (1 - M.tFase)));
-  if (M.alertaPeso) tr *= 5;   // nave pesada: sacode muito
-  if (ima) tr *= 0.3;          // presa no ponto: quase parada
+  else { const s = Math.min(1, dt * (mirando ? 8 : 3)); M.olhar.x += (M.alvo.x - M.olhar.x) * s; M.olhar.y += (M.alvo.y - M.olhar.y) * s; }
+  let tr = reduz ? 0 : tremor;
+  if (ima) tr *= 0.3;                                          // presa no ponto: quase parada
   const yaw = M.olhar.x + (Math.random() - 0.5) * tr * 2, pitch = M.olhar.y + (Math.random() - 0.5) * tr * 2;
   cam2.rotation.set(pitch, -yaw, (Math.random() - 0.5) * tr * 2);
   cam2.position.set((Math.random() - 0.5) * tr * 5, (Math.random() - 0.5) * tr * 5, 0);
-  exterior.rotation.z = Math.sin(M.t * 0.25) * 0.04; exterior.userData.terra.rotation.y += dt * 0.02;
-  // mira "+" sobre os pontos
-  if (M.fase === 'mira') {
-    const frente = ima ? ima.dir : dirDe(yaw, pitch); let naMira = false; // com o ímã, conta o centro exato do ponto
-    M.pontos.forEach(p => {
-      if (p.ok) return;
-      if (frente.angleTo(p.dir) < AJ.raio) {
-        naMira = true; p.prog += dt;
-        if (p.prog >= AJ.segurar) {
-          p.ok = true; p.nucleo.material = matVerde; p.brilho.visible = false; p.arco.visible = false;
-          bip(990, 0.12, 'sine', 0.07); vibrar(45);
-        }
-      } else p.prog = Math.max(0, p.prog - dt * 1.5);
-      const f = Math.min(1, p.prog / AJ.segurar), passo = Math.round(f * 48);
-      if (!p.ok && passo !== p.desenhado) { // círculo branco que mostra os 2 s
-        p.desenhado = passo; p.arco.visible = passo > 0;
-        if (passo > 0) { p.arco.geometry.dispose(); p.arco.geometry = new THREE.RingGeometry(2.2, 2.65, 48, 1, Math.PI / 2, -Math.PI * 2 * f); }
-      }
-    });
-    // luzes laterais: contadas DEPOIS de checar todos os pontos, então a ordem em que o jogador trava os pontos não importa
-    const feitos = M.pontos.filter(p => p.ok).length;
-    document.querySelectorAll('#m-luzes i').forEach((l, i) => l.classList.toggle('on', i < feitos));
-    if (naMira !== M.naMira) { M.naMira = naMira; $('m-mira').classList.toggle('on', naMira); dica(naMira ? t.segure : dicaMira()); }
-    if (feitos >= M.pontos.length) { // piloto automático volta
-      M.fase = 'ok'; M.tFase = 0; $('m-alerta').textContent = t.restaurado; $('m-alerta').className = 'm-alerta ok';
-      $('m-vermelho').classList.remove('on'); $('m-mira').className = 'm-mira ok'; luzCabine.color.set('#ffffff'); dica(''); bip(1320, 0.3, 'sine', 0.07);
-    }
-  } else if (M.fase === 'ok' && M.tFase > 1.7) fimMissao();
-  $('m-tempo').textContent = M.t.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
-  atualizarCombustivel(); atualizarBarraEstrelas();
+  exterior.rotation.z = Math.sin(tempoTotal() * 0.25) * 0.04; exterior.userData.terra.rotation.y += dt * 0.02;
+  if (mirando) atualizarMira(dt, ima, yaw, pitch);
+  atualizarHud();
   const pisca = Math.sin(M.tFase * 10) > 0;
-  luzesAlarme.forEach((l, i) => l.visible = falha ? (pisca ? i % 2 === 0 : i % 2 === 1) : false);
-  luzCabine.intensity = falha ? 0.8 + (pisca ? 0.5 : 0) : 0.9;
+  luzesAlarme.forEach((l, i) => l.visible = M.alarme ? (pisca ? i % 2 === 0 : i % 2 === 1) : false);
+  luzCabine.intensity = M.alarme ? 0.8 + (pisca ? 0.5 : 0) : 0.9;
   desenharMostrador();
 }
-// mover a câmera da cabine: mouse (posição na tela), toque (arrastar) ou setas/WASD
+// Task 1: mira "+" sobre os 4 pontos (2,0 s em cada; 1,2 s com o giroscópio)
+function atualizarMira(dt, ima, yaw, pitch) {
+  const t = LM();
+  const frente = ima ? ima.dir : dirDe(yaw, pitch); let naMira = false; // com o ímã, conta o centro exato do ponto
+  M.pontos.forEach(p => {
+    if (p.ok) return;
+    if (frente.angleTo(p.dir) < AJ.raio) {
+      naMira = true; p.prog += dt;
+      if (p.prog >= AJ.segurar) {
+        p.ok = true; p.nucleo.material = matVerde; p.brilho.visible = false; p.arco.visible = false;
+        bip(990, 0.12, 'sine', 0.07); vibrar(45);
+      }
+    } else p.prog = Math.max(0, p.prog - dt * 1.5);
+    const f = Math.min(1, p.prog / AJ.segurar), passo = Math.round(f * 48);
+    if (!p.ok && passo !== p.desenhado) { // círculo branco que mostra o tempo de travar
+      p.desenhado = passo; p.arco.visible = passo > 0;
+      if (passo > 0) { p.arco.geometry.dispose(); p.arco.geometry = new THREE.RingGeometry(2.2, 2.65, 48, 1, Math.PI / 2, -Math.PI * 2 * f); }
+    }
+  });
+  // luzes laterais: contadas DEPOIS de checar todos os pontos, então a ordem em que o jogador trava os pontos não importa
+  const feitos = M.pontos.filter(p => p.ok).length;
+  document.querySelectorAll('#m-luzes i').forEach((l, i) => l.classList.toggle('on', i < feitos));
+  if (naMira !== M.naMira) { M.naMira = naMira; $('m-mira').classList.toggle('on', naMira); dica(naMira ? t.segure : dicaMira()); }
+  if (feitos >= M.pontos.length) concluirTask();              // controle automático restaurado
+}
+// Task 3: 10 s para decidir; depois, segurar o retropack até a barra encher (soltar só pausa). Devolve o tremor do quadro.
+function atualizarT3(dt, tt) {
+  const t = LM(), e = M.t3;
+  const segurando = e.botao;
+  if (segurando && !e.decidiu) { e.decidiu = true; $('m-plasma').className = 'm-plasma on'; bip(520, 0.2, 'sine', 0.06); } // decisão tomada: manter
+  if (!e.decidiu) {
+    const falta = Math.max(0, CFG.t3.decidir - tt);
+    $('t3-dica').textContent = t.t3_decida.replace('{s}', Math.ceil(falta));
+    if (arred(tt) > CFG.t3.decidir) falhar('tempo');           // não decidiu a tempo
+    return 0.004;
+  }
+  if (segurando) e.prog += dt;
+  if (segurando !== e.segurando) { e.segurando = segurando; $('t3-manter').classList.toggle('segurando', segurando); $('m-plasma').classList.toggle('forte', segurando); if (segurando) vibrar(30); }
+  $('t3-dica').textContent = segurando ? t.t3_segurando : e.prog > 0.05 ? t.t3_pausado : t.t3_segure;
+  const f = Math.min(1, e.prog / M.cfg.segurarT3);
+  $('t3-barra').style.setProperty('--n', (f * 100) + '%'); $('t3-barra').setAttribute('aria-valuenow', Math.round(f * 100));
+  // plasma da reentrada nas janelas: o fundo oscila entre vermelho-escuro e laranja
+  cena2.background.copy(corTmp.set('#3a0d00').lerp(PLASMA, (segurando ? 0.45 : 0.2) + Math.random() * 0.25));
+  if (f >= 1) { concluirTask(); cena2.background.copy(ESPACO); $('t3-manter').classList.remove('segurando'); return 0; }
+  return (segurando ? 0.02 : 0.008) * M.cfg.tremorT3;         // o escudo reforçado diminui a trepidação
+}
+// mover a mira (só na Task 1): mouse (posição na tela), toque (arrastar) ou setas/WASD
 addEventListener('pointermove', e => {
-  if (!M.ativa || document.querySelector('dialog[open]')) return;
+  if (!M.ativa || M.task !== 1 || M.fase !== 'jogo' || document.querySelector('dialog[open]')) return;
   if (e.pointerType === 'mouse') {
     M.alvo.x = (e.clientX / innerWidth - 0.5) * 2 * AJ.yawMax;
     M.alvo.y = AJ.pitchMin + (1 - e.clientY / innerHeight) * (AJ.pitchMax - AJ.pitchMin);
@@ -1714,6 +1941,15 @@ addEventListener('pointermove', e => {
 addEventListener('pointerdown', e => { if (M.ativa && e.pointerType !== 'mouse') M.arrasto = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
 addEventListener('pointerup', () => { M.arrasto = null; });
 addEventListener('keyup', e => { delete M.teclas[e.key.toLowerCase()]; });
+// teclado na Task 2: números, Backspace e Enter digitam no rádio; ← e → trocam de estação
+addEventListener('keydown', e => {
+  if (!M.ativa || M.task !== 2 || M.fase !== 'jogo' || document.querySelector('dialog[open]')) return;
+  if (/^[0-9]$/.test(e.key)) { abaT2('radio'); teclaT2(e.key); }
+  else if (e.key === 'Backspace') { e.preventDefault(); teclaT2('del'); }
+  else if (e.key === 'Enter') { e.preventDefault(); teclaT2('ok'); }
+  else if (e.key === 'ArrowLeft') abaT2('prancheta');
+  else if (e.key === 'ArrowRight') abaT2('radio');
+});
 
 /* ---------------- card da missão real, álbum espacial e Roblox ---------------- */
 function cardMissao(c, completo) {
@@ -1921,18 +2157,21 @@ requestAnimationFrame(quadro);
 // atalhos para apresentação: index.html#lang=pt&g=m&jogar&tp=museu  ·  &expo=atlantis  ·  &missao
 const h = new URLSearchParams(location.hash.slice(1));
 if (PONTOS[h.get('tp')]) teleportar(h.get('tp'));
-if (h.has('missao')) setTimeout(() => { // #missao abre a fase 1 · #missao=fim mostra o banner de conclusão
+// #missao abre a missão 1 pela contagem · #missao=1, =2 ou =3 pula direto para aquela task (&abrir já passa do splash)
+// #missao=fim&t=60 mostra o aprendizado e o resultado com tempo total de 60 s (t=120 mostra a falha por demora)
+if (h.has('missao')) setTimeout(() => {
   estado.capacete = true; teleportar('braco'); comecarMissao();
-  if (h.get('missao') === 'mira') { M.fase = 'mira'; M.tFase = 0; $('m-splash').classList.remove('on'); dica(dicaMira()); M.alvo.x = PONTOS_M[0][0] + 0.03; M.alvo.y = PONTOS_M[0][1]; M.pontos[1].prog = 2; }
-  if (h.get('missao') === 'fim') { M.t = parseFloat(h.get('t')) || 11.4; fimMissao(); } // ex.: #missao=fim&t=30 (1 estrela) · &t=41 (falha)
-  if (h.get('missao') === 'escolha') { sairMissao(); if (!estado.estrelas) estado.estrelas = 2; if (!missaoFeita()) estado.feitas.push('missao1'); abrirEscolha(); }
+  const m = h.get('missao');
+  if (['1', '2', '3'].includes(m)) { M.pesado = false; iniciarTask(+m); if (h.has('abrir')) abrirTask(); }
+  if (m === 'fim') { const tt = parseFloat(h.get('t')) || 41; M.pesado = false; iniciarTask(3); M.tempos = [tt * 0.3, tt * 0.4, tt * 0.3]; finalizarMissao(); }
+  if (m === 'escolha') { sairMissao(); if (!estado.estrelas) estado.estrelas = 2; if (!missaoFeita()) estado.feitas.push('missao1'); abrirEscolha(); }
 }, 300);
 if (h.has('capacete')) estado.capacete = true; // atalho: já chega com o capacete liberado (aparece na plataforma de cima)
-// atalho do pitch: #preparo=falha (3 itens, 80 kg → não decola) · #preparo=bom (só o giroscópio) · #preparo (últimas escolhas)
+// atalho do pitch: #preparo=falha (manual + escudo, 65 kg → não decola) · #preparo=bom (só o giroscópio) · #preparo=nada · #preparo (últimas escolhas)
 if (h.has('preparo')) setTimeout(() => {
   estado.capacete = true; teleportar('braco');
   const modo = h.get('preparo');
-  abrirPreparo(modo === 'falha' ? DADOS.equipamentos.map(e => e.id) : modo === 'bom' ? ['giroscopio'] : undefined);
+  abrirPreparo(modo === 'falha' ? ['manual', 'escudo'] : modo === 'bom' ? ['giroscopio'] : modo === 'nada' ? [] : undefined, 2);
 }, 300);
 if (h.has('album')) setTimeout(abrirAlbum, 300);
 if (h.has('roblox')) setTimeout(abrirRoblox, 300);

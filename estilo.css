@@ -327,6 +327,76 @@ body.touch .hint-bar{display:none}
 .m-comb.amarelo i{background:#f2b632}
 .m-comb.vermelho i{background:#e3262b}
 .m-comb.vermelho{animation:pisca .6s steps(1) infinite}
+/* ---------- Missão 1: contagem, Task 2 (rádio), Task 3 (reentrada) ---------- */
+[hidden]{display:none!important}
+/* plasma da reentrada (Task 3): laranja nas bordas; mais forte enquanto segura o retropack */
+.m-plasma{position:absolute;inset:0;opacity:0;transition:opacity .5s;background:radial-gradient(ellipse at center,transparent 30%,rgba(255,122,26,.55) 70%,rgba(227,38,43,.8))}
+.m-plasma.on{opacity:.55;animation:plasma .35s steps(3) infinite}
+.m-plasma.forte{opacity:1}
+@keyframes plasma{50%{filter:brightness(1.35) hue-rotate(-12deg)}}
+.m-contagem{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:rgba(22,40,79,.9);padding:16px 34px 18px;border-radius:18px;border-bottom:5px solid var(--vermelho);color:#fff}
+.m-contagem small{font-size:14px;font-weight:700;letter-spacing:3px;color:#c9d3ea}
+.m-contagem b{font-family:var(--marca);font-size:clamp(54px,14vmin,110px);line-height:1}
+.m-contagem.decolou b{font-size:clamp(26px,7vmin,54px);color:var(--amarelo)}
+.m-contagem button{border:0;border-radius:10px;background:var(--vermelho);color:#fff;font-weight:800;font-size:15px;padding:9px 18px;box-shadow:0 4px 0 var(--vermelho2)}
+/* painel central das Tasks 2 e 3 */
+.m-painel{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:min(480px,calc(100vw - 24px));max-height:calc(100vh - 250px);overflow:auto;pointer-events:auto;background:rgba(13,24,48,.94);border:2px solid #8da2c9;border-radius:16px;padding:12px 14px 14px;color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.mp-dica{margin:0 0 10px;font-size:15px;font-weight:700;text-align:center;line-height:1.35}
+.t2-abas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.t2-abas button{border:2px solid #8da2c9;border-radius:10px;background:transparent;color:#c9d3ea;font-weight:800;font-size:15px;padding:9px 6px}
+.t2-abas button[aria-pressed="true"]{background:var(--osso);color:var(--marinho);border-color:var(--osso)}
+/* prancheta: papel com as linhas do plano de voo */
+.t2-prancheta{background:#f6f1df;color:#2b2a26;border-radius:10px;padding:10px 14px 12px;border-top:10px solid #8a6a3f;box-shadow:inset 0 0 0 1px #d9cfae}
+.t2-prancheta b{display:block;font-size:12px;letter-spacing:2px;margin-bottom:6px;color:#6a5a3a}
+.t2-prancheta ul{list-style:none;margin:0;padding:0}
+.t2-prancheta li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 6px;border-bottom:1px dashed #cfc5a3;font-size:15px;font-weight:600}
+.t2-prancheta li code{font-family:ui-monospace,Consolas,monospace;font-size:19px;font-weight:800;letter-spacing:4px}
+.t2-prancheta li small{font-size:11px;font-weight:800;color:#9a6a00;margin-left:6px}
+.t2-prancheta li.destaque{background:#ffe680;border-radius:6px;border-bottom-color:transparent;box-shadow:0 0 0 2px #f0b400}
+.t2-topo{display:flex;gap:10px;align-items:stretch}
+.t2-visor{flex:1;display:grid;place-items:center;min-height:52px;border-radius:10px;background:#04120a;border:2px solid #2fbf71;color:#5dff9c;font-family:ui-monospace,Consolas,monospace;font-size:30px;font-weight:800;letter-spacing:10px;text-indent:10px;text-shadow:0 0 10px rgba(93,255,156,.7)}
+.t2-visor.estatica{animation:estatica .12s steps(2) infinite}
+@keyframes estatica{50%{opacity:.55;transform:translateX(1px)}}
+.t2-visor.ok{font-size:15px;letter-spacing:0;text-indent:0;padding:6px 10px;text-align:center;font-family:var(--fonte);animation:none}
+.t2-msg{min-height:20px;margin:6px 0;font-size:14px;font-weight:800;text-align:center;color:#ffb3b5}
+.t2-msg.neutro{color:#c9d3ea}
+.t2-teclado{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.t2-teclado button{border:0;border-radius:10px;background:#dfe2e7;color:var(--marinho);font-weight:800;font-size:22px;min-height:48px;box-shadow:0 4px 0 #8d93a1;touch-action:manipulation}
+.t2-teclado button:active{transform:translateY(3px);box-shadow:0 1px 0 #8d93a1}
+.t2-teclado button.fn{background:#5b6b8f;color:#fff;box-shadow:0 4px 0 #3f4b66;font-size:16px}
+.t2-teclado button.ok{background:var(--verde);color:#fff;box-shadow:0 4px 0 #1f8a50;font-size:16px}
+/* botões de decisão: EJETAR (vermelho, piscando) e MANTER (verde, segurar) */
+.btn-ejetar{border:0;border-radius:12px;background:var(--vermelho);color:#fff;font-weight:800;font-size:14px;letter-spacing:.5px;padding:8px 12px;box-shadow:0 5px 0 var(--vermelho2),0 0 18px rgba(227,38,43,.8);animation:pisca .7s steps(2) infinite;touch-action:manipulation}
+.btn-manter{border:0;border-radius:12px;background:var(--verde);color:#fff;font-weight:800;font-size:17px;letter-spacing:.5px;padding:8px 12px;box-shadow:0 6px 0 #1f8a50;touch-action:none;-webkit-touch-callout:none}
+.btn-manter.segurando{transform:translateY(5px);box-shadow:0 1px 0 #1f8a50,0 0 26px rgba(47,191,113,.9);filter:brightness(1.15)}
+.t3-botoes{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}
+.t3-botoes button{min-height:84px}
+.t3-barra{position:relative;height:26px;margin-top:12px;border-radius:13px;background:#0b1730;border:2px solid #8da2c9;overflow:hidden}
+.t3-barra i{position:absolute;left:0;top:0;bottom:0;width:var(--n,0%);background:linear-gradient(90deg,#1f8a50,#5fd88f)}
+.t3-barra span{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:800;letter-spacing:2px}
+/* parabéns + aprendizado */
+.ap-lista{display:grid;gap:10px;margin-bottom:14px}
+.ap-item{background:#fff;border-radius:12px;border-left:6px solid var(--marinho);padding:10px 14px;box-shadow:0 3px 0 rgba(22,40,79,.12)}
+.ap-item small{display:block;font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--vermelho)}
+.ap-item b{display:block;font-size:17px;font-weight:800;color:var(--marinho);margin:1px 0 2px}
+.ap-item em{display:block;font-style:normal;font-size:12.5px;font-weight:700;color:var(--marinho2);margin-bottom:5px}
+.ap-item p{margin:3px 0 0!important;font-size:14.5px!important;line-height:1.4!important;color:var(--tinta)!important}
+.ap-item p span{font-weight:800;color:var(--marinho)}
+/* manifesto de voo: abas, guia das tasks e checklist */
+.pr-abas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pr-abas button{border:2px solid var(--marinho);border-radius:10px;background:transparent;color:var(--marinho);font-weight:800;font-size:15px;padding:8px 6px}
+.pr-abas button[aria-pressed="true"]{background:var(--marinho);color:#fff}
+.pr-guia{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
+.pr-guia li{background:#fff;border-radius:12px;border-left:6px solid var(--vermelho);padding:9px 14px;box-shadow:0 3px 0 rgba(22,40,79,.12)}
+.pr-guia li small{display:block;font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--vermelho)}
+.pr-guia li b{display:block;font-size:16px;color:var(--marinho)}
+.pr-guia li span{font-size:14px;color:var(--tinta2)}
+.pr-item .task{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--vermelho)}
+.pr-check{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;font-weight:700;color:var(--tinta)}
+.pr-check li:before{content:"✔ ";color:var(--verde);font-weight:800}
+.pr-check li.ruim{color:var(--vermelho)}
+.pr-check li.ruim:before{content:"✕ ";color:var(--vermelho)}
+.pr-dica.aviso{background:#ffe1e2;color:var(--vermelho2)!important}
 .m-baixo{position:absolute;left:0;right:0;bottom:4vh;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 12px}
 .m-dica{background:rgba(22,40,79,.88);color:#fff;font-weight:600;font-size:17px;padding:10px 18px;border-radius:12px;text-align:center;max-width:640px}
 .m-dica:empty{display:none}
@@ -380,5 +450,33 @@ body.touch .hint-bar{display:none}
   .m-alerta{padding:7px 10px}
   .m-sair{padding:8px 10px;font-size:13px}
 }
-@media (max-height:520px){.m-splash{padding:12px 22px;top:42%}}
+@media (max-width:820px),(max-height:520px){
+  .m-painel{top:auto;bottom:calc(max(10px,env(safe-area-inset-bottom)) + 118px);transform:translateX(-50%);max-height:calc(100vh - 250px)}
+  /* nas Tasks 2 e 3 a dica vai dentro do painel: some a de baixo para sobrar espaço */
+  #missao.task2 .m-dica,#missao.task3 .m-dica{display:none}
+  #missao.task2 .m-painel,#missao.task3 .m-painel{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 108px)}
+}
+/* celular deitado (tela baixa): tudo mais compacto e o teclado do rádio em 2 fileiras */
+@media (max-height:520px){
+  .m-splash{padding:12px 22px;top:42%}
+  .m-contagem{padding:10px 24px 12px;top:42%}
+  .m-painel{width:min(620px,calc(100vw - 24px));max-height:calc(100vh - 164px);padding:8px 12px 10px;bottom:calc(max(10px,env(safe-area-inset-bottom)) + 104px)!important}
+  .mp-dica{font-size:13px;margin-bottom:6px}
+  .t2-abas{margin-bottom:6px}
+  .t2-abas button{padding:5px;font-size:13px}
+  .t2-prancheta{padding:4px 12px 6px;border-top-width:6px}
+  .t2-prancheta b{display:none}
+  .t2-prancheta li{padding:2px 6px;font-size:13px}
+  .t2-prancheta li code{font-size:16px}
+  .t2-visor{min-height:38px;font-size:22px}
+  .t2-msg{min-height:16px;margin:3px 0;font-size:12px}
+  .t2-teclado{grid-template-columns:repeat(6,1fr);gap:6px}
+  .t2-teclado button{min-height:36px;font-size:18px}
+  .t2-teclado button.fn,.t2-teclado button.ok{font-size:13px}
+  .t3-botoes button{min-height:58px}
+  .t3-barra{height:20px;margin-top:8px}
+  /* sem a faixa de pontos (só existe na Task 1), sobra altura para o painel */
+  #missao.task2 .m-estbar,#missao.task3 .m-estbar{display:none}
+  #missao.task2 .m-painel,#missao.task3 .m-painel{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 70px)!important;max-height:calc(100vh - 130px)}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

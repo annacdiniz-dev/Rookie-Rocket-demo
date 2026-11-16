@@ -23,77 +23,128 @@ No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa.
 
 **Equipe:** Anna Clara Diniz, Hurias Felipe Silveira, Luis Renato Fernandes, Nando Nogueira, Túlio Amaral e Valter Cauã Alves.
 
-## Fase 1 · Projeto Mercury: O Colapso do Piloto Automático
+## Fase 1 · Missão 1: Projeto Mercury (Friendship 7)
 
-Ao embarcar pela escotilha, o **capacete aparece sozinho** e abre primeiro a **Preparação da missão**. A fase só começa depois do 🚀 **Lançar**.
+A missão segue a spec do jogo no Roblox, adaptada para um jogador (a demo não tem co-op nem login).
 
-### Preparação: equipamentos x peso
+```
+Manifesto de voo (missão → equipamentos) → contagem de 12 s
+  → Task 1 → Task 2 → Task 3 → parabéns + aprendizado → resultado + estrelas → card da missão real
+  Falha em qualquer ponto: o Marcos explica → Repetir task | Reiniciar missão | Sair para o mapa
+```
 
-O jogador escolhe o que levar. Cada equipamento ajuda na mira, mas pesa. Pode marcar nenhum, um ou vários.
+Ao embarcar pela escotilha, o **capacete aparece sozinho** e abre o **Manifesto de voo**.
 
-| Equipamento | Peso | Efeito na Fase 1 |
-|---|---|---|
-| 🛡️ Amortecedor | 25 kg | tremor da cabine 70% menor e raio de acerto dos pontos 30% maior |
-| ⛽ Combustível extra | 20 kg | a barra de combustível dura **55 s** (em vez de 40 s) antes da missão ser encerrada |
-| 🧭 Giroscópio | 15 kg | **ímã na mira:** quando o "+" encosta no círculo cinza em volta de um ponto, a mira pula para o centro dele e fica presa até o ponto travar |
+### Manifesto de voo
+
+Duas abas:
+
+1. **Missão:** descrição da Friendship 7 e o guia das 3 tasks.
+2. **Equipamentos:** itens com ícone e peso, barra de peso e checklist (traje, itens, peso). O botão 🚀 **Embarcar** fica sempre habilitado, para o erro de peso acontecer.
+
+| Equipamento | Peso | Task | Efeito |
+|---|---|---|---|
+| 🧭 Giroscópio | 15 kg | 1 | travar cada alvo leva **1,2 s** (em vez de 2,0 s). Na demo ele também tem o **ímã**: quando o "+" encosta no círculo cinza, a mira pula para o centro do ponto |
+| 📘 Manual de bordo | 20 kg | 2 | destaca o código na prancheta e dá **+15 s** (30 s → 45 s) |
+| 🛡️ Escudo reforçado | 25 kg | 3 | segurar o retropack leva **6 s** (em vez de 10 s) e a cabine treme menos |
 
 **Regra de peso:**
-- A nave pesa **20 kg**, e o foguete Atlas leva no máximo **60 kg**.
+- A nave pesa **20 kg** e o foguete leva no máximo **60 kg**.
+- No máximo **2 equipamentos**. Tentar marcar o terceiro mostra um aviso.
+- 15 + 20 = 55 kg e 15 + 25 = 60 kg são válidos. **20 + 25 = 65 kg é o erro didático.**
 - Barra: verde até 50 kg, amarela de 51 a 60 kg, vermelha acima de 60 kg.
-- **Acima de 60 kg a missão falha dentro da cabine:** o jogador entra na cena, mas a mira nunca libera. Depois de 1,4 s o alerta muda para **PESO ACIMA DO LIMITE**, a cabine sacode forte e a Terra sobe na janela. Aos 3,4 s o banner **MISSÃO FALHOU** abre por cima da própria cena, com 0 estrelas e sem "Tentar de novo".
+- **Bônus de leveza** = ⌊(60 − peso) ÷ 10⌋ × 2 s.
+- **Acima de 60 kg:** o jogador entra na cápsula, mas o lançamento é cancelado. Depois de 1,4 s o alerta **PESO ACIMA DO LIMITE** dispara e a cabine sacode; aos 3,4 s o banner **MISSÃO FALHOU** abre por cima da cena. O foguete não sai da plataforma.
 
-**Tempo final:**
-- `kgLivres = 60 − peso` e `bônus = floor(kgLivres ÷ 10) × 1 s`.
-- `tempo final = max(0, tempo − bônus)`; as estrelas saem do tempo final.
-- Exemplo do resultado: "Tempo 14,2 s − 3 s de bônus de leveza = 11,2 s · ⭐⭐".
+### Lançamento
 
-**Onde mexer:** todos esses números ficam em `regrasPeso` e `equipamentos`, no [dados.js](dados.js). São **valores didáticos** para balancear, não dados reais da NASA (isso também aparece nos créditos). As últimas escolhas ficam salvas e vêm pré-marcadas. Os efeitos valem só naquela tentativa: os valores originais (`AJ_BASE`) voltam ao sair ou reiniciar.
+Contagem regressiva de **12 s** dentro da cápsula, com céu azul na janela (há um botão **Pular**). Nos 3 s finais os motores ligam e a cabine treme. Na decolagem o céu escurece até virar espaço e começa a Task 1.
 
-### Na cabine
+### As 3 tasks
 
-A cabine é **em primeira pessoa**, já com o piloto automático desligado. Na tela aparece só o título da fase.
+Cada task abre com um aviso "TASK n/3" e tem cronômetro próprio, que só corre com a task ativa.
 
-1. A tela treme e fica vermelha, e pisca o alerta **FALHA NO PILOTO AUTOMÁTICO**.
-2. Há um **+** no centro da visão e **4 pontos vermelhos no espaço**, fora da nave.
-3. O jogador move a câmera (mouse, setas/WASD ou arrastar no celular) até o + ficar sobre um ponto e **segura 2 s**. Um **círculo branco** em volta do ponto mostra o tempo.
-4. No painel da direita, a **barra de combustível** esvazia com o tempo: verde, depois amarela (≤ 45%) e vermelha piscando (≤ 20%). Vazia, a missão falha por tempo (40 s, ou 55 s com o combustível extra).
-5. A **barra das estrelas** (no alto, no computador; embaixo, no celular) mostra quantas estrelas ainda dá para ganhar. Ela tem 3 trechos e esvazia com o **tempo final** (cronômetro menos o bônus de leveza): cheia até 2/3 nos primeiros 10 s (⭐⭐⭐), de 2/3 a 1/3 até 17 s (⭐⭐) e de 1/3 a vazia até 25 s (⭐). Quando uma estrela é perdida, a barra dá um tranco, toca um som e o celular vibra.
-6. Com os 4 pontos travados, o piloto automático volta e tudo se normaliza.
-7. A nota vem em **estrelas**, pelo **tempo final** (cronômetro `M.t` menos o bônus de leveza):
+**Task 1 · A Falha do Piloto Automático**
+- Alerta: **FALHA NO CONTROLE AUTOMÁTICO**, com tremor leve e luz vermelha.
+- O jogador leva a mira **+** até 4 pontos vermelhos no espaço e segura até o círculo branco completar (2,0 s; 1,2 s com o giroscópio).
+- Controles: mouse, setas/WASD ou arrastar no celular.
+- **Falha:** passar de 40 s.
 
-   | Tempo final | Estrelas |
-   |-------|----------|
-   | até 10,0 s | ⭐⭐⭐ |
-   | 10,1 a 17,0 s | ⭐⭐ |
-   | 17,1 a 25,0 s | ⭐ |
-   | acima de 25,0 s | nenhuma: missão falhou ("demorou demais") |
-   | cronômetro passou de 40 s (55 s com combustível) | nenhuma: a missão é encerrada na hora |
+**Task 2 · O Blackout de Comunicação**
+- Alerta: **PERDA DE CONTATO COM A TERRA**, com estática no rádio.
+- Duas estações, em abas: a **Mesa de navegação** tem a prancheta com 5 códigos (o certo é o "REINÍCIO DO RÁDIO", sorteado a cada tentativa) e o **Rádio** tem o teclado. O jogador lê em uma e digita na outra.
+- Com o manual de bordo, a linha certa aparece destacada.
+- Código errado mostra só **"Código inválido"**. Código certo: a estática para e chega a mensagem "Friendship 7, estamos ouvindo você. Bem-vindo de volta."
+- Ao lado do visor pisca o botão vermelho **EJETAR CÁPSULA**.
+- No teclado do computador: números, Backspace, Enter, e ← → para trocar de estação.
+- **Falha:** apertar EJETAR CÁPSULA ou o tempo acabar (30 s; 45 s com o manual).
 
-6. **Com 1 a 3 estrelas:** banner **Missão concluída com sucesso!**, estrelas douradas, **card da missão real** (Friendship 7, 1962: objetivo, o que aconteceu e foto oficial da NASA) e selo. O card entra no **Álbum espacial**. **Voltar a explorar** volta ao mapa e **Próxima fase** abre o banner **A aventura continua no Roblox!**.
-7. **Com 0 estrelas:** **MISSÃO FALHOU** em vermelho, estrelas apagadas, sem card e sem selo. O **Marcos Pontes explica o motivo** e dá uma dica. Os botões são:
-   - **Trocar equipamentos:** volta à Preparação.
-   - **Tentar de novo:** repete com as mesmas escolhas e o tempo zerado. Não aparece na falha de peso, porque com a mesma carga o foguete falharia de novo.
-   - **Sair para o mapa.**
-8. Embarcar de novo depois de concluir a Fase 1 mostra o melhor resultado em estrelas e as opções **Refazer fase 1** (que passa pela Preparação) e **Próxima fase** (Roblox).
+**Task 3 · O Alarme do Escudo Térmico**
+- Alerta: **PERIGO: SENSOR DO ESCUDO TÉRMICO INSTÁVEL**, com **10 s para decidir**.
+- Dois botões: **EJETAR CÁPSULA** (vermelho) e **MANTER RETROPACK** (verde).
+- Mantendo, a cabine fica vermelha de calor, treme e o plasma laranja passa pelas janelas. O jogador **segura** o botão verde até a barra encher (10 s; 6 s com o escudo). **Soltar só pausa.**
+- **Falha:** apertar EJETAR CÁPSULA ou não decidir nos 10 s.
 
-Os limites de estrela ficam no [jogo.js](jogo.js): `LIMITE_ESTRELAS` (10 / 17 / 25 s) e `LIMITE_TEMPO` (40 s).
+### Painel durante a missão
 
-### Falas do Marcos no resultado
+- **Barra das estrelas:** mostra quantas estrelas ainda dá para ganhar. Tem 3 trechos e esvazia com o tempo final: cheia até 2/3 nos primeiros 45 s (⭐⭐⭐), até 1/3 aos 70 s (⭐⭐) e vazia aos 100 s (⭐). Ao perder uma estrela, a barra dá um tranco, toca um som e o celular vibra.
+- **TEMPO:** soma das tasks até agora, com o bônus de leveza embaixo.
+- **LIMITE:** quanto falta para a task atual falhar por tempo.
+- No computador o painel fica à direita e a barra das estrelas no alto. No celular tudo vira uma faixa embaixo; com o aparelho deitado, o teclado do rádio passa a ter 2 fileiras.
 
-As falas ficam em `marcosResultado`, no [dados.js](dados.js), em PT e EN, e usam os valores reais da tentativa. O jogo mostra **uma** dica só, a mais útil.
+### Pontuação
 
-| Motivo | Fala | Dica |
-|---|---|---|
-| Passou do peso | "o foguete Atlas só consegue levar 60 kg e a sua nave estava com {peso} kg…" | (a fala já ensina) |
-| Tempo esgotado | "A nave ficou fora de controle por tempo demais…" | sem combustível: "o combustível extra teria te dado mais 15 segundos" · com combustível: "trave primeiro os pontos mais próximos" |
-| Demorou (tempo final acima de 25 s) | "Você salvou a nave, mas demorou {tempo}…" | sem giroscópio: "com o giroscópio, a mira gruda sozinha no centro dos pontos" · com giroscópio: "cada 10 kg livres valem 1 s" |
-| Sucesso | "Mandou bem, {nome}! Tempo final de {tempo} e {n} de 3 estrelas…" | — |
+`Tempo final = max(0, T1 + T2 + T3 − bônus de leveza)`
 
-A recepção tem seis quadros decorativos (Lua cheia, céu estrelado, planeta com anéis, nascer da Terra, nebulosa e Cruzeiro do Sul). São ilustrações originais, sem dados científicos.
+| Tempo final | Estrelas |
+|---|---|
+| até 45 s | ⭐⭐⭐ |
+| 46 a 70 s | ⭐⭐ |
+| 71 a 100 s | ⭐ |
+| acima de 100 s | nenhuma: missão falhou ("demorou demais") |
+
+Exemplo do resultado: "T1 12,0 s + T2 18,0 s + T3 15,0 s − 4 s de leveza = 41,0 s · ⭐⭐⭐".
+
+### Falhas e falas do Marcos
+
+Toda falha interrompe a partida e abre o banner **MISSÃO FALHOU** com o Marcos explicando. As falas são fictícias.
+
+| Gatilho | Fala |
+|---|---|
+| Peso acima de 60 kg | "o foguete só leva 60 kg e a nave estava com {peso} kg. Ele nem saiu da plataforma!…" |
+| Ejetar na Task 2 | "Ejetar durante a reentrada seria fatal. O John Glenn ficou 4 minutos sem rádio e confiou no treinamento…" |
+| Ejetar na Task 3 | "Era um erro do sensor! O escudo estava preso… Manter o retropack foi a decisão real da NASA." |
+| Tempo esgotado sem o item da task | "Faltou tempo, {nome}. O {equipamento} teria ajudado justamente aqui…" |
+| Tempo esgotado com o item da task | "Quase lá, {nome}! Mesmo com o {equipamento}, o tempo apertou…" |
+| Tempo final acima de 100 s | "Você trouxe a nave de volta, mas o tempo final foi de {tempo}…" |
+| Sucesso | "Excelente trabalho, {nome}! Você tomou decisões de verdadeiro astronauta da NASA…" |
+
+Botões do banner de falha:
+- **Repetir task:** zera só o tempo daquela task e mantém os itens. Não aparece na falha por peso nem no "demorou demais".
+- **Reiniciar missão:** volta ao Manifesto de voo, na aba de equipamentos, e libera a troca de itens.
+- **Sair para o mapa.**
+
+### Fim da missão
+
+1. **Parabéns + aprendizado:** para cada task, as áreas (Física e Engenharia), um texto de ciência e o fato real ligado a ela.
+2. **Resultado:** a conta do tempo, as estrelas e a fala do Marcos.
+3. **Card da missão real** (Friendship 7, 20/02/1962), que entra no **Álbum espacial**. **Voltar a explorar** volta ao mapa e **Próxima fase** abre o banner do Roblox.
+
+Embarcar de novo depois de concluir mostra o melhor resultado em estrelas e as opções **Refazer fase 1** e **Próxima fase**.
 
 O capacete sai da cabeça quando o jogador desce da plataforma de cima (pulando ou de elevador) e volta quando ele sobe de novo.
 
-**Fontes do card:** foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório oficial da NASA no NTRS (20040110111), que registra dificuldades no voo e mudanças na sequência planejada.
+### Onde mexer
+
+Todos os números ficam no [dados.js](dados.js): `regrasPeso`, `equipamentos` e `missao1` (contagem, limites das tasks e das estrelas). São **valores didáticos** simplificados para jogabilidade e aprendizado, não dados reais da NASA; isso aparece nos créditos. Os textos ficam em `idiomas.pt` e `idiomas.en`, em `missao`, `marcosResultado` e `preparo`.
+
+### O que a demo não tem (em relação ao Roblox)
+
+- **Co-op:** a demo é para um jogador. As falas do Marcos foram passadas para o singular.
+- **Andar dentro da cápsula:** as estações da Task 2 são abas, e a câmera vira sozinha para cada uma.
+- **Ana, armário do traje e cutscene da decolagem:** o Manifesto de voo abre direto na escotilha, o jogador já está de traje e a decolagem acontece vista de dentro da cabine.
+
+**Fontes do card e dos fatos:** foto do registro NASA 9248362 e relatório oficial no NTRS (20040110111). Fatos usados: Friendship 7 em 20/02/1962, 3 órbitas em 4 h 55 min; Glenn guiou a cápsula à mão quando ela saiu de atitude; apagão de rádio de 4 min 20 s; o sinal de escudo solto era um interruptor com defeito e o retropack ficou preso. Os textos de "ciência" da tela de aprendizado foram escritos para a demo.
 
 ## Link do Roblox
 
@@ -128,8 +179,9 @@ O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 **Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
 - `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `totem`, `hangar`, `elevador`, `braco`) · acrescente `&pp` para já começar em primeira pessoa
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
-- `index.html#lang=pt&g=m&jogar&preparo=falha`: abre a Preparação com os 3 itens (80 kg: ao lançar, a missão falha dentro da cabine) · `preparo=bom`: só o Giroscópio · `preparo`: últimas escolhas
-- `index.html#lang=pt&g=m&jogar&missao`: abre a Fase 1 direto · `missao=fim&t=18` mostra o banner com o tempo informado (`t=41` mostra a falha) · `missao=escolha` mostra a escolha ao reembarcar
+- `index.html#lang=pt&g=m&jogar&preparo=falha`: abre o Manifesto de voo com manual + escudo (65 kg: ao embarcar, o lançamento é cancelado) · `preparo=bom`: só o Giroscópio · `preparo=nada`: sem itens · `preparo`: últimas escolhas
+- `index.html#lang=pt&g=m&jogar&missao`: abre a missão pela contagem · `missao=1`, `missao=2` ou `missao=3` pula direto para aquela task (acrescente `&abrir` para já passar do aviso inicial)
+- `…&missao=fim&t=41`: mostra o aprendizado e o resultado com tempo total de 41 s (`t=120` mostra a falha por demora) · `missao=escolha` mostra a escolha ao reembarcar
 - `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
 
 ## Regra de dados: só NASA
@@ -156,7 +208,7 @@ Os textos estão em [dados.js](dados.js), em `idiomas.pt` e `idiomas.en`. Para t
 - **As falas do Marcos Pontes são fictícias** (aviso no balão e nos créditos). Os fatos citados nelas vêm dos registros da NASA acima.
 - O museu **junta em um salão** atrações que no Visitor Complex real ficam em lugares diferentes (Rocket Garden, Heroes and Legends, Space Shuttle Atlantis, Apollo/Saturn V Center). É uma representação para o jogo, não uma réplica arquitetônica.
 - A nave RR-01 é um **modelo original** inspirado no SLS com a Orion. O mapa-múndi do Controle Mercury é estilizado.
-- O embarque na nave ainda não está implementado, como combinado ("por enquanto").
+- A Fase 1 da demo cobre a Missão 1 inteira (3 tasks). A Missão 2 fica só no jogo do Roblox.
 
 ## Para quem vai montar no Roblox Studio
 

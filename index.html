@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css?v=13">
+<link rel="stylesheet" href="estilo.css?v=14">
 </head>
 <body class="inicio">
 
@@ -49,9 +49,29 @@
 <!-- ===== Fase 1: cabine em primeira pessoa ===== -->
 <div id="missao" hidden>
   <div class="m-vermelho" id="m-vermelho"></div>
+  <div class="m-plasma" id="m-plasma"></div>
   <div class="m-visor"></div>
   <div class="m-mira" id="m-mira" aria-hidden="true"></div>
   <div class="m-splash" id="m-splash"><svg class="logo"><use href="#logo"/></svg><small id="m-splash-fase"></small><b id="m-splash-task"></b></div>
+  <!-- contagem regressiva do lançamento -->
+  <div class="m-contagem" id="m-contagem" hidden><small id="m-cont-l"></small><b id="m-cont-n">12</b><button id="m-cont-pular"></button></div>
+  <!-- Task 2: prancheta (mesa de navegação) e rádio -->
+  <div class="m-painel" id="m-t2" hidden>
+    <p class="mp-dica" id="t2-dica"></p>
+    <div class="t2-abas"><button id="t2-aba-prancheta" aria-pressed="false"></button><button id="t2-aba-radio" aria-pressed="true"></button></div>
+    <div class="t2-prancheta" id="t2-prancheta" hidden><b id="t2-pr-titulo"></b><ul id="t2-linhas"></ul></div>
+    <div class="t2-radio" id="t2-radio">
+      <div class="t2-topo"><div class="t2-visor" id="t2-visor" aria-live="polite"></div><button class="btn-ejetar" id="t2-ejetar"></button></div>
+      <p class="t2-msg" id="t2-msg" aria-live="assertive"></p>
+      <div class="t2-teclado" id="t2-teclado"></div>
+    </div>
+  </div>
+  <!-- Task 3: console de reentrada -->
+  <div class="m-painel" id="m-t3" hidden>
+    <p class="mp-dica" id="t3-dica" aria-live="polite"></p>
+    <div class="t3-botoes"><button class="btn-ejetar" id="t3-ejetar"></button><button class="btn-manter" id="t3-manter"></button></div>
+    <div class="t3-barra" id="t3-barra" role="meter" aria-valuemin="0" aria-valuemax="100"><i></i><span id="t3-barra-l"></span></div>
+  </div>
   <div class="m-top">
     <div class="m-titulo"><svg class="logo"><use href="#logo"/></svg><div><small id="m-fase"></small><b id="m-task"></b></div></div>
     <div class="m-alerta" id="m-alerta"></div>
@@ -65,7 +85,7 @@
     </div>
     <!-- painel da missão: coluna à direita no computador, faixa horizontal embaixo no celular -->
     <div class="m-alvos">
-      <div class="m-grupo"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div></div>
+      <div class="m-grupo" id="m-grupo-pontos"><span id="m-alvos-l"></span><div class="m-luzes" id="m-luzes"><i></i><i></i><i></i><i></i></div></div>
       <div class="m-grupo"><span id="m-tempo-l"></span><b id="m-tempo">0,0 s</b><small class="m-bonus" id="m-bonus"></small></div>
       <div class="m-grupo"><span id="m-comb-l"></span><div class="m-comb" id="m-comb" role="meter" aria-valuemin="0" aria-valuemax="100"><i id="m-comb-fill"></i></div></div>
     </div>
@@ -90,19 +110,33 @@
   </div>
 </dialog>
 
-<!-- Painel: preparação da missão (escolha de equipamentos por peso) -->
+<!-- Banner: parabéns + o que a missão ensinou (aparece antes do resultado) -->
+<dialog id="m-aprender" class="banner">
+  <div class="banner-topo ok"><span class="selo">✔</span><div><h2 id="ap-titulo"></h2><p id="ap-sub"></p></div></div>
+  <div class="banner-corpo"><div class="ap-lista" id="ap-lista"></div><button class="big-btn" id="ap-continuar"></button></div>
+</dialog>
+
+<!-- Manifesto de voo: aba 1 = missão e guia das tasks · aba 2 = equipamentos, peso e checklist -->
 <dialog id="preparo" class="banner prep">
   <button class="close" data-close data-i18n-label="fechar">✕</button>
   <div class="banner-topo"><svg class="logo"><use href="#logo"/></svg><div><small class="pr-fase" id="pr-fase"></small><h2 id="pr-titulo"></h2></div></div>
   <div class="banner-corpo">
-    <p class="pr-task" id="pr-task"></p>
-    <p class="pr-obj" id="pr-obj"></p>
-    <div class="pr-pesos"><span id="pr-nave"></span><span id="pr-limite"></span></div>
-    <div class="pr-barra" aria-hidden="true"><div class="pr-fill" id="pr-fill"></div><i class="pr-marca" id="pr-marca"></i></div>
-    <p class="pr-peso" id="pr-peso" aria-live="polite"></p>
-    <div class="pr-itens" id="pr-itens"></div>
-    <p class="pr-dica" id="pr-dica"></p>
-    <button class="big-btn" id="pr-lancar"></button>
+    <div class="pr-abas"><button id="pr-aba1" aria-pressed="true"></button><button id="pr-aba2" aria-pressed="false"></button></div>
+    <section id="pr-passo1">
+      <p class="pr-task" id="pr-task"></p>
+      <p class="pr-obj" id="pr-obj"></p>
+      <ol class="pr-guia" id="pr-guia"></ol>
+      <button class="big-btn" id="pr-continuar"></button>
+    </section>
+    <section id="pr-passo2" hidden>
+      <div class="pr-pesos"><span id="pr-nave"></span><span id="pr-limite"></span></div>
+      <div class="pr-barra" aria-hidden="true"><div class="pr-fill" id="pr-fill"></div><i class="pr-marca" id="pr-marca"></i></div>
+      <p class="pr-peso" id="pr-peso" aria-live="polite"></p>
+      <div class="pr-itens" id="pr-itens"></div>
+      <ul class="pr-check" id="pr-check"></ul>
+      <p class="pr-dica" id="pr-dica" aria-live="polite"></p>
+      <div class="banner-botoes"><button class="big-btn alt" id="pr-voltar"></button><button class="big-btn" id="pr-lancar"></button></div>
+    </section>
   </div>
 </dialog>
 
@@ -219,7 +253,7 @@
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js?v=13"></script>
-<script src="jogo.js?v=13"></script>
+<script src="dados.js?v=14"></script>
+<script src="jogo.js?v=14"></script>
 </body>
 </html>

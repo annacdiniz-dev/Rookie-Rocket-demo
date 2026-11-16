@@ -51,28 +51,35 @@ const DADOS = {
   linkRoblox: 'https://www.roblox.com/share?code=a84324d6a84b554796b4115f8931b4ff&type=ExperienceDetails&stamp=1794753740191',
 
   // =====================================================================
-  // PREPARAÇÃO DA FASE 1: equipamentos e peso
+  // MISSÃO 1 · PROJETO MERCURY (FRIENDSHIP 7): peso, equipamentos, tempos e estrelas
   // ATENÇÃO: são VALORES DIDÁTICOS para balancear o jogo, não dados reais da NASA.
   // Pode ajustar à vontade. O jogo.js lê tudo daqui.
   // =====================================================================
   regrasPeso: {
     pesoNave: 20,          // kg: peso da cápsula vazia
-    limite: 60,            // kg: o máximo que o foguete Atlas consegue levar (acima disso não decola)
+    limite: 60,            // kg: o máximo que o foguete consegue levar (acima disso não decola)
     faixaVerde: 50,        // kg: barra verde até aqui · amarela até o limite · vermelha acima do limite
     kgPorBonus: 10,        // a cada 10 kg livres (limite − peso)...
-    segundosPorBonus: 1    // ...o jogador ganha 1 s de desconto no tempo final
+    segundosPorBonus: 2,   // ...o jogador ganha 2 s de desconto no tempo final
+    maxItens: 2            // no máximo 2 equipamentos (20 + 25 = 65 kg é o erro didático)
   },
   equipamentos: [
-    // efeito.tremorFator: multiplica o tremor da cabine (0.3 = 70% menos)
-    // efeito.raioFator: multiplica o raio de acerto dos pontos (1.3 = 30% maior)
-    { id: 'amortecedor', icone: '🛡️', peso: 25, efeito: { tremorFator: 0.3, raioFator: 1.3 } },
-    // efeito.limiteTempo: novo tempo máximo da missão, em segundos (o normal é 40).
-    // A barra de combustível na tela esvazia nesse tempo: 40 s sem o item, 55 s com ele.
-    { id: 'combustivel', icone: '⛽', peso: 20, efeito: { limiteTempo: 55 } },
-    // efeito.ima: "ímã" da mira. Com 1, a mira pula para o centro do ponto assim que o "+"
-    // encosta no círculo cinza em volta dele. 1.5 = alcance 50% maior. Sem o giroscópio não há ímã.
-    { id: 'giroscopio', icone: '🧭', peso: 15, efeito: { ima: 1 } }
+    // task: em qual task o equipamento ajuda (aparece no card e nas dicas do Marcos)
+    // efeito.segurar: segundos para travar cada alvo da Task 1 (o normal é 2,0)
+    // efeito.ima: "ímã" da mira. Com 1, a mira pula para o centro do ponto quando o "+" encosta no círculo cinza. 0 desliga.
+    { id: 'giroscopio', icone: '🧭', peso: 15, task: 1, efeito: { segurar: 1.2, ima: 1 } },
+    // efeito.limiteT2: tempo máximo da Task 2 em segundos (o normal é 30) · destaque: marca o código na prancheta
+    { id: 'manual', icone: '📘', peso: 20, task: 2, efeito: { limiteT2: 45, destaque: true } },
+    // efeito.segurarT3: segundos segurando o retropack na Task 3 (o normal é 10) · tremorT3: multiplica o tremor (0.4 = 60% menos)
+    { id: 'escudo', icone: '🛡️', peso: 25, task: 3, efeito: { segurarT3: 6, tremorT3: 0.4 } }
   ],
+  missao1: {
+    contagem: 12,              // s: contagem regressiva do lançamento (dá para pular)
+    estrelas: [45, 70, 100],   // tempo final (T1 + T2 + T3 − bônus): ≤45 s = 3★ · ≤70 s = 2★ · ≤100 s = 1★ · acima = falha
+    t1: { limite: 40, segurar: 2.0 },   // Task 1: falha ao passar de 40 s · 2,0 s para travar cada alvo
+    t2: { limite: 30, digitos: 4 },     // Task 2: falha aos 30 s · código de 4 dígitos sorteado
+    t3: { decidir: 10, segurar: 10 }    // Task 3: 10 s para decidir · segurar o retropack por 10 s
+  },
 
   equipe: ['Anna Clara Diniz', 'Hurias Felipe Silveira', 'Luis Renato Fernandes', 'Nando Nogueira', 'Túlio Amaral', 'Valter Cauã Alves'],
 
@@ -116,7 +123,7 @@ const DADOS = {
         cr_p3: 'Cenários, personagens, trajes e a nave RR-01 são criações originais em estilo de blocos. O museu é uma representação simplificada, não uma réplica arquitetônica.',
         cr_p4: 'As falas do personagem Marcos Pontes são <b>fictícias</b>, escritas para o jogo. Os fatos citados nelas vêm dos registros da NASA iss012e22280 e 20060409_exp12_11.',
         cr_p5: 'Motor 3D: three.js r128 (licença MIT). Fontes: Outfit e Michroma (SIL Open Font License). Tudo incluído na pasta lib.',
-        cr_p6: 'Pesos e efeitos dos equipamentos são valores didáticos simplificados, não dados reais da NASA.',
+        cr_p6: 'Todos os pesos, tempos, velocidades e efeitos de equipamentos são valores didáticos simplificados para jogabilidade e aprendizado, não dados reais da NASA.',
         cr_desafio: 'Página do desafio', cr_desafio_rot: 'DESAFIO ESCOLHIDO',
         continuar: 'Continuar explorando', fechar: 'Fechar',
         btn_mapa: 'Mapa (M)', btn_creditos: 'Fontes e créditos', btn_idioma: 'Trocar idioma', btn_capacete: 'Capacete (H)',
@@ -187,57 +194,92 @@ const DADOS = {
         dica_pinca: '🤏 Dica: afaste dois dedos na tela para dar zoom até a primeira pessoa.'
       },
       missao: {
-        fase: 'FASE 1 · PROJETO MERCURY', task: 'O Colapso do Piloto Automático', sair: 'Sair',
-        alerta: '⚠ FALHA NO PILOTO AUTOMÁTICO', restaurado: '✔ PILOTO AUTOMÁTICO RESTAURADO',
-        alerta_peso: '⚠ PESO ACIMA DO LIMITE', dica_peso: 'A nave está pesada demais e não responde aos comandos!',
-        combustivel: 'COMBUST.', barra_estrelas: 'Estrelas que ainda dá para ganhar',
+        fase: 'FASE 1 · PROJETO MERCURY', sair: 'Sair', task_n: 'TASK {n}/3',
+        // as 3 tasks: nome, alerta que pisca, aviso de sucesso e resumo (guia do manifesto de voo)
+        tasks: {
+          t1: { nome: 'A Falha do Piloto Automático', alerta: '⚠ FALHA NO CONTROLE AUTOMÁTICO', ok: '✔ CONTROLE AUTOMÁTICO RESTAURADO', guia: 'Leve a mira + até os 4 pontos vermelhos e segure em cada um.' },
+          t2: { nome: 'O Blackout de Comunicação', alerta: '⚠ PERDA DE CONTATO COM A TERRA', ok: '✔ CONTATO RESTABELECIDO', guia: 'Leia o código na prancheta e digite no rádio. Não ejete!' },
+          t3: { nome: 'O Alarme do Escudo Térmico', alerta: '⚠ PERIGO: SENSOR DO ESCUDO TÉRMICO INSTÁVEL', ok: '✔ REENTRADA CONCLUÍDA', guia: 'Decida rápido: ejetar a cápsula ou manter o retropack.' }
+        },
+        contagem: 'LANÇAMENTO EM', decolagem: 'DECOLAGEM!', pular: 'Pular ▶',
+        alerta_peso: '⚠ PESO ACIMA DO LIMITE · LANÇAMENTO CANCELADO', dica_peso: 'O foguete está pesado demais para decolar!',
+        barra_estrelas: 'Estrelas que ainda dá para ganhar',
+        // Task 1
         dica: 'Mova a câmera: leve o + até um ponto vermelho e segure {s} s',
         dica_toque: 'Arraste a tela: leve o + até um ponto vermelho e segure {s} s',
-        segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO',
-        sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'Novo card no seu Álbum Espacial',
+        segure: 'Segure firme…', pontos: 'PONTOS', tempo: 'TEMPO', limite: 'LIMITE', bonus_hud: 'BÔNUS',
+        // Task 2
+        t2_dica: 'Ache o código REINÍCIO DO RÁDIO na prancheta e digite no rádio.',
+        t2_aba_prancheta: '📋 Mesa de navegação', t2_aba_radio: '📻 Rádio',
+        t2_prancheta_titulo: 'PLANO DE VOO · FRIENDSHIP 7', t2_alvo: 'REINÍCIO DO RÁDIO',
+        t2_linhas: ['VERIF. DE ÓRBITA', 'PRESSÃO DA CABINE', 'SEQUÊNCIA RETRO', 'COMBUSTÍVEL RCS'],
+        t2_manual: '◀ manual de bordo', t2_estatica: 'SEM SINAL · digite o código', t2_invalido: 'Código inválido',
+        t2_ok: '“Friendship 7, estamos ouvindo você. Bem-vindo de volta.”', t2_enviar: 'ENVIAR',
+        ejetar: 'EJETAR CÁPSULA',
+        // Task 3
+        t3_decida: 'Decida em {s} s: ejetar a cápsula ou manter o retropack?',
+        t3_manter: 'MANTER RETROPACK', t3_barra: 'RETROPACK',
+        t3_segure: 'Segure o botão verde até a barra encher', t3_segurando: 'Segurando… não solte!', t3_pausado: 'Pausado: segure de novo!',
+        // fim: parabéns + aprendizado, depois o resultado
+        parabens_titulo: 'Parabéns, {nome}!', parabens_sub: 'O que esta missão ensinou', ciencia: 'Ciência: ', fato: 'Fato real: ', ver_resultado: 'Ver resultado ▶',
+        // Textos de aprendizado escritos para a demo; os "fatos reais" são os conferidos na NASA (Friendship 7).
+        aprender: {
+          t1: { areas: 'Física (inércia e mecânica) · Engenharia de Automação e Controle',
+            ciencia: 'No espaço quase não há ar para frear a nave. Pela inércia, se a cápsula começa a girar, ela continua girando até que um jato a empurre no sentido contrário. O controle automático faz isso sozinho; quando ele falha, o piloto assume.',
+            fato: 'Na Friendship 7, a cápsula saiu da posição correta e John Glenn a guiou à mão.' },
+          t2: { areas: 'Física (ondas eletromagnéticas) · Engenharia de Telecomunicações',
+            ciencia: 'O rádio leva a voz por ondas eletromagnéticas. Na reentrada, o ar em volta da cápsula esquenta tanto que vira plasma, um gás eletrizado que bloqueia essas ondas.',
+            fato: 'John Glenn ficou 4 min 20 s sem contato por rádio durante a reentrada.' },
+          t3: { areas: 'Física (termodinâmica) · Engenharia de Materiais',
+            ciencia: 'Ao reentrar, a cápsula comprime o ar à sua frente, e a energia do movimento vira calor. O escudo térmico é feito de materiais que aguentam esse calor e protegem o astronauta.',
+            fato: 'O aviso de escudo solto vinha de um interruptor com defeito. Por segurança, o retropack ficou preso à cápsula durante a reentrada.' }
+        },
+        sucesso_titulo: 'Missão concluída com sucesso!', novo_card: 'A missão real · novo card no seu Álbum Espacial',
         voltar: 'Voltar a explorar', proxima: 'Próxima fase',
-        // estrelas: 3 ≤ 10 s · 2 ≤ 17 s · 1 ≤ 25 s · mais que isso = falhou (aos 40 s a missão é encerrada)
         falhou_titulo: 'MISSÃO FALHOU',
-        tentar: 'Tentar de novo', sair_mapa: 'Sair para o mapa', trocar: 'Trocar equipamentos',
-        // conta do resultado. {t} tempo · {b} bônus · {f} tempo final · {e} estrelas
-        conta: 'Tempo {t} − {b} s de bônus de leveza = {f} · {e}',
-        conta_peso: 'Peso {p} kg · limite {l} kg · a nave saiu de controle',
-        sem_estrelas: 'sem estrelas', bonus_hud: 'BÔNUS',
+        tentar_task: 'Repetir task', reiniciar: 'Reiniciar missão', sair_mapa: 'Sair para o mapa',
+        // conta do resultado. {a} {b} {c} tempos das tasks · {l} bônus de leveza · {f} tempo final · {e} estrelas
+        conta: 'T1 {a} + T2 {b} + T3 {c} − {l} s de leveza = {f} · {e}',
+        conta_peso: 'Peso {p} kg · limite {l} kg · o foguete não decolou',
+        conta_task: 'Falha na Task {n} · {nome}',
+        sem_estrelas: 'demorou demais',
         escolha_titulo: 'Fase 1 concluída!', escolha_txt: 'Seu melhor resultado:', refazer: 'Refazer fase 1'
       },
       // Falas do Marcos no resultado (fictícias, escritas para o jogo).
-      // Marcadores: {nome} {o} {peso} {limite} {tempo} {limiteTempo} {extra} {estrelas} {bonusKg} {bonusS}
+      // Marcadores: {nome} {peso} {limite} {equipamento} {tempo} {limiteEstrela} {estrelas}
       marcosResultado: {
-        peso: '{nome}, o foguete Atlas só consegue levar {limite} kg e a sua nave estava com {peso} kg. Pesada demais, ela não chegou à órbita certa e saiu de controle antes de você conseguir agir! Na engenharia espacial, cada quilo conta: escolha os equipamentos que mais ajudam e deixe o resto em terra.',
-        tempo: 'A nave ficou fora de controle por tempo demais, {nome}. No Projeto Mercury, o astronauta precisava agir rápido quando o piloto automático falhava.',
-        lento: 'Você salvou a nave, mas demorou {tempo}. Para ganhar estrelas, o tempo final precisa ficar abaixo de {limiteEstrela} s.',
-        // dicas: o jogo escolhe só UMA, a mais útil para a tentativa
-        dica_combustivel: 'Dica: o combustível extra teria te dado mais {extra} segundos.',
-        dica_proximos: 'Dica: tente travar primeiro os pontos mais próximos da mira.',
-        dica_giroscopio: 'Dica: com o giroscópio, a mira gruda sozinha no centro dos pontos.',
-        dica_leveza: 'Dica: uma nave mais leve ganha bônus de tempo: cada {bonusKg} kg livres valem {bonusS} s.',
-        sucesso: 'Mandou bem, {nome}! Tempo final de {tempo} e {estrelas} de 3 estrelas. Você pilotou como um{a} verdadeir{o} astronauta do Projeto Mercury!'
+        peso: '{nome}, o foguete só leva {limite} kg e a nave estava com {peso} kg. Ele nem saiu da plataforma! Na engenharia espacial cada quilo conta: escolha apenas o que mais ajuda.',
+        ejetar2: 'Ejetar durante a reentrada seria fatal. O John Glenn ficou 4 minutos sem rádio e confiou no treinamento. Às vezes a resposta certa é manter a calma e seguir o procedimento.',
+        ejetar3: 'Era um erro do sensor! O escudo estava preso. Quem ejeta no pânico perde a missão. Manter o retropack foi a decisão real da NASA.',
+        tempo_sem: 'Faltou tempo, {nome}. O {equipamento} teria ajudado justamente aqui. Na próxima, pense em qual task é mais difícil para você antes de escolher.',
+        tempo_com: 'Quase lá, {nome}! Mesmo com o {equipamento}, o tempo apertou. Respire, organize os passos e tente novamente.',
+        lento: 'Você trouxe a nave de volta, {nome}, mas o tempo final foi de {tempo}. Para ganhar estrelas ele precisa ficar em até {limiteEstrela} s.',
+        sucesso: 'Excelente trabalho, {nome}! Você tomou decisões de verdadeir{o} astronauta da NASA. Confira o registro histórico dessa missão no seu álbum!'
       },
       preparo: {
-        titulo: 'Preparação da missão',
-        objetivo: 'Escolha o que levar na nave. Depois, trave os 4 pontos vermelhos com a mira + o mais rápido que puder.',
-        nave: 'Peso da nave: {n} kg', limite: 'Limite do foguete Atlas: {n} kg',
+        titulo: 'Manifesto de voo',
+        aba_missao: '1 · Missão', aba_itens: '2 · Equipamentos',
+        descricao: 'Em 20 de fevereiro de 1962, John Glenn deu 3 voltas na Terra a bordo da Friendship 7. Reviva os três momentos mais tensos desse voo.',
+        continuar: 'Escolher equipamentos ▶', voltar: '◀ Missão',
+        nave: 'Peso da nave: {n} kg', limite: 'Limite do foguete: {n} kg',
         peso: 'Peso: {p} / {l} kg · Livre: {f} kg', acima: 'Peso: {p} / {l} kg · {x} kg acima do limite!',
         bonus: 'Bônus de leveza: −{b} s',
-        dica: 'Nave mais leve manobra melhor: cada {kg} kg livres tiram {s} s do seu tempo final.',
-        lancar: '🚀 Lançar',
+        dica: 'Leve no máximo {max} equipamentos. Cada {kg} kg livres tiram {s} s do seu tempo final.',
+        max_itens: 'Só cabem {max} equipamentos! Desmarque um para trocar.',
+        check_traje: 'Traje espacial vestido', check_itens: 'Equipamentos: {n} de {max}', check_peso_ok: 'Peso dentro do limite', check_peso_ruim: 'Peso acima do limite',
+        lancar: '🚀 Embarcar',
         itens: {
-          amortecedor: { nome: 'Amortecedor', txt: 'A cabine treme menos e fica mais fácil mirar.' },
-          combustivel: { nome: 'Combustível extra', txt: 'Mais tempo antes da nave sair de controle.' },
-          giroscopio: { nome: 'Giroscópio', txt: 'Encostou no círculo cinza, a mira pula para o centro do ponto.' }
+          giroscopio: { nome: 'Giroscópio', txt: 'Trava cada ponto em 1,2 s (em vez de 2 s) e a mira gruda no centro.' },
+          manual: { nome: 'Manual de bordo', txt: 'Destaca o código na prancheta e dá mais 15 s.' },
+          escudo: { nome: 'Escudo reforçado', txt: 'Segurar o retropack leva 6 s (em vez de 10 s) e a cabine treme menos.' }
         }
       },
       // Cards das missões reais (álbum). Fase 1: foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório NTRS 20040110111.
       cards: {
         missao1: {
           nome: 'Friendship 7 · Mercury-Atlas 6',
-          objetivo: 'Fazer o primeiro voo orbital tripulado dos EUA: John Glenn deu três voltas na Terra em cerca de 5 horas.',
-          aconteceu: 'O relatório da NASA registra dificuldades durante o voo e mudanças na sequência planejada. A conclusão: o astronauta ajuda a missão a dar certo com sua capacidade de controlar a nave e seus sistemas.',
+          objetivo: 'Fazer o primeiro voo orbital tripulado dos EUA. Em 20/02/1962, John Glenn deu 3 voltas na Terra em 4 h 55 min.',
+          aconteceu: 'A cápsula saiu da posição correta e Glenn a guiou à mão. Na reentrada, ele ficou 4 min 20 s sem rádio. Um aviso indicou que o escudo térmico estava solto, mas era um interruptor com defeito: o retropack ficou preso por segurança e o pouso foi um sucesso.',
           vazio: 'Conclua a Fase 1'
         },
         missao2: { nome: 'Fase 2', vazio: 'Card da Fase 2' }
@@ -293,7 +335,7 @@ const DADOS = {
         cr_p3: 'Scenery, characters, suits and the RR-01 ship are original block-style creations. The museum is a simplified representation, not an architectural replica.',
         cr_p4: 'The lines spoken by the Marcos Pontes character are <b>fictional</b>, written for the game. The facts they mention come from NASA records iss012e22280 and 20060409_exp12_11.',
         cr_p5: '3D engine: three.js r128 (MIT license). Fonts: Outfit and Michroma (SIL Open Font License). All included in the lib folder.',
-        cr_p6: 'Equipment weights and effects are simplified teaching values, not real NASA data.',
+        cr_p6: 'All weights, times, speeds and equipment effects are simplified teaching values for gameplay and learning, not real NASA data.',
         cr_desafio: 'Challenge page', cr_desafio_rot: 'OUR CHALLENGE',
         continuar: 'Keep exploring', fechar: 'Close',
         btn_mapa: 'Map (M)', btn_creditos: 'Sources and credits', btn_idioma: 'Change language', btn_capacete: 'Helmet (H)',
@@ -364,55 +406,84 @@ const DADOS = {
         dica_pinca: '🤏 Tip: spread two fingers on the screen to zoom into first person.'
       },
       missao: {
-        fase: 'PHASE 1 · PROJECT MERCURY', task: 'Autopilot Meltdown', sair: 'Exit',
-        alerta: '⚠ AUTOPILOT FAILURE', restaurado: '✔ AUTOPILOT RESTORED',
-        alerta_peso: '⚠ OVER WEIGHT LIMIT', dica_peso: 'The spacecraft is too heavy and won\'t respond!',
-        combustivel: 'FUEL', barra_estrelas: 'Stars you can still earn',
+        fase: 'PHASE 1 · PROJECT MERCURY', sair: 'Exit', task_n: 'TASK {n}/3',
+        tasks: {
+          t1: { nome: 'The Autopilot Failure', alerta: '⚠ AUTOMATIC CONTROL FAILURE', ok: '✔ AUTOMATIC CONTROL RESTORED', guia: 'Put the + crosshair on the 4 red dots and hold on each one.' },
+          t2: { nome: 'The Communication Blackout', alerta: '⚠ LOSS OF CONTACT WITH EARTH', ok: '✔ CONTACT RESTORED', guia: 'Read the code on the clipboard and type it into the radio. Do not eject!' },
+          t3: { nome: 'The Heat Shield Alarm', alerta: '⚠ DANGER: HEAT SHIELD SENSOR UNSTABLE', ok: '✔ REENTRY COMPLETE', guia: 'Decide fast: eject the capsule or hold the retropack.' }
+        },
+        contagem: 'LAUNCH IN', decolagem: 'LIFTOFF!', pular: 'Skip ▶',
+        alerta_peso: '⚠ OVER WEIGHT LIMIT · LAUNCH ABORTED', dica_peso: 'The rocket is too heavy to lift off!',
+        barra_estrelas: 'Stars you can still earn',
         dica: 'Move the camera: put the + on a red dot and hold for {s} s',
         dica_toque: 'Drag the screen: put the + on a red dot and hold for {s} s',
-        segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME',
-        sucesso_titulo: 'Mission accomplished!', novo_card: 'New card in your Space Album',
+        segure: 'Hold steady…', pontos: 'DOTS', tempo: 'TIME', limite: 'LIMIT', bonus_hud: 'BONUS',
+        t2_dica: 'Find the RADIO RESET code on the clipboard and type it into the radio.',
+        t2_aba_prancheta: '📋 Navigation table', t2_aba_radio: '📻 Radio',
+        t2_prancheta_titulo: 'FLIGHT PLAN · FRIENDSHIP 7', t2_alvo: 'RADIO RESET',
+        t2_linhas: ['ORBIT CHECK', 'CABIN PRESSURE', 'RETRO SEQUENCE', 'RCS FUEL'],
+        t2_manual: '◀ flight manual', t2_estatica: 'NO SIGNAL · enter the code', t2_invalido: 'Invalid code',
+        t2_ok: '“Friendship 7, we read you. Welcome back.”', t2_enviar: 'ENTER',
+        ejetar: 'EJECT CAPSULE',
+        t3_decida: 'Decide in {s} s: eject the capsule or hold the retropack?',
+        t3_manter: 'HOLD RETROPACK', t3_barra: 'RETROPACK',
+        t3_segure: 'Hold the green button until the bar fills', t3_segurando: 'Holding… don\'t let go!', t3_pausado: 'Paused: hold again!',
+        parabens_titulo: 'Congratulations, {nome}!', parabens_sub: 'What this mission taught', ciencia: 'Science: ', fato: 'Real fact: ', ver_resultado: 'See result ▶',
+        aprender: {
+          t1: { areas: 'Physics (inertia and mechanics) · Automation and Control Engineering',
+            ciencia: 'In space there is almost no air to slow a spacecraft down. Because of inertia, a capsule that starts to spin keeps spinning until a thruster pushes it the other way. The automatic control does that by itself; when it fails, the pilot takes over.',
+            fato: 'On Friendship 7 the capsule drifted out of attitude and John Glenn flew it by hand.' },
+          t2: { areas: 'Physics (electromagnetic waves) · Telecommunications Engineering',
+            ciencia: 'Radio carries voices on electromagnetic waves. During reentry the air around the capsule gets so hot that it becomes plasma, an electrified gas that blocks those waves.',
+            fato: 'John Glenn spent 4 min 20 s without radio contact during reentry.' },
+          t3: { areas: 'Physics (thermodynamics) · Materials Engineering',
+            ciencia: 'During reentry the capsule squeezes the air in front of it, and the energy of motion turns into heat. The heat shield is made of materials that withstand that heat and protect the astronaut.',
+            fato: 'The loose heat shield warning came from a faulty switch. To be safe, the retropack stayed strapped to the capsule during reentry.' }
+        },
+        sucesso_titulo: 'Mission accomplished!', novo_card: 'The real mission · new card in your Space Album',
         voltar: 'Keep exploring', proxima: 'Next phase',
-        // stars: 3 ≤ 10 s · 2 ≤ 17 s · 1 ≤ 25 s · slower = failed (the mission ends at 40 s)
         falhou_titulo: 'MISSION FAILED',
-        tentar: 'Try again', sair_mapa: 'Back to the map', trocar: 'Change equipment',
-        // result math. {t} time · {b} bonus · {f} final time · {e} stars
-        conta: 'Time {t} − {b} s lightness bonus = {f} · {e}',
-        conta_peso: 'Weight {p} kg · limit {l} kg · the spacecraft lost control',
-        sem_estrelas: 'no stars', bonus_hud: 'BONUS',
+        tentar_task: 'Retry task', reiniciar: 'Restart mission', sair_mapa: 'Back to the map',
+        conta: 'T1 {a} + T2 {b} + T3 {c} − {l} s lightness = {f} · {e}',
+        conta_peso: 'Weight {p} kg · limit {l} kg · the rocket did not lift off',
+        conta_task: 'Failed on Task {n} · {nome}',
+        sem_estrelas: 'took too long',
         escolha_titulo: 'Phase 1 complete!', escolha_txt: 'Your best result:', refazer: 'Replay Phase 1'
       },
       // Marcos lines on the result screen (fictional, written for the game).
       marcosResultado: {
-        peso: '{nome}, the Atlas rocket can only carry {limite} kg and your spacecraft weighed {peso} kg. Too heavy: it never reached the right orbit and lost control before you could act! In space engineering every kilogram counts: pick the equipment that helps most and leave the rest on the ground.',
-        tempo: 'The spacecraft was out of control for too long, {nome}. In Project Mercury, astronauts had to act fast when the autopilot failed.',
-        lento: 'You saved the spacecraft, but it took {tempo}. To earn stars, your final time must be under {limiteEstrela} s.',
-        dica_combustivel: 'Tip: the extra fuel would have given you {extra} more seconds.',
-        dica_proximos: 'Tip: try locking the dots closest to your crosshair first.',
-        dica_giroscopio: 'Tip: with the gyroscope, the crosshair snaps to the center of the dots.',
-        dica_leveza: 'Tip: a lighter spacecraft earns a time bonus: every {bonusKg} kg free is worth {bonusS} s.',
-        sucesso: 'Great job, {nome}! Final time {tempo} and {estrelas} of 3 stars. You flew like a real Project Mercury astronaut!'
+        peso: '{nome}, the rocket can only carry {limite} kg and the spacecraft weighed {peso} kg. It never left the pad! In space engineering every kilogram counts: pick only what helps the most.',
+        ejetar2: 'Ejecting during reentry would be fatal. John Glenn spent 4 minutes without radio and trusted his training. Sometimes the right answer is to stay calm and follow the procedure.',
+        ejetar3: 'It was a sensor error! The shield was secure. Ejecting in a panic loses the mission. Holding the retropack was NASA\'s real decision.',
+        tempo_sem: 'You ran out of time, {nome}. The {equipamento} would have helped right here. Next time, think about which task is hardest for you before choosing.',
+        tempo_com: 'Almost there, {nome}! Even with the {equipamento}, time got tight. Take a breath, plan your steps and try again.',
+        lento: 'You brought the spacecraft home, {nome}, but your final time was {tempo}. To earn stars it must be {limiteEstrela} s or less.',
+        sucesso: 'Excellent work, {nome}! You made decisions like a real NASA astronaut. Check this mission\'s historical record in your album!'
       },
       preparo: {
-        titulo: 'Mission preparation',
-        objetivo: 'Choose what to carry on the spacecraft. Then lock the 4 red dots with the + crosshair as fast as you can.',
-        nave: 'Spacecraft weight: {n} kg', limite: 'Atlas rocket limit: {n} kg',
+        titulo: 'Mission Flight Manifest',
+        aba_missao: '1 · Mission', aba_itens: '2 · Equipment',
+        descricao: 'On February 20, 1962, John Glenn orbited the Earth 3 times aboard Friendship 7. Relive the three tensest moments of that flight.',
+        continuar: 'Choose equipment ▶', voltar: '◀ Mission',
+        nave: 'Spacecraft weight: {n} kg', limite: 'Rocket limit: {n} kg',
         peso: 'Weight: {p} / {l} kg · Free: {f} kg', acima: 'Weight: {p} / {l} kg · {x} kg over the limit!',
         bonus: 'Lightness bonus: −{b} s',
-        dica: 'A lighter spacecraft handles better: every {kg} kg free takes {s} s off your final time.',
-        lancar: '🚀 Launch',
+        dica: 'Take at most {max} items. Every {kg} kg free takes {s} s off your final time.',
+        max_itens: 'Only {max} items fit! Unselect one to swap.',
+        check_traje: 'Space suit on', check_itens: 'Equipment: {n} of {max}', check_peso_ok: 'Weight within the limit', check_peso_ruim: 'Weight over the limit',
+        lancar: '🚀 Board',
         itens: {
-          amortecedor: { nome: 'Shock absorber', txt: 'The cabin shakes less and aiming gets easier.' },
-          combustivel: { nome: 'Extra fuel', txt: 'More time before the spacecraft goes out of control.' },
-          giroscopio: { nome: 'Gyroscope', txt: 'Touch the gray ring and the crosshair jumps to the center of the dot.' }
+          giroscopio: { nome: 'Gyroscope', txt: 'Locks each dot in 1.2 s (instead of 2 s) and the crosshair snaps to the center.' },
+          manual: { nome: 'Flight Manual', txt: 'Highlights the code on the clipboard and gives 15 extra seconds.' },
+          escudo: { nome: 'Reinforced Shield', txt: 'Holding the retropack takes 6 s (instead of 10 s) and the cabin shakes less.' }
         }
       },
       // Real mission cards (album). Phase 1: photo and goal from NASA record 9248362; "what happened" from NTRS report 20040110111.
       cards: {
         missao1: {
           nome: 'Friendship 7 · Mercury-Atlas 6',
-          objetivo: 'Fly the first U.S. manned orbital flight: John Glenn orbited the Earth three times in about 5 hours.',
-          aconteceu: 'NASA’s report records a few difficulties during the flight and deviations from the planned sequence. Its conclusion: the astronaut contributes to mission success through the capacity to control the spacecraft and its systems.',
+          objetivo: 'Fly the first U.S. crewed orbital flight. On February 20, 1962, John Glenn orbited the Earth 3 times in 4 h 55 min.',
+          aconteceu: 'The capsule drifted out of attitude and Glenn flew it by hand. During reentry he spent 4 min 20 s without radio. A warning said the heat shield was loose, but it was a faulty switch: the retropack stayed strapped on to be safe and the landing was a success.',
           vazio: 'Complete Phase 1'
         },
         missao2: { nome: 'Phase 2', vazio: 'Phase 2 card' }
