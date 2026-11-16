@@ -1,278 +1,300 @@
-# Rookie Rocket · demo local
+# Rookie Rocket
 
-Demo navegável do jogo que está sendo criado no Roblox para o **NASA Space Apps Challenge 2026 · Space Mission Design Game**.
+**Fly two real NASA missions, make the calls the astronauts made, and learn the science behind them.**
 
-**Como abrir:** dê dois cliques em `index.html`. Não precisa de servidor, instalação nem internet: o motor 3D (`lib/three.min.js`), a fonte dos títulos (`lib/Michroma-Regular.ttf`) e as fotos (`nasa/`) já estão na pasta.
+Rookie Rocket is our entry for the **NASA Space Apps Challenge 2026 · Space Mission Design Game**. You are a rookie astronaut on your first day at a space agency inspired by the Kennedy Space Center. You meet your guide, walk through a museum of real exhibits, pack your spacecraft under a strict weight limit, and then fly:
 
-**Site publicado:** https://annacdiniz-dev.github.io/Rookie-Rocket-demo/
+- **Phase 1 · Project Mercury (Friendship 7, 1962):** take manual control, survive the radio blackout, and decide what to do about the heat shield alarm.
+- **Phase 2 · International Space Station:** dock Zarya to Unity (STS-88), fix a slack solar array on a spacewalk (STS-97), and seal a 2 mm leak (Soyuz MS-09).
 
-## Início do jogo
+Every mission ends with the science you just practiced and a card of the real mission, with an official NASA photo and sources.
 
-Um único card, nesta ordem:
+| | |
+|---|---|
+| ▶ **Play the web demo (no login, no install)** | https://annacdiniz-dev.github.io/Rookie-Rocket-demo/ |
+| 🎮 **Full game on Roblox** | https://www.roblox.com/share?code=a84324d6a84b554796b4115f8931b4ff&type=ExperienceDetails&stamp=1794753740191 |
+| 🌍 Languages | English and Portuguese, switchable at any time |
+| 📱 Devices | Desktop and mobile (touch, portrait and landscape) |
+| 👥 Audience | Ages 10 to 17 |
 
-1. **Idioma** (Português ou English, com caixa de seleção). A troca é instantânea: interface, falas do Marcos, exposições, placas 3D, missões e conquistas mudam de idioma.
-2. **Nome de astronauta:** aparece sobre o personagem, no telão e nas falas.
-3. **Personagem:** Feminino ou Masculino. O personagem começa **sem capacete**. Em português, as palavras com gênero acompanham a escolha (Estagiário/Estagiária, selecionado/selecionada).
+---
 
-No jogo, o botão **PT/EN** troca o idioma sem perder o lugar no mapa.
+## What is in this repository
 
-## HUD
+This repository holds the two halves of the project side by side.
 
-- **Canto esquerdo:** idioma (🌐 PT/EN), **i** (fontes, créditos e a equipe em destaque) e 📖 (**Álbum espacial**). O canto direito fica livre.
-- O nome do Marcos, o "!" e a seta vermelha de objetivo somem quando há parede entre a câmera e eles.
+| Path | What it is | Who it is for |
+|---|---|---|
+| **`/` (root)** | The **web demo**: a 3D, Roblox-style version of the game that runs in any browser. Plain HTML, CSS and JavaScript, no build step, no account. | Judges and anyone who wants to play right now |
+| **[`rookie-rocket-roblox/`](rookie-rocket-roblox/)** | The **Roblox project**: the Luau scripts, map generators, specs and the place file of the full multiplayer game. | Developers who want to see how the Roblox experience is built |
 
-**Equipe:** Anna Clara Diniz, Hurias Felipe Silveira, Luis Renato Fernandes, Nando Nogueira, Túlio Amaral e Valter Cauã Alves.
-
-## Fase 1 · Missão 1: Projeto Mercury (Friendship 7)
-
-A missão segue a spec do jogo no Roblox, adaptada para um jogador (a demo não tem co-op nem login).
+The web demo exists because a Space Apps submission has to be playable without a login. It follows the Roblox game's own mission data, so both tell the same story with the same numbers.
 
 ```
-Manifesto de voo (missão → equipamentos) → contagem de 12 s
-  → Task 1 → Task 2 → Task 3 → parabéns + aprendizado → resultado + estrelas → card da missão real
-  Falha em qualquer ponto: o Marcos explica → Repetir task | Reiniciar missão | Sair para o mapa
+Rookie-Rocket-demo/
+├── index.html            ← the web demo (open this)
+├── jogo.js               ← 3D world, characters, physics, both missions
+├── dados.js              ← every number and every text, in English and Portuguese
+├── estilo.css            ← interface and mobile layout
+├── lib/                  ← three.js r128 and fonts, vendored
+├── nasa/                 ← official NASA photos used by the exhibits and cards
+├── versao-anterior/      ← the first 2D prototype, kept for history
+└── rookie-rocket-roblox/ ← the Roblox project (see below)
 ```
 
-Ao embarcar pela escotilha, o **capacete aparece sozinho** e abre o **Manifesto de voo**.
+---
 
-### Manifesto de voo
+## Part 1 · The web demo
 
-Duas abas:
+### Run it
 
-1. **Missão:** descrição da Friendship 7 e o guia das 3 tasks.
-2. **Equipamentos:** itens com ícone e peso, barra de peso e checklist (traje, itens, peso). O botão 🚀 **Embarcar** fica sempre habilitado, para o erro de peso acontecer.
+- **Online:** open https://annacdiniz-dev.github.io/Rookie-Rocket-demo/
+- **Offline:** download the repository and open `index.html`. It works from the file system; nothing needs to be installed or served.
 
-| Equipamento | Peso | Task | Efeito |
-|---|---|---|---|
-| 🧭 Giroscópio | 15 kg | 1 | travar cada alvo leva **1,2 s** (em vez de 2,0 s). Na demo ele também tem o **ímã**: quando o "+" encosta no círculo cinza, a mira pula para o centro do ponto |
-| 📘 Manual de bordo | 20 kg | 2 | destaca o código na prancheta e dá **+15 s** (30 s → 45 s) |
-| 🛡️ Escudo reforçado | 25 kg | 3 | segurar o retropack leva **6 s** (em vez de 10 s) e a cabine treme menos |
+Pick a language, type a name, choose a character and press play.
 
-**Regra de peso:**
-- A nave pesa **20 kg** e o foguete leva no máximo **60 kg**.
-- No máximo **2 equipamentos**. Tentar marcar o terceiro mostra um aviso.
-- 15 + 20 = 55 kg e 15 + 25 = 60 kg são válidos. **20 + 25 = 65 kg é o erro didático.**
-- Barra: verde até 50 kg, amarela de 51 a 60 kg, vermelha acima de 60 kg.
-- **Bônus de leveza** = ⌊(60 − peso) ÷ 10⌋ × 2 s.
-- **Acima de 60 kg:** o jogador entra na cápsula, mas o lançamento é cancelado. Depois de 1,4 s o alerta **PESO ACIMA DO LIMITE** dispara e a cabine sacode; aos 3,4 s o banner **MISSÃO FALHOU** abre por cima da cena. O foguete não sai da plataforma.
+### The world
 
-### Lançamento
+| # | Area | What you find there |
+|---|---|---|
+| 01 | **Reception** | Marcos Pontes, your mission guide, greets you by name. A welcome screen, a tilted Earth globe, space paintings, and a kiosk that links to the official Roblox game |
+| → | Hallway 1 | Neon arrows and signs to the museum |
+| 02 | **Museum · Kennedy Space Center Visitor Complex** | Six exhibits with real NASA photos and facts: Rocket Garden, Sigma 7 on a Redstone, Mercury Mission Control, the Astronaut Hall of Fame, **Atlantis tilted at 43.21° with its payload bay doors open**, and a **Saturn V hanging horizontally** |
+| → | Hallway 2 | The boarding hallway, on the wall opposite the entrance |
+| 03 | **Hangar** | The RR-01 rocket, stairs to a platform, an elevator with call buttons, the access arm and the hatch that starts the missions |
 
-Contagem regressiva de **12 s** dentro da cápsula, com céu azul na janela (há um botão **Pular**). Nos 3 s finais os motores ligam e a cabine treme. Na decolagem o céu escurece até virar espaço e começa a Task 1.
+Movement uses Roblox defaults so the demo feels like the real game: 1 unit is 1 stud, blocky R6-style characters, studs on the floor, JumpPower 50, Gravity 196.2, and a slightly faster WalkSpeed of 22.
 
-### As 3 tasks
+### How a mission works
 
-Cada task abre com um aviso "TASK n/3" e tem cronômetro próprio, que só corre com a task ativa.
+Both phases share one flow:
 
-**Task 1 · A Falha do Piloto Automático**
-- Alerta: **FALHA NO CONTROLE AUTOMÁTICO**, com tremor leve e luz vermelha.
-- O jogador leva a mira **+** até 4 pontos vermelhos no espaço e segura até o círculo branco completar (2,0 s; 1,2 s com o giroscópio).
-- Controles: mouse, setas/WASD ou arrastar no celular.
-- **Falha:** passar de 40 s.
+```
+Mission Flight Manifest (mission → equipment) → 12 s countdown
+  → Task 1 → Task 2 → Task 3 → congratulations + what you learned
+  → result with stars → the real mission card (added to the Space Album)
 
-**Task 2 · O Blackout de Comunicação**
-- Alerta: **PERDA DE CONTATO COM A TERRA**, com estática no rádio.
-- Duas estações, em abas: a **Mesa de navegação** tem a prancheta com 5 códigos (o certo é o "REINÍCIO DO RÁDIO", sorteado a cada tentativa) e o **Rádio** tem o teclado. O jogador lê em uma e digita na outra.
-- Com o manual de bordo, a linha certa aparece destacada.
-- Código errado mostra só **"Código inválido"**. Código certo: a estática para e chega a mensagem "Friendship 7, estamos ouvindo você. Bem-vindo de volta."
-- Ao lado do visor pisca o botão vermelho **EJETAR CÁPSULA**.
-- No teclado do computador: números, Backspace, Enter, e ← → para trocar de estação.
-- **Falha:** apertar EJETAR CÁPSULA ou o tempo acabar (30 s; 45 s com o manual).
+Any failure: Marcos explains what happened → Retry task | Restart mission | Back to the map
+```
 
-**Task 3 · O Alarme do Escudo Térmico**
-- Alerta: **PERIGO: SENSOR DO ESCUDO TÉRMICO INSTÁVEL**, com **10 s para decidir**.
-- Dois botões: **EJETAR CÁPSULA** (vermelho) e **MANTER RETROPACK** (verde).
-- Mantendo, a cabine fica vermelha de calor, treme e o plasma laranja passa pelas janelas. O jogador **segura** o botão verde até a barra encher (10 s; 6 s com o escudo). **Soltar só pausa.**
-- **Falha:** apertar EJETAR CÁPSULA ou não decidir nos 10 s.
+**The weight trade-off.** The spacecraft weighs 20 kg and the rocket can only lift 60 kg. Each mission offers three pieces of equipment (15, 20 and 25 kg), and each one helps with exactly one task. You can take at most two. Taking the 20 kg and the 25 kg items together makes 65 kg, and the launch is aborted: that mistake is part of the lesson. Travelling light pays off too, with a lightness bonus of 2 seconds for every 10 kg left free.
 
-### Painel durante a missão
+**Scoring.** Each task has its own timer.
 
-- **Barra das estrelas:** mostra quantas estrelas ainda dá para ganhar. Tem 3 trechos e esvazia com o tempo final: cheia até 2/3 nos primeiros 45 s (⭐⭐⭐), até 1/3 aos 70 s (⭐⭐) e vazia aos 100 s (⭐). Ao perder uma estrela, a barra dá um tranco, toca um som e o celular vibra.
-- **TEMPO:** soma das tasks até agora, com o bônus de leveza embaixo.
-- **LIMITE:** quanto falta para a task atual falhar por tempo.
-- No computador o painel fica à direita e a barra das estrelas no alto. No celular tudo vira uma faixa embaixo; com o aparelho deitado, o teclado do rádio passa a ter 2 fileiras.
+`Final time = max(0, T1 + T2 + T3 − lightness bonus)`
 
-### Pontuação
-
-`Tempo final = max(0, T1 + T2 + T3 − bônus de leveza)`
-
-| Tempo final | Estrelas |
+| Final time | Stars |
 |---|---|
-| até 45 s | ⭐⭐⭐ |
-| 46 a 70 s | ⭐⭐ |
-| 71 a 100 s | ⭐ |
-| acima de 100 s | nenhuma: missão falhou ("demorou demais") |
+| up to 45 s | ⭐⭐⭐ |
+| 46 to 70 s | ⭐⭐ |
+| 71 to 100 s | ⭐ |
+| over 100 s | none: "took too long" |
 
-Exemplo do resultado: "T1 12,0 s + T2 18,0 s + T3 15,0 s − 4 s de leveza = 41,0 s · ⭐⭐⭐".
+A star bar on screen shows how many stars are still within reach and shakes when you lose one.
 
-### Falhas e falas do Marcos
+### Phase 1 · Project Mercury (Friendship 7)
 
-Toda falha interrompe a partida e abre o banner **MISSÃO FALHOU** com o Marcos explicando. As falas são fictícias.
-
-| Gatilho | Fala |
-|---|---|
-| Peso acima de 60 kg | "o foguete só leva 60 kg e a nave estava com {peso} kg. Ele nem saiu da plataforma!…" |
-| Ejetar na Task 2 | "Ejetar durante a reentrada seria fatal. O John Glenn ficou 4 minutos sem rádio e confiou no treinamento…" |
-| Ejetar na Task 3 | "Era um erro do sensor! O escudo estava preso… Manter o retropack foi a decisão real da NASA." |
-| Tempo esgotado sem o item da task | "Faltou tempo, {nome}. O {equipamento} teria ajudado justamente aqui…" |
-| Tempo esgotado com o item da task | "Quase lá, {nome}! Mesmo com o {equipamento}, o tempo apertou…" |
-| Tempo final acima de 100 s | "Você trouxe a nave de volta, mas o tempo final foi de {tempo}…" |
-| Sucesso | "Excelente trabalho, {nome}! Você tomou decisões de verdadeiro astronauta da NASA…" |
-
-Botões do banner de falha:
-- **Repetir task:** zera só o tempo daquela task e mantém os itens. Não aparece na falha por peso nem no "demorou demais".
-- **Reiniciar missão:** volta ao Manifesto de voo, na aba de equipamentos, e libera a troca de itens.
-- **Sair para o mapa.**
-
-### Fim da missão
-
-1. **Parabéns + aprendizado:** para cada task, as áreas (Física e Engenharia), um texto de ciência e o fato real ligado a ela.
-2. **Resultado:** a conta do tempo, as estrelas e a fala do Marcos.
-3. **Card da missão real** (Friendship 7, 20/02/1962), que entra no **Álbum espacial**. **Voltar a explorar** volta ao mapa e **Próxima fase** abre o banner do Roblox.
-
-Embarcar de novo depois de concluir mostra o melhor resultado em estrelas e as opções **Refazer fase 1** e **Próxima fase**.
-
-O capacete sai da cabeça quando o jogador desce da plataforma de cima (pulando ou de elevador) e volta quando ele sobe de novo.
-
-### Onde mexer
-
-Todos os números ficam no [dados.js](dados.js): `regrasPeso`, `equipamentos` e `missao1` (contagem, limites das tasks e das estrelas). São **valores didáticos** simplificados para jogabilidade e aprendizado, não dados reais da NASA; isso aparece nos créditos. Os textos ficam em `idiomas.pt` e `idiomas.en`, em `missao`, `marcosResultado` e `preparo`.
-
-### O que a demo não tem (em relação ao Roblox)
-
-- **Co-op:** a demo é para um jogador. As falas do Marcos foram passadas para o singular.
-- **Andar dentro da cápsula:** as estações da Task 2 são abas, e a câmera vira sozinha para cada uma.
-- **Ana, armário do traje e cutscene da decolagem:** o Manifesto de voo abre direto na escotilha, o jogador já está de traje e a decolagem acontece vista de dentro da cabine.
-
-**Fontes do card e dos fatos:** foto do registro NASA 9248362 e relatório oficial no NTRS (20040110111). Fatos usados: Friendship 7 em 20/02/1962, 3 órbitas em 4 h 55 min; Glenn guiou a cápsula à mão quando ela saiu de atitude; apagão de rádio de 4 min 20 s; o sinal de escudo solto era um interruptor com defeito e o retropack ficou preso. A descrição da missão, o guia das tasks e os textos da tela de aprendizado são os do jogo no Roblox (`rookie-rocket-roblox/build/rookie/shared/Missoes.luau`): em inglês, iguais; em português, traduzidos.
-
-A pasta [rookie-rocket-roblox/](rookie-rocket-roblox/) guarda o projeto do Roblox (scripts Luau, specs e o place). A demo web não depende dela.
-
-## Fase 2 · Missão 2: Estação Espacial Internacional (ISS)
-
-Usa o mesmo fluxo, o mesmo peso (20 kg de nave, limite de 60 kg, até 2 itens), o mesmo bônus de leveza e as mesmas estrelas (45 / 70 / 100 s) da Fase 1. Só mudam os equipamentos e as 3 tasks.
-
-**Desbloqueio:** a ISS fica bloqueada até o jogador ganhar ao menos 1 estrela na Mercury. No Manifesto de voo, a aba **Missão** tem um seletor com as duas fases; a ISS bloqueada mostra "🔒 BLOQUEADA · Ganhe 1★ na Mercury". Depois de concluir a Fase 1, **Próxima fase** abre o manifesto já na ISS.
-
-| Equipamento | Peso | Task | Efeito |
+| Equipment | Weight | Helps with | Effect |
 |---|---|---|---|
-| ⏲️ Sensor de pressão | 15 kg | 1 | zona verde do controle de pressão **50% maior** |
-| 🧤 Luvas aderentes | 20 kg | 2 | arrasta os cabos **2× mais rápido** sem escorregar |
-| 🧰 Kit de vedação | 25 kg | 3 | perda de ar **40% menor** e vedação em **2,0 s** (em vez de 3,0 s) |
+| 🧭 Gyroscope | 15 kg | Task 1 | Locks each target in 1.2 s instead of 2.0 s, and the crosshair snaps to the target |
+| 📘 Flight Manual | 20 kg | Task 2 | Highlights the code on the clipboard and adds 15 s |
+| 🛡️ Reinforced Shield | 25 kg | Task 3 | Hold the retropack for 6 s instead of 10 s, with less shake |
 
-**Chegada:** contagem de 12 s (com Pular) e o aviso "ACOPLADO À ESTAÇÃO!".
+| Task | What you do | How you fail |
+|---|---|---|
+| **1 · The Autopilot Failure** | Put the **+** crosshair on 4 red markers outside the capsule and hold until each circle fills | Passing 40 s |
+| **2 · The Communication Blackout** | Read a random 4-digit code on the navigation clipboard, then type it into the radio. A red EJECT CAPSULE button blinks next to the keypad | Pressing EJECT, or running out of time (30 s, or 45 s with the manual) |
+| **3 · The Heat Shield Alarm** | Decide within 10 s: EJECT CAPSULE or HOLD RETROPACK. Then hold the green button while reentry plasma fills the windows. Letting go only pauses | Pressing EJECT, or not deciding in time |
 
-**Task 1 · O Acoplamento (STS-88, 1998)**
-- Alerta: **PRESSÃO DO BRAÇO ALTA DEMAIS**.
-- No console do braço robótico, o jogador arrasta **4 esferas** até 4 alvos (✕) e mantém a **pressão na zona verde** (centro em 0,5; meia largura de 0,1, ou 0,15 com o sensor), ajustando a válvula.
-- A pressão segue a válvula com atraso e sofre uma deriva que obriga a reajustar. Fora do verde o braço não obedece: a esfera que estava sendo carregada escorrega e volta.
-- Ao completar, a Zarya desliza e trava no Unity do lado de fora.
-- **Falha:** pressão no máximo (≥ 0,95) por 3 s seguidos, ou passar de 40 s.
+### Phase 2 · International Space Station
 
-**Task 2 · O Painel Solar Preso (STS-97, 2000)**
-- Alerta: **CABOS DO PAINEL SOLAR SOLTOS**.
-- Caminhada espacial: a cabine some e fica só o espaço, com a Terra ao fundo. O jogador arrasta **2 cabos** soltos, cada um até a sua polia verde.
-- O cabo segue o dedo a no máximo 12 studs/s (os propulsores). Acima de 6 studs/s (12 com as luvas) por mais de 0,3 s, ele **escorrega e volta ao lugar**, sem fim de jogo. Uma barra de velocidade mostra o limite.
-- **Falha:** passar de 45 s.
+Locked until you earn at least one star on Mercury.
 
-**Task 3 · O Vazamento de 2 mm (Soyuz MS-09, 2018)**
-- Alerta: **PRESSÃO DA CABINE CAINDO**; o ar cai 2,5% por segundo.
-- Em ordem: **fechar a escotilha** do módulo ao lado (corta a perda pela metade); **achar o furo** entre 4 painéis da parede (sorteado a cada tentativa, marcado por partículas de ar sendo sugadas); **pegar a gaze com epóxi** na caixa de ferramentas e **segurar** sobre o furo (3,0 s; 2,0 s com o kit). Soltar só pausa.
-- **Falha:** a pressão da cabine chegar a 0%.
+| Equipment | Weight | Helps with | Effect |
+|---|---|---|---|
+| ⏲️ Pressure Sensor | 15 kg | Task 1 | Green zone of the pressure control 50% bigger |
+| 🧤 Grip Gloves | 20 kg | Task 2 | Drag the loose cables 2× faster without slipping |
+| 🧰 Sealing Kit | 25 kg | Task 3 | Air loss 40% lower and sealing in 2.0 s instead of 3.0 s |
 
-**Falas do Marcos na Fase 2:** as mesmas da Fase 1 para peso, tempo esgotado (com e sem o item) e sucesso, mais uma própria para a pressão no máximo na Task 1 ("Força demais esmaga o módulo! Na STS-88, a solução foi aliviar a pressão no braço…"). Na Task 3, ficar sem ar usa as falas de tempo esgotado.
+| Task | What you do | How you fail |
+|---|---|---|
+| **1 · The Docking (STS-88, 1998)** | At the robotic arm console, drag 4 spheres onto 4 ✕ marks while keeping the arm pressure in the green zone with a valve. The pressure lags and drifts, so you keep adjusting. When you finish, Zarya slides in and locks onto Unity outside | Pressure at maximum for 3 s in a row, or passing 40 s |
+| **2 · The Stuck Solar Panel (STS-97, 2000)** | A spacewalk. Drag 2 loose cables to their green pulleys. Move too fast and the cable slips back to where it started | Passing 45 s |
+| **3 · The 2 mm Leak (Soyuz MS-09, 2018)** | Cabin air drops 2.5% per second. Close the hatch (halves the loss), find the hole among 4 wall panels by spotting air being sucked in, take the epoxy gauze and hold it on the hole | Cabin pressure reaching 0% |
 
-**Fim:** parabéns com a ciência e o fato real de cada task, resultado com a conta e as estrelas, e o card **Construindo a ISS** (STS-88 · STS-97 · Soyuz MS-09; 1998 · 2000 · 2018), com a foto oficial `iss020e005813`, o que aconteceu, a ligação com as três tasks, o trade-off de massa e os links das três páginas da NASA. O card entra no Álbum espacial. **Próxima fase** abre o banner do Roblox (Fase 3).
+After Phase 2, **Next phase** takes you to the full game on Roblox.
 
-**Onde mexer:** `missao2` e os itens com `missao: 2` em `equipamentos`, no [dados.js](dados.js); textos em `missao2` de cada idioma. A deriva da pressão é 0,25 na demo (0,32 no Roblox), porque aqui um jogador cuida das esferas e da pressão ao mesmo tempo.
+### Marcos Pontes, your guide
 
-**O que a demo não tem:** co-op, andar pela estação (Cupola, Airlock e túnel viram painéis) e flutuar com propulsores (na Task 2 o jogador arrasta os cabos em um quadro). No Roblox a Missão 2 ainda aguarda playtest completo, então a demo segue a spec, não um comportamento já validado no jogo.
+Marcos Pontes, the first Brazilian astronaut, appears as a blocky character who welcomes you and explains every failure: what went wrong, the parallel with the real event, and a tip tied to the equipment you did or did not bring. **His lines are fictional and written for the game**; the game says so in the credits.
 
-## Link do Roblox
+### Controls
 
-O link do jogo oficial fica em `linkRoblox`, no topo do [dados.js](dados.js). Se ficar vazio, o botão mostra "Link do jogo em breve". O botão **Jogar no Roblox** aparece em três lugares:
+| | Desktop | Mobile |
+|---|---|---|
+| Move | WASD or arrow keys | On-screen joystick |
+| Jump | Space | Jump button |
+| Interact | E, or click | Tap the prompt |
+| Look around | Drag the mouse | Drag with one finger |
+| Zoom, down to first person | Mouse wheel | Pinch with two fingers |
+| Mission panels | Mouse and keyboard | Touch; panels become a compact strip at the bottom |
 
-- no **totem "JOGO OFICIAL"** da recepção (à direita de quem entra): chegar perto e apertar **E**, ou tocar nele;
-- no banner de **Próxima fase**, depois de concluir a **Fase 2** (a Fase 3 é no Roblox);
-- no Manifesto de voo, como card "Fase 3", depois que a Fase 2 foi concluída.
+Interface text cannot be selected or copied, so stray drags never interrupt play. Progress is saved in the browser.
 
-O nome do desafio (**Space Mission Design Game**) aparece em destaque no botão **i** (créditos) e leva à página do desafio. Nome, evento e link ficam em `desafio`, no dados.js.
+### Shortcuts for presenting
 
-## O que tem no mapa
+Add these after `index.html` to jump straight to a moment (`g=m` is the female character, `g=h` the male one):
 
-| # | Área | Destaques |
-|---|------|-----------|
-| 01 | **Recepção** (lobby da agência) | Marcos Pontes com "!" de missão, balão de fala em 5 partes com o nome do jogador, telão "BEM-VINDO(A), NOME!", globo holográfico, 2 totens (Marcos Pontes e entrada do Visitor Complex), **totem do jogo oficial no Roblox** |
-| → | Corredor 1 | Setas neon e placas "Museu KSC" |
-| 02 | **Museu: Kennedy Space Center Visitor Complex** | 6 exposições: Rocket Garden, Sigma 7 sobre Redstone, Controle de Missão Mercury, Hall da Fama com estátua, **Atlantis erguido e inclinado 43,21° com as portas abertas**, **Saturn V suspenso na horizontal** |
-| → | Corredor 2 (na parede **oposta** à entrada) | "Corredor de embarque" |
-| 03 | **Hangar** | Nave RR-01, **escada à direita da nave** até a plataforma, **elevador** (com botões de chamada no chão, embaixo e em cima) até o braço de acesso e a escotilha, que leva à **Fase 1** |
+| Link | Opens |
+|---|---|
+| `#lang=en&g=m&jogar&tp=museu` | The museum (also `recepcao`, `totem`, `hangar`, `elevador`, `braco`). Add `&pp` to start in first person |
+| `#lang=en&g=m&jogar&expo=atlantis` | An exhibit card |
+| `#lang=en&g=m&jogar&preparo` | The Mission Flight Manifest (`preparo=falha` picks an overweight load) |
+| `#lang=en&g=m&jogar&missao=2&abrir` | A task directly (`1`, `2` or `3`) |
+| `#lang=en&g=m&jogar&missao=fim&t=41` | The learning screen and the result for a 41 s run (`t=120` shows the "took too long" failure) |
+| add `&m=2` | The same shortcut for Phase 2 (ISS) |
+| `#lang=en&g=m&jogar&album` | The Space Album |
 
-## Controles
+### Tuning the game
 
-- **WASD / setas**: andar. **Espaço**: pular. **E**: interagir com o prompt mais próximo.
-- **Arrastar o mouse**: girar a câmera. **Roda do mouse**: zoom, de 48 até 6 studs. No mínimo, mais um passo da roda entra em **primeira pessoa**; rolar para trás volta.
-- **Clique** em personagens, totens, Atlantis ou Saturn V para abrir as informações. A nave do hangar não é clicável (as informações dela ficam no totem ao lado).
-- Os textos da interface não são selecionáveis nem copiáveis; só o campo do nome aceita edição.
-- **Celular**: joystick, botão de pulo e toque nos prompts. Um dedo gira a câmera. **Pinça com dois dedos** dá zoom: afastar os dedos aproxima até a primeira pessoa, juntar os dedos volta. Não há botão para isso.
-- Em primeira pessoa o boneco some, o corpo acompanha o olhar e dá para olhar para cima.
+Every number lives in [`dados.js`](dados.js): `regrasPeso` (weights and bonus), `equipamentos` (items and effects), `missao1` and `missao2` (countdown, task limits and star thresholds). Every text lives in the same file under `idiomas.en` and `idiomas.pt`. Nothing is hard-coded in the game logic.
 
-O progresso (nome, missões, exposições vistas) fica salvo no navegador.
+---
 
-**Atalhos para apresentar** (pulam a tela inicial; `g=m` é feminino e `g=h` é masculino):
-- `index.html#lang=pt&g=m&jogar&tp=museu` (ou `recepcao`, `totem`, `hangar`, `elevador`, `braco`) · acrescente `&pp` para já começar em primeira pessoa
-- `index.html#lang=en&g=h&jogar&expo=atlantis`
-- `index.html#lang=pt&g=m&jogar&preparo=falha`: abre o Manifesto de voo com manual + escudo (65 kg: ao embarcar, o lançamento é cancelado) · `preparo=bom`: só o Giroscópio · `preparo=nada`: sem itens · `preparo`: últimas escolhas
-- `index.html#lang=pt&g=m&jogar&missao`: abre a missão pela contagem · `missao=1`, `missao=2` ou `missao=3` pula direto para aquela task (acrescente `&abrir` para já passar do aviso inicial)
-- `…&missao=fim&t=41`: mostra o aprendizado e o resultado com tempo total de 41 s (`t=120` mostra a falha por demora)
-- **Fase 2 (ISS):** acrescente `&m=2` a qualquer atalho de missão ou de manifesto, por exemplo `…&missao=1&abrir&m=2` (Task 1 da ISS), `…&missao=fim&t=50&m=2` (resultado da ISS) ou `…&preparo&m=2` (manifesto da ISS). O atalho libera a ISS sem precisar da estrela.
-- `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
+## Part 2 · The Roblox project
 
-## Regra de dados: só NASA
+The folder [`rookie-rocket-roblox/`](rookie-rocket-roblox/) is the source of the full game, a Roblox place called **NASA Space Adventure**. It was developed in its own repository ([tulioamaral123/roockie-rocket](https://github.com/tulioamaral123/roockie-rocket)) and brought here with its complete commit history, so the submission keeps the demo and the game together.
 
-Todos os fatos e fotos das exposições vêm da **NASA Image and Video Library** (API oficial `images-api.nasa.gov`), consultada em 14/11/2026. Cada card mostra o ID, a data, o crédito e o link do registro:
+### What the full game adds
 
-| Exposição | Registros NASA |
-|-----------|----------------|
+- **A much larger map** inspired by the Kennedy Space Center: reception, museum and planetarium, the Launch Control Center, the Vehicle Assembly Building with the SLS on its Mobile Launcher and crawler, the crawlerway and Launch Pad 39B.
+- **Co-op for 1 to 4 players.** One astronaut reads the clipboard while another types on the radio; one aligns the spheres while another watches the pressure.
+- **Walkable spacecraft:** a Mercury capsule with three stations and an ISS module with a Cupola, an Airlock and a real floating spacewalk.
+- **Two guides,** Marcos Pontes and Ana, cutscenes for arrival and liftoff, a crew suit-up room, and navigation arrows on the floor.
+- **An interactive museum,** including a Saturn V you can explore part by part.
+
+### How it is built
+
+The place is not edited by hand. It is **generated by code**:
+
+| Piece | Where | How it reaches Roblox Studio |
+|---|---|---|
+| The map (parts, lights, signs) | `build/phase1_structure.luau` … `build/phase24_outdoor.luau` | Generator scripts, run in order by `build/run_in_studio.luau` |
+| Mission scripts | `build/rookie/{server,client,shared}` | [Rojo](https://rojo.space/), live |
+| Museum scripts | `build/museum/` | Rojo |
+| Guides and navigation | `build/guide/` | Rojo |
+| Doors, crew access, planets | `build/systems/` | Rojo |
+
+Each generator phase tags the parts it creates and clears them before rebuilding, so any phase can be re-run safely.
+
+### Where to look
+
+| File | What it tells you |
+|---|---|
+| [`docs/rookie-rocket-spec.md`](rookie-rocket-roblox/docs/rookie-rocket-spec.md) | The full mission design: Mercury and ISS, co-op, weight, stars, the Album |
+| [`build/rookie/shared/Missoes.luau`](rookie-rocket-roblox/build/rookie/shared/Missoes.luau) | **The single source of truth** for mission numbers and texts |
+| [`docs/rookie-contrato.md`](rookie-rocket-roblox/docs/rookie-contrato.md) | The contract between map parts and scripts |
+| [`docs/marcos-pontes-spec.md`](rookie-rocket-roblox/docs/marcos-pontes-spec.md), [`docs/guias-spec.md`](rookie-rocket-roblox/docs/guias-spec.md) | The guides |
+| [`museuspec.md`](rookie-rocket-roblox/museuspec.md), [`docs/museu-foguete-interativo.md`](rookie-rocket-roblox/docs/museu-foguete-interativo.md) | The museum and the explorable Saturn V |
+| [`spec-v3.md`](rookie-rocket-roblox/spec-v3.md) | How the map is laid out and built |
+| [`ROJO.md`](rookie-rocket-roblox/ROJO.md) | Setting up Rojo, VS Code and Roblox Studio |
+| [`IMPLEMENTATION.md`](rookie-rocket-roblox/IMPLEMENTATION.md) | The state of every build step |
+
+The documents inside that folder are written in Portuguese, the team's working language. All text shown to players in the Roblox game is in English.
+
+### How the demo and the game stay in sync
+
+The web demo reads its mission design from the same place the Roblox scripts do. Weights, time limits, star thresholds, equipment effects, the learning texts and the real mission cards in the demo match `Missoes.luau`: identical in English, translated in Portuguese.
+
+What the demo leaves out, because it is single-player and runs in a browser:
+
+| In the Roblox game | In the web demo |
+|---|---|
+| Co-op for up to 4 players | One player; Marcos speaks to you alone |
+| Walking between stations inside the spacecraft | Stations are panels, and the camera turns to each one |
+| Floating with thrusters on the spacewalk | Dragging the cables on a board, with the same speed rule |
+| Ana, the suit-up room and the liftoff cutscene | The manifest opens at the hatch and liftoff is seen from inside the cabin |
+| Pressure drift of 0.32 in the docking task | 0.25, because one player handles both the spheres and the pressure |
+
+---
+
+## Data and sources
+
+The project rule is strict: **only data released for the challenge or served by official NASA APIs.**
+
+- **Exhibit photos and facts** come from the **NASA Image and Video Library** (`images-api.nasa.gov`). Every card shows the record ID, the date, the credit and a link.
+- **The Friendship 7 card** uses NASA record `9248362` and the official report on the NASA Technical Reports Server, [NTRS 20040110111](https://ntrs.nasa.gov/citations/20040110111).
+- **The ISS card** uses NASA record `iss020e005813` (the P4, P5 and P6 trusses) and three NASA pages: [STS-88](https://www.nasa.gov/mission/sts-88/), [STS-97](https://www.nasa.gov/mission/sts-97/) and the [ISS status report of August 30, 2018](https://www.nasa.gov/blogs/spacestation/2018/08/30/international-space-station-status-3/).
+
+| Exhibit or card | NASA records |
+|---|---|
 | Marcos Pontes | iss012e22280, 20060409_exp12_11 |
-| Entrada do Visitor Complex | KSC-03pd2164 |
+| Visitor Complex entrance | KSC-03pd2164 |
 | Rocket Garden | KSC-03pd2174 |
 | Sigma 7 | KSC-20161107-PH_GEB02_0276 |
-| Controle de Missão Mercury | KSC-20161107-PH_GEB02_0090 |
-| Hall da Fama | KSC-20161107-PH_GEB02_0118 |
+| Mercury Mission Control | KSC-20161107-PH_GEB02_0090 |
+| Hall of Fame | KSC-20161107-PH_GEB02_0118 |
 | Atlantis | KSC-2012-6136, KSC-2012-6362, 2013-2311 |
 | Saturn V | KSC-98pc1004 |
-| Artemis I (inspiração da nave) | NHQ202211160030, MAF_20221211_Splashdown02 |
-| Card da Fase 1 (Friendship 7) | 9248362 |
-| Card da Fase 2 (Construindo a ISS) | iss020e005813 |
+| Artemis I (inspiration for the rocket) | NHQ202211160030, MAF_20221211_Splashdown02 |
+| Phase 1 card · Friendship 7 | 9248362 |
+| Phase 2 card · Building the ISS | iss020e005813 |
 
-Os textos estão em [dados.js](dados.js), em `idiomas.pt` e `idiomas.en`. Para trocar ou acrescentar uma exposição, edite só esse arquivo, sempre nos dois idiomas. Os textos em inglês seguem de perto as descrições originais da NASA.
+### What is real and what is not
 
-## Pendências e avisos
+- **Real:** the missions, dates, crews, events and photos named above.
+- **Simplified for play:** all weights, times, speeds and equipment effects are teaching values, not historical data. The game states this in its credits.
+- **Fictional:** every line spoken by the Marcos Pontes character.
+- **Original:** the scenery, the characters, the suits and the RR-01 rocket are our own block-style creations. The museum gathers in one hall attractions that sit in different buildings at the real Visitor Complex; it is a representation, not an architectural replica.
+- This is not an official product of NASA or of the Kennedy Space Center Visitor Complex.
 
-- **A página do desafio não abriu daqui** (erro de certificado SSL/TLS). Por isso não confirmei a lista de recursos liberados pelo desafio. Até lá, usei apenas a API oficial da NASA, como pedido. Se puderem colar a lista de recursos da página, eu confiro e ajusto.
-- **As falas do Marcos Pontes são fictícias** (aviso no balão e nos créditos). Os fatos citados nelas vêm dos registros da NASA acima.
-- O museu **junta em um salão** atrações que no Visitor Complex real ficam em lugares diferentes (Rocket Garden, Heroes and Legends, Space Shuttle Atlantis, Apollo/Saturn V Center). É uma representação para o jogo, não uma réplica arquitetônica.
-- A nave RR-01 é um **modelo original** inspirado no SLS com a Orion. O mapa-múndi do Controle Mercury é estilizado.
-- A demo cobre as Missões 1 e 2 inteiras (3 tasks cada). A Fase 3 em diante fica só no jogo do Roblox.
+---
 
-## Para quem vai montar no Roblox Studio
+## Team and contributions
 
-A demo foi feita em **studs**, com os valores padrão do Roblox, então dá para copiar as medidas direto:
+**Anna Clara Diniz · Hurias Felipe Silveira · Luis Renato Fernandes · Nando Nogueira · Túlio Amaral · Valter Cauã Alves**
 
-- 1 unidade = 1 stud. Personagem R6 com ~5,2 studs de altura.
-- WalkSpeed **22** (um pouco acima do padrão 16 do Roblox), JumpPower **50**, Gravity **196,2**.
-- Recepção 60×50 (pé-direito 22). Corredores 14×30 (altura 14). Museu 100×90 (altura 45). Hangar 80×60 (altura 60).
-- Escada com 14 degraus (1 stud de altura × 2 de profundidade) até a plataforma em Y=14. Elevador de Y=14 até Y=41 a 6 studs/s.
-- Prompts "E" = **ProximityPrompt**. Balão do Marcos = **BubbleChat** / `TextChatService`. Telão com o nome = **SurfaceGui**. Conquistas = **Badges**. Painel de progresso = **leaderstats**.
+The table below records what this repository's commit history shows. Work done outside the repository, such as game design, research, playtesting, building in Roblox Studio and preparing the pitch, does not appear in a commit log and is shared by the whole team.
 
-## Arquivos
+| Contributor | In this repository |
+|---|---|
+| **Anna Clara Diniz** | Built the **web demo** at the root: the 3D world, both missions, the bilingual interface and the mobile layout. Published every tagged version from `v1` on, and merged the Roblox project into this repository with its history intact |
+| **Túlio Amaral** | Authored the **Roblox project**: the map generator phases (1 to 24), the Mercury and ISS mission scripts, the museum, the guides, the cutscenes and the specs. The folder `rookie-rocket-roblox/` comes from his repository |
+| **Valter Cauã Alves** | Set up the **collaboration workflow** of the Roblox project: the agent guidelines, the task board, parallel worktrees and the integration test |
+| **Hurias Felipe Silveira** | Team member and repository collaborator |
+| **Luis Renato Fernandes** | Team member |
+| **Nando Nogueira** | Team member |
 
-- `index.html`: estrutura e HUD.
-- `estilo.css`: visual da interface (HUD, balões, prompts, cards, celular).
-- `dados.js`: textos em PT e EN (falas, exposições com fontes da NASA, placas, missões e conquistas) e os números da Preparação (`regrasPeso`, `equipamentos`).
-- `jogo.js`: mundo 3D, personagens, física (escada e elevador), câmera, interações e salvamento.
-- `lib/three.min.js`: three.js r128 (licença MIT).
-- `lib/Michroma-Regular.ttf`: fonte dos títulos, no estilo do storyboard (SIL Open Font License, em `lib/Michroma-OFL.txt`).
-- `nasa/`: 13 fotos baixadas da NASA Image and Video Library.
-- `versao-anterior/`: a demo 2D anterior, guardada sem alterações.
+### How to contribute
+
+1. Clone the repository and create a branch for your change.
+2. **Web demo:** edit the files at the root and open `index.html` to test. Change numbers and texts in `dados.js`, always in both languages. Bump the `?v=` number in `index.html` so browsers load the new files.
+3. **Roblox project:** follow [`rookie-rocket-roblox/ROJO.md`](rookie-rocket-roblox/ROJO.md). Change a generator and rebuild instead of editing parts by hand, and keep new scripts as files under `build/`.
+4. When a mission rule changes, update **both** `Missoes.luau` and `dados.js`, so the demo and the game keep matching.
+5. Open a pull request describing what changed and how you tested it.
+
+### Use of AI tools
+
+AI coding assistants were used during development. The web demo was built with Claude Code, and the Roblox project used Claude Code and Codex, as documented in `rookie-rocket-roblox/CLAUDE.md` and `rookie-rocket-roblox/AGENTS.md`. The team chose the design, checked the facts against NASA sources and tested the results.
+
+---
+
+## Version history of the web demo
+
+| Tag | What changed |
+|---|---|
+| `v1` – `v2` | First 3D world: reception, museum, hangar; language choice and the storyboard look |
+| `v3` – `v6` | Start screen, Phase 1 prototype in first person, star rating, the Space Album |
+| `v7` | Equipment chosen by weight, with Marcos explaining every failure |
+| `v8` – `v10` | Mobile mission panel, first-person zoom, the Roblox kiosk, the star bar |
+| `v11` – `v12` | **Phase 1 complete:** the full Mercury mission with its 3 tasks, aligned with the Roblox game's data |
+| `v13` | **Phase 2 complete:** the ISS mission with its 3 tasks and the Building the ISS card |
+
+---
+
+## Credits and licenses
+
+- 3D engine: [three.js](https://threejs.org/) r128, MIT license.
+- Fonts: Outfit and Michroma, SIL Open Font License. License files are in `lib/`.
+- Photos: NASA, via the NASA Image and Video Library.
+- Made for the **NASA Space Apps Challenge 2026 · Space Mission Design Game**.
