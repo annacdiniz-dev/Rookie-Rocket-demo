@@ -1,0 +1,86 @@
+{
+  "name": "nasa-space-adventure",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "MuseumSystem": {
+        "$className": "Folder",
+        "$attributes": {
+          "RojoManaged": true
+        },
+        "Shared": {
+          "$path": "build/museum/shared"
+        }
+      },
+      "RookieRocket": {
+        "$className": "Folder",
+        "$attributes": {
+          "RojoManaged": true
+        },
+        "Config": {
+          "$path": "build/rookie/shared"
+        },
+        "Remotes": {
+          "$className": "Folder",
+          "SelecionarEquipamento": {
+            "$className": "RemoteEvent"
+          },
+          "IniciarLancamento": {
+            "$className": "RemoteEvent"
+          },
+          "AcaoTask": {
+            "$className": "RemoteEvent"
+          },
+          "ReiniciarTaskOuMissao": {
+            "$className": "RemoteEvent"
+          },
+          "SincronizarEstado": {
+            "$className": "RemoteEvent"
+          }
+        }
+      },
+      "GuideSystem": {
+        "$className": "Folder",
+        "$attributes": {
+          "RojoManaged": true
+        },
+        "Config": {
+          "$path": "build/guide/shared"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "MuseumSystem": {
+        "$path": "build/museum/server"
+      },
+      "Map_Systems": {
+        "$path": "build/systems/server",
+        "$attributes": {
+          "RojoManaged": true
+        }
+      },
+      "RookieRocket": {
+        "$path": "build/rookie/server"
+      },
+      "GuideSystem": {
+        "$path": "build/guide/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "MuseumClient": {
+          "$path": "build/museum/client"
+        },
+        "MapClient": {
+          "$path": "build/systems/client"
+        },
+        "RookieClient": {
+          "$path": "build/rookie/client"
+        },
+        "GuideClient": {
+          "$path": "build/guide/client"
+        }
+      }
+    }
+  }
+}
