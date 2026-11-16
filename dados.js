@@ -67,11 +67,19 @@ const DADOS = {
     // task: em qual task o equipamento ajuda (aparece no card e nas dicas do Marcos)
     // efeito.segurar: segundos para travar cada alvo da Task 1 (o normal é 2,0)
     // efeito.ima: "ímã" da mira. Com 1, a mira pula para o centro do ponto quando o "+" encosta no círculo cinza. 0 desliga.
-    { id: 'giroscopio', icone: '🧭', peso: 15, task: 1, efeito: { segurar: 1.2, ima: 1 } },
+    // missao: a qual missão o equipamento pertence (1 = Mercury, 2 = ISS)
+    { id: 'giroscopio', missao: 1, icone: '🧭', peso: 15, task: 1, efeito: { segurar: 1.2, ima: 1 } },
     // efeito.limiteT2: tempo máximo da Task 2 em segundos (o normal é 30) · destaque: marca o código na prancheta
-    { id: 'manual', icone: '📘', peso: 20, task: 2, efeito: { limiteT2: 45, destaque: true } },
+    { id: 'manual', missao: 1, icone: '📘', peso: 20, task: 2, efeito: { limiteT2: 45, destaque: true } },
     // efeito.segurarT3: segundos segurando o retropack na Task 3 (o normal é 10) · tremorT3: multiplica o tremor (0.5 = metade, igual ao jogo)
-    { id: 'escudo', icone: '🛡️', peso: 25, task: 3, efeito: { segurarT3: 6, tremorT3: 0.5 } }
+    { id: 'escudo', missao: 1, icone: '🛡️', peso: 25, task: 3, efeito: { segurarT3: 6, tremorT3: 0.5 } },
+    // ---- Missão 2 (ISS) ----
+    // efeito.zonaI1: multiplica a zona verde da pressão na Task 1 (1.5 = 50% maior)
+    { id: 'sensor', missao: 2, icone: '⏲️', peso: 15, task: 1, efeito: { zonaI1: 1.5 } },
+    // efeito.velI2: multiplica a velocidade máxima para arrastar os cabos na Task 2 (2 = o dobro)
+    { id: 'luvas', missao: 2, icone: '🧤', peso: 20, task: 2, efeito: { velI2: 2 } },
+    // efeito.perdaI3: multiplica a perda de ar na Task 3 (0.6 = 40% menor) · vedarI3: segundos para vedar (o normal é 3,0)
+    { id: 'kit', missao: 2, icone: '🧰', peso: 25, task: 3, efeito: { perdaI3: 0.6, vedarI3: 2.0 } }
   ],
   missao1: {
     contagem: 12,              // s: contagem regressiva do lançamento (dá para pular)
@@ -80,6 +88,20 @@ const DADOS = {
     t2: { limite: 30, digitos: 4 },     // Task 2: falha aos 30 s · código de 4 dígitos sorteado
     t3: { decidir: 10, segurar: 10 }    // Task 3: 10 s para decidir · segurar o retropack por 10 s
   },
+  // MISSÃO 2 · ESTAÇÃO ESPACIAL INTERNACIONAL (ISS). Liberada com 1 estrela ou mais na Mercury.
+  missao2: {
+    contagem: 12,              // s: lançamento e chegada à estação (dá para pular)
+    estrelas: [45, 70, 100],   // iguais aos da missão 1
+    // Task 1 (acoplamento): pressão de 0 a 1. Zona verde = centro ± zona. Falha se ficar em "max" ou mais por maxSegundos, ou ao passar do limite.
+    // resposta: quão rápido a pressão segue a válvula · deriva: tamanho da oscilação que obriga a reajustar (no Roblox é 0.32; aqui é menor porque um jogador faz tudo sozinho)
+    t1: { limite: 40, centro: 0.5, zona: 0.1, max: 0.95, maxSegundos: 3, resposta: 1.3, deriva: 0.25 },
+    // Task 2 (caminhada espacial): velMax em studs/s carregando o cabo · tolerancia: segundos acima do limite até escorregar
+    // largura: quantos studs o quadro representa de lado a lado · encaixe: distância (studs) para prender na polia
+    // velEVA: velocidade máxima dos propulsores (studs/s); o cabo segue o dedo no máximo nessa velocidade
+    t2: { limite: 45, velMax: 6, velEVA: 12, tolerancia: 0.3, largura: 24, encaixe: 4.5 },
+    // Task 3 (vazamento): perda de ar em % por segundo · escotilha fechada multiplica a perda por 0.5 · vedar: segundos segurando a gaze
+    t3: { perda: 2.5, escotilha: 0.5, vedar: 3.0, lugares: 4 }
+  },
 
   equipe: ['Anna Clara Diniz', 'Hurias Felipe Silveira', 'Luis Renato Fernandes', 'Nando Nogueira', 'Túlio Amaral', 'Valter Cauã Alves'],
 
@@ -87,13 +109,19 @@ const DADOS = {
   // Fase 1 → Friendship 7 (foto: NASA Image and Video Library 9248362; "o que aconteceu": relatório NTRS abaixo).
   album: [
     { id: 'missao1', ano: '1962', foto: 'nasa/9248362.jpg', registro: { id: '9248362', data: '1962-02-20', credito: 'NASA/MSFC' } },
-    { id: 'missao2' } // espaço reservado para o card da próxima fase
+    // Fase 2 → Construindo a ISS (foto: NASA Image and Video Library iss020e005813, treliças P4, P5 e P6; fontes: páginas oficiais da NASA)
+    { id: 'missao2', ano: '1998 · 2000 · 2018', foto: 'nasa/iss020e005813.jpg', registro: { id: 'iss020e005813', data: '2009-05-31', credito: 'NASA' },
+      fontes: [
+        { rot: 'STS-88', url: 'https://www.nasa.gov/mission/sts-88/' },
+        { rot: 'STS-97', url: 'https://www.nasa.gov/mission/sts-97/' },
+        { rot: 'Soyuz MS-09', url: 'https://www.nasa.gov/blogs/spacestation/2018/08/30/international-space-station-status-3/' }
+      ] }
   ],
   // NASA Technical Reports Server (API oficial https://ntrs.nasa.gov/api): "Summary results of the first United States manned orbital space flight"
   ntrs: { id: '20040110111', url: 'https://ntrs.nasa.gov/citations/20040110111' },
 
   exposMuseu: ['jardim', 'sigma7', 'controle', 'halldafama', 'atlantis', 'saturnv'],
-  missoes: [{ id: 'falar' }, { id: 'museu' }, { id: 'expo', meta: 6 }, { id: 'hangar' }, { id: 'escada' }, { id: 'elevador' }, { id: 'missao1' }],
+  missoes: [{ id: 'falar' }, { id: 'museu' }, { id: 'expo', meta: 6 }, { id: 'hangar' }, { id: 'escada' }, { id: 'elevador' }, { id: 'missao1' }, { id: 'missao2' }],
 
   idiomas: {
     /* ============================== PORTUGUÊS ============================== */
@@ -173,8 +201,8 @@ const DADOS = {
           'Foi o primeiro voo de teste integrado dos sistemas de exploração do espaço profundo da NASA: Orion, SLS e sistemas de solo.',
           'A Orion voltou em 11 de dezembro de 2022, depois de 25,5 dias. Nenhuma nave feita para humanos tinha ido tão longe no espaço profundo.'] }
       },
-      missoes: { falar: 'Fale com Marcos Pontes', museu: 'Entre no museu do Kennedy Space Center', expo: 'Explore as exposições do museu', expo_cont: 'exposições', hangar: 'Chegue ao hangar da nave', escada: 'Suba a escada da plataforma', elevador: 'Use o elevador até o braço de acesso', missao1: 'Embarque na nave e conclua a Fase 1' },
-      conquistas: { falar: 'Recrutad{o}!', museu: 'Visitante do KSC', expo: 'Historiador{a} Espacial', hangar: 'Dentro do Hangar', escada: 'Fôlego de Astronauta', elevador: 'Pront{o} para Embarcar', missao1: 'Pilot{o} do Projeto Mercury' },
+      missoes: { falar: 'Fale com Marcos Pontes', museu: 'Entre no museu do Kennedy Space Center', expo: 'Explore as exposições do museu', expo_cont: 'exposições', hangar: 'Chegue ao hangar da nave', escada: 'Suba a escada da plataforma', elevador: 'Use o elevador até o braço de acesso', missao1: 'Embarque na nave e conclua a Fase 1', missao2: 'Embarque de novo e conclua a Fase 2 (ISS)' },
+      conquistas: { falar: 'Recrutad{o}!', museu: 'Visitante do KSC', expo: 'Historiador{a} Espacial', hangar: 'Dentro do Hangar', escada: 'Fôlego de Astronauta', elevador: 'Pront{o} para Embarcar', missao1: 'Pilot{o} do Projeto Mercury', missao2: 'Tripulante da ISS' },
       zonas: {
         recepcao: ['AGÊNCIA ROOKIE ROCKET', 'Recepção'], c1: ['EM TRÂNSITO', 'Corredor para o museu'],
         museu: ['KENNEDY SPACE CENTER VISITOR COMPLEX', 'Museu'], c2: ['EM TRÂNSITO', 'Corredor de embarque'], hangar: ['SETOR DE LANÇAMENTO', 'Hangar da nave']
@@ -245,15 +273,52 @@ const DADOS = {
         sem_estrelas: 'demorou demais',
         escolha_titulo: 'Fase 1 concluída!', escolha_txt: 'Seu melhor resultado:', refazer: 'Refazer fase 1'
       },
+      // MISSÃO 2 (ISS): só o que muda em relação à missão 1. O que não estiver aqui vem de "missao" (botões, conta, etc.).
+      // Textos traduzidos do jogo no Roblox (Missoes.luau).
+      missao2: {
+        fase: 'FASE 2 · ESTAÇÃO ESPACIAL (ISS)',
+        tasks: {
+          t1: { nome: 'O Acoplamento (STS-88)', alerta: '⚠ PRESSÃO DO BRAÇO ALTA DEMAIS', ok: '✔ ZARYA ACOPLADA AO UNITY', guia: 'Alinhe as 4 esferas e mantenha a pressão no verde.' },
+          t2: { nome: 'O Painel Solar Preso (STS-97)', alerta: '⚠ CABOS DO PAINEL SOLAR SOLTOS', ok: '✔ CABOS PRESOS NAS POLIAS', guia: 'Vá para fora e arraste os cabos até as polias.' },
+          t3: { nome: 'O Vazamento de 2 mm (Soyuz MS-09)', alerta: '⚠ PRESSÃO DA CABINE CAINDO', ok: '✔ VAZAMENTO VEDADO', guia: 'Feche a escotilha, ache o vazamento e vede.' }
+        },
+        contagem: 'CHEGADA À ESTAÇÃO EM', decolagem: 'ACOPLADO À ESTAÇÃO!',
+        // Task 1: console do braço robótico
+        i1_dica: 'Arraste as 4 esferas até os ✕ e mantenha a pressão na zona verde.',
+        i1_pressao: 'PRESSÃO DO BRAÇO', i1_valvula: 'VÁLVULA: arraste para ajustar',
+        i1_fora: 'Pressão fora da zona verde: a esfera escorregou.', i1_perigo: 'PRESSÃO NO MÁXIMO! Alivie a válvula!', i1_esfera: 'Esfera {n}',
+        // Task 2: caminhada espacial
+        i2_dica: 'Arraste cada cabo solto até a sua polia verde. Rápido demais e ele escorrega!',
+        i2_vel: 'VELOCIDADE', i2_escorregou: 'O cabo escorregou! Vá mais devagar ao carregar.', i2_cabo: 'Cabo {n}',
+        // Task 3: vazamento
+        i3_dica1: '1. Feche a escotilha do módulo ao lado.', i3_dica2: '2. Ache o furo: procure o ar sendo sugado e toque nele.',
+        i3_dica3: '3. Pegue a gaze com epóxi na caixa de ferramentas.', i3_dica4: '4. Segure a gaze sobre o furo até vedar.',
+        i3_pressao: 'PRESSÃO DA CABINE', i3_escotilha: '🚪 Fechar escotilha', i3_escotilha_ok: '✔ Escotilha fechada', i3_gaze: '🧰 Pegar gaze com epóxi', i3_gaze_ok: '✔ Gaze na mão',
+        i3_feche: 'Feche primeiro a escotilha do módulo ao lado!', i3_precisa: 'Pegue primeiro a gaze com epóxi na caixa de ferramentas.',
+        i3_nada: 'Nada aqui. Procure o ar sendo sugado.', i3_achou: 'Furo de 2 mm encontrado!', i3_vedar: 'VEDAÇÃO', i3_painel: 'Painel {n} da parede',
+        parabens_sub: 'Você manteve a estação espacial segura! Cada task foi inspirada em um momento real da história da ISS. Veja a ciência por trás de cada uma:',
+        aprender: {
+          t1: { areas: 'Física (forças / ação e reação) · Engenharia Robótica',
+            ciencia: 'Cada empurrão que o braço dá em um módulo empurra o braço de volta (3ª lei de Newton). Força suave e constante alinha as peças sem estragar nada.',
+            fato: 'Na STS-88 (dezembro de 1998), o braço robótico do ônibus espacial capturou a Zarya e a uniu ao Unity. Os encaixes não alinharam de primeira, então o braço soltou a Zarya e tentou de novo.' },
+          t2: { areas: 'Física (massa e momento) · Engenharia Mecânica',
+            ciencia: 'Em órbita um cabo não tem peso, mas ainda tem massa: se você o move rápido, o momento dificulta parar e ele escapa.',
+            fato: 'Na STS-97 (dezembro de 2000), a manta de um novo painel solar do P6 ficou frouxa. Na terceira caminhada espacial, Joe Tanner e Carlos Noriega puxaram os cabos de tensão de volta aos carretéis.' },
+          t3: { areas: 'Física (pressão dos gases) · Engenharia de Suporte à Vida',
+            ciencia: 'O ar sempre vai da pressão alta para a baixa. Um furo pequeno para o vácuo do espaço deixa o ar da cabine escapar devagar, e fechar escotilhas isola o módulo com vazamento.',
+            fato: 'Em agosto de 2018, a tripulação achou um furo de cerca de 2 mm no módulo orbital da Soyuz MS-09. O comandante Sergey Prokopyev o tapou com epóxi em uma gaze.' }
+        }
+      },
       // Falas do Marcos no resultado (fictícias, escritas para o jogo).
       // Marcadores: {nome} {peso} {limite} {equipamento} {tempo} {limiteEstrela} {estrelas}
       marcosResultado: {
+        pressao_max: 'Força demais esmaga o módulo! Na STS-88, a solução foi aliviar a pressão no braço, não empurrar com mais força.',
         peso: '{nome}, o foguete só leva {limite} kg e a nave estava com {peso} kg. Ele nem saiu da plataforma! Na engenharia espacial cada quilo conta: escolha apenas o que mais ajuda.',
         ejetar2: 'Ejetar durante a reentrada seria fatal. O John Glenn ficou 4 minutos sem rádio e confiou no treinamento. Às vezes a resposta certa é manter a calma e seguir o procedimento.',
         ejetar3: 'Era um erro do sensor! O escudo estava preso. Quem ejeta no pânico perde a missão. Manter o retropack foi a decisão real da NASA.',
         tempo_sem: 'Faltou tempo, {nome}. O {equipamento} teria ajudado justamente aqui. Na próxima, pense em qual task é mais difícil para você antes de escolher.',
         tempo_com: 'Quase lá, {nome}! Mesmo com o {equipamento}, o tempo apertou. Respire, organize os passos e tente novamente.',
-        lento: 'Você trouxe a nave de volta, {nome}, mas o tempo final foi de {tempo}. Para ganhar estrelas ele precisa ficar em até {limiteEstrela} s.',
+        lento: 'Missão concluída, mas demorou demais, {nome}: {tempo} passa do limite de {limiteEstrela} s. Planeje os passos antes de os alarmes começarem.',
         sucesso: 'Excelente trabalho, {nome}! Você tomou decisões de verdadeir{o} astronauta da NASA. Confira o registro histórico dessa missão no seu álbum!'
       },
       preparo: {
@@ -271,8 +336,19 @@ const DADOS = {
         itens: {
           giroscopio: { nome: 'Giroscópio', txt: 'Trava cada ponto em 1,2 s (em vez de 2 s) e a mira gruda no centro.' },
           manual: { nome: 'Manual de bordo', txt: 'Destaca o código na prancheta e dá mais 15 s.' },
-          escudo: { nome: 'Escudo reforçado', txt: 'Segurar o retropack leva 6 s (em vez de 10 s) e a cabine treme menos.' }
-        }
+          escudo: { nome: 'Escudo reforçado', txt: 'Segurar o retropack leva 6 s (em vez de 10 s) e a cabine treme menos.' },
+          sensor: { nome: 'Sensor de pressão', txt: 'A zona verde do controle de pressão fica 50% maior.' },
+          luvas: { nome: 'Luvas aderentes', txt: 'Arrasta os cabos soltos 2× mais rápido sem escorregar.' },
+          kit: { nome: 'Kit de vedação', txt: 'Perda de ar 40% menor e vedação em 2 s (em vez de 3 s).' }
+        },
+        // seletor de missão (aba 1)
+        missoes: {
+          m1: { nome: 'Projeto Mercury (Friendship 7)', sub: 'A primeira órbita americana em volta da Terra' },
+          m2: { nome: 'Estação Espacial Internacional (ISS)', sub: 'Monte e conserte a estação espacial' },
+          m3: { nome: 'Fase 3', sub: 'Continua no jogo oficial do Roblox ↗' }
+        },
+        bloqueada: '🔒 BLOQUEADA · Ganhe 1★ na Mercury', escolher: 'Escolha a missão',
+        descricao2: 'Em 1998, os dois primeiros módulos da ISS foram unidos com um braço robótico. Depois, tripulações consertaram cabos frouxos de um painel solar e vedaram um vazamento minúsculo de 2 mm.'
       },
       // Cards das missões reais (álbum). Fase 1: foto e objetivo do registro NASA 9248362; "o que aconteceu" do relatório NTRS 20040110111.
       cards: {
@@ -280,12 +356,21 @@ const DADOS = {
           nome: 'Friendship 7 · Mercury-Atlas 6',
           objetivo: 'Fazer o primeiro voo orbital tripulado dos EUA. Em 20/02/1962, John Glenn deu 3 voltas na Terra em 4 h 55 min.',
           aconteceu: 'A cápsula saiu da posição correta e Glenn a guiou à mão. Na reentrada, ele ficou 4 min 20 s sem rádio. Um aviso indicou que o escudo térmico estava solto, mas era um interruptor com defeito: o retropack ficou preso por segurança e o pouso foi um sucesso.',
+          relacao: 'Task 1 é o controle manual da cápsula, Task 2 o apagão de rádio da reentrada e Task 3 o alarme do escudo térmico com o retropack mantido.',
+          tradeoff: 'Cada quilo lançado pede mais combustível, então as primeiras cápsulas levavam só o essencial. No jogo, cada item ajuda em uma task, mas custa peso e bônus de leveza.',
           vazio: 'Conclua a Fase 1'
         },
-        missao2: { nome: 'Fase 2', vazio: 'Card da Fase 2' }
+        // Fase 2: textos traduzidos do card "Building the ISS" do jogo no Roblox (Missoes.luau)
+        missao2: {
+          nome: 'Construindo a ISS · STS-88 · STS-97 · Soyuz MS-09',
+          aconteceu: 'Em dezembro de 1998, a tripulação da STS-88 usou o braço robótico do ônibus espacial para unir o módulo americano Unity ao módulo russo Zarya: as duas primeiras peças da ISS. Em dezembro de 2000, a STS-97 instalou a treliça P6 com os primeiros painéis solares americanos da estação, e astronautas em caminhada espacial retensionaram uma manta frouxa. Em agosto de 2018, um furo de 2 mm na Soyuz MS-09 causou um vazamento lento de pressão; a tripulação o encontrou e vedou com epóxi em uma gaze.',
+          relacao: 'Task 1 é o acoplamento Unity–Zarya, Task 2 os cabos do painel solar da STS-97 e Task 3 o vazamento da Soyuz MS-09.',
+          tradeoff: 'Tudo na estação foi lançado da Terra: cada ferramenta e peça compete por massa com comida, água e ciência. No jogo, o limite de 60 kg obriga a escolher só dois itens.',
+          vazio: 'Conclua a Fase 2'
+        }
       },
-      album: { titulo: 'Álbum Espacial', sub: 'Conclua as fases para colecionar os cards das missões reais.', real: 'MISSÃO REAL', objetivo: 'Objetivo: ', aconteceu: 'O que aconteceu: ' },
-      roblox: { titulo: 'A aventura continua no Roblox!', texto: 'As próximas fases estão no jogo oficial do Rookie Rocket.', botao: 'Jogar no Roblox', em_breve: 'Link do jogo em breve',
+      album: { titulo: 'Álbum Espacial', sub: 'Conclua as fases para colecionar os cards das missões reais.', real: 'MISSÃO REAL', objetivo: 'Objetivo: ', aconteceu: 'O que aconteceu: ', relacao: 'No jogo: ', tradeoff: 'Trade-off de massa: ' },
+      roblox: { titulo: 'A aventura continua no Roblox!', texto: 'Você concluiu as duas fases da demo! A Fase 3 e as próximas estão no jogo oficial do Rookie Rocket.', botao: 'Jogar no Roblox', em_breve: 'Link do jogo em breve',
         // textos do totem da recepção (antes de terminar a fase 1)
         titulo_totem: 'Jogue o Rookie Rocket de verdade!', texto_totem: 'Esta é só a demo. O jogo oficial, com a aventura completa, está no Roblox.' },
       placas: {
@@ -385,8 +470,8 @@ const DADOS = {
           'It was the first integrated flight test of NASA’s deep space exploration systems: Orion, SLS and ground systems.',
           'Orion splashed down on Dec. 11, 2022, after a 25.5-day mission that took it farther into deep space than any human-rated spacecraft had ever flown.'] }
       },
-      missoes: { falar: 'Talk to Marcos Pontes', museu: 'Enter the Kennedy Space Center museum', expo: 'Explore the museum exhibits', expo_cont: 'exhibits', hangar: 'Reach the ship hangar', escada: 'Climb the platform stairs', elevador: 'Ride the elevator to the access arm', missao1: 'Board the ship and complete Phase 1' },
-      conquistas: { falar: 'Recruited!', museu: 'KSC Visitor', expo: 'Space Historian', hangar: 'Inside the Hangar', escada: 'Astronaut Stamina', elevador: 'Ready to Board', missao1: 'Project Mercury Pilot' },
+      missoes: { falar: 'Talk to Marcos Pontes', museu: 'Enter the Kennedy Space Center museum', expo: 'Explore the museum exhibits', expo_cont: 'exhibits', hangar: 'Reach the ship hangar', escada: 'Climb the platform stairs', elevador: 'Ride the elevator to the access arm', missao1: 'Board the ship and complete Phase 1', missao2: 'Board again and complete Phase 2 (ISS)' },
+      conquistas: { falar: 'Recruited!', museu: 'KSC Visitor', expo: 'Space Historian', hangar: 'Inside the Hangar', escada: 'Astronaut Stamina', elevador: 'Ready to Board', missao1: 'Project Mercury Pilot', missao2: 'ISS Crew Member' },
       zonas: {
         recepcao: ['ROOKIE ROCKET AGENCY', 'Reception'], c1: ['IN TRANSIT', 'Hallway to the museum'],
         museu: ['KENNEDY SPACE CENTER VISITOR COMPLEX', 'Museum'], c2: ['IN TRANSIT', 'Boarding hallway'], hangar: ['LAUNCH SECTOR', 'Ship hangar']
@@ -451,14 +536,47 @@ const DADOS = {
         sem_estrelas: 'took too long',
         escolha_titulo: 'Phase 1 complete!', escolha_txt: 'Your best result:', refazer: 'Replay Phase 1'
       },
+      // MISSION 2 (ISS): only what differs from mission 1. Same texts as the Roblox game (Missoes.luau).
+      missao2: {
+        fase: 'PHASE 2 · SPACE STATION (ISS)',
+        tasks: {
+          t1: { nome: 'The Docking (STS-88)', alerta: '⚠ ARM PRESSURE TOO HIGH', ok: '✔ ZARYA DOCKED TO UNITY', guia: 'Line up the 4 spheres and keep the pressure green.' },
+          t2: { nome: 'The Stuck Solar Panel (STS-97)', alerta: '⚠ SOLAR ARRAY CABLES LOOSE', ok: '✔ CABLES LOCKED ON THE PULLEYS', guia: 'Go outside and drag the cables to their pulleys.' },
+          t3: { nome: 'The 2 mm Leak (Soyuz MS-09)', alerta: '⚠ CABIN PRESSURE DROPPING', ok: '✔ LEAK SEALED', guia: 'Close the hatch, find the leak and seal it.' }
+        },
+        contagem: 'ARRIVING AT THE STATION IN', decolagem: 'DOCKED TO THE STATION!',
+        i1_dica: 'Drag the 4 spheres onto the ✕ marks and keep the pressure in the green zone.',
+        i1_pressao: 'ARM PRESSURE', i1_valvula: 'VALVE: drag to adjust',
+        i1_fora: 'Pressure outside the green zone: the sphere slipped.', i1_perigo: 'PRESSURE AT MAXIMUM! Ease the valve!', i1_esfera: 'Sphere {n}',
+        i2_dica: 'Drag each loose cable to its green pulley. Too fast and it slips!',
+        i2_vel: 'SPEED', i2_escorregou: 'The cable slipped! Move slower while carrying it.', i2_cabo: 'Cable {n}',
+        i3_dica1: '1. Close the hatch to the next module.', i3_dica2: '2. Find the hole: look for air being sucked in and tap it.',
+        i3_dica3: '3. Take the epoxy gauze from the toolbox.', i3_dica4: '4. Hold the gauze on the hole until it seals.',
+        i3_pressao: 'CABIN PRESSURE', i3_escotilha: '🚪 Close hatch', i3_escotilha_ok: '✔ Hatch closed', i3_gaze: '🧰 Take epoxy gauze', i3_gaze_ok: '✔ Gauze in hand',
+        i3_feche: 'Close the hatch to the next module first!', i3_precisa: 'Take the epoxy gauze from the toolbox first.',
+        i3_nada: 'Nothing here. Look for air being sucked in.', i3_achou: '2 mm hole found!', i3_vedar: 'SEAL', i3_painel: 'Wall panel {n}',
+        parabens_sub: 'You kept the space station safe! Each task was inspired by a real moment in the history of the ISS. Here is the science behind it:',
+        aprender: {
+          t1: { areas: 'Physics (Forces / Action and Reaction) · Robotics Engineering',
+            ciencia: 'Every push the arm gives a module pushes back on the arm (Newton\'s third law). Gentle, steady force lines parts up without damaging them.',
+            fato: 'On STS-88 (December 1998) the shuttle\'s robotic arm captured Zarya and joined it to Unity. The fittings did not line up at first, so the arm released Zarya and tried again.' },
+          t2: { areas: 'Physics (Mass and Momentum) · Mechanical Engineering',
+            ciencia: 'In orbit a cable has no weight, but it still has mass: if you move it fast, its momentum makes it hard to stop and it slips away.',
+            fato: 'On STS-97 (December 2000) a new P6 solar array blanket was slack. On the third spacewalk, Joe Tanner and Carlos Noriega pulled its tensioning cables back into their reels.' },
+          t3: { areas: 'Physics (Pressure of Gases) · Life Support Engineering',
+            ciencia: 'Air always flows from high to low pressure. A tiny hole to the vacuum of space lets cabin air escape slowly, and closing hatches isolates the leaking module.',
+            fato: 'In August 2018 the crew found a hole about 2 mm across in the Soyuz MS-09 orbital module. Commander Sergey Prokopyev plugged it with epoxy on a gauze wipe.' }
+        }
+      },
       // Marcos lines on the result screen (fictional, written for the game).
       marcosResultado: {
+        pressao_max: 'Too much force crushes the module! On STS-88, the fix was to ease the pressure on the arm, not to push harder.',
         peso: '{nome}, the rocket can only carry {limite} kg and the spacecraft weighed {peso} kg. It never left the pad! In space engineering every kilogram counts: pick only what helps the most.',
         ejetar2: 'Ejecting during reentry would be fatal. John Glenn spent 4 minutes without radio and trusted his training. Sometimes the right answer is to stay calm and follow the procedure.',
         ejetar3: 'It was a sensor error! The shield was secure. Ejecting in a panic loses the mission. Holding the retropack was NASA\'s real decision.',
         tempo_sem: 'You ran out of time, {nome}. The {equipamento} would have helped right here. Next time, think about which task is hardest for you before choosing.',
         tempo_com: 'Almost there, {nome}! Even with the {equipamento}, time got tight. Take a breath, plan your steps and try again.',
-        lento: 'You brought the spacecraft home, {nome}, but your final time was {tempo}. To earn stars it must be {limiteEstrela} s or less.',
+        lento: 'Mission complete, but it took too long, {nome}: {tempo} is over the {limiteEstrela} s limit. Plan your steps before the alarms start.',
         sucesso: 'Excellent work, {nome}! You made decisions like a real NASA astronaut. Check this mission\'s historical record in your album!'
       },
       preparo: {
@@ -476,8 +594,18 @@ const DADOS = {
         itens: {
           giroscopio: { nome: 'Gyroscope', txt: 'Locks each dot in 1.2 s (instead of 2 s) and the crosshair snaps to the center.' },
           manual: { nome: 'Flight Manual', txt: 'Highlights the code on the clipboard and gives 15 extra seconds.' },
-          escudo: { nome: 'Reinforced Shield', txt: 'Holding the retropack takes 6 s (instead of 10 s) and the cabin shakes less.' }
-        }
+          escudo: { nome: 'Reinforced Shield', txt: 'Holding the retropack takes 6 s (instead of 10 s) and the cabin shakes less.' },
+          sensor: { nome: 'Pressure Sensor', txt: 'The green zone of the pressure control gets 50% bigger.' },
+          luvas: { nome: 'Grip Gloves', txt: 'Drag the loose cables 2× faster without slipping.' },
+          kit: { nome: 'Sealing Kit', txt: 'Air loss 40% lower and sealing in 2 s (instead of 3 s).' }
+        },
+        missoes: {
+          m1: { nome: 'Project Mercury (Friendship 7)', sub: 'America\'s first orbit around Earth' },
+          m2: { nome: 'International Space Station (ISS)', sub: 'Build and repair the space station' },
+          m3: { nome: 'Phase 3', sub: 'Continues in the official Roblox game ↗' }
+        },
+        bloqueada: '🔒 LOCKED · Earn 1★ on Mercury', escolher: 'Choose the mission',
+        descricao2: 'In 1998 the first two ISS modules were joined with a robotic arm. Later, crews fixed slack solar array cables and sealed a tiny 2 mm leak.'
       },
       // Real mission cards (album). Phase 1: photo and goal from NASA record 9248362; "what happened" from NTRS report 20040110111.
       cards: {
@@ -485,12 +613,21 @@ const DADOS = {
           nome: 'Friendship 7 · Mercury-Atlas 6',
           objetivo: 'Fly the first U.S. crewed orbital flight. On February 20, 1962, John Glenn orbited the Earth 3 times in 4 h 55 min.',
           aconteceu: 'The capsule drifted out of attitude and Glenn flew it by hand. During reentry he spent 4 min 20 s without radio. A warning said the heat shield was loose, but it was a faulty switch: the retropack stayed strapped on to be safe and the landing was a success.',
+          relacao: 'Your three tasks follow this flight: manual attitude control (Task 1), the reentry radio blackout (Task 2) and the heat shield alarm with the retropack kept on (Task 3).',
+          tradeoff: 'Every kilogram launched needs more rocket fuel, so early capsules carried only what was essential. In the game, items help one task each but cost weight and lightness bonus.',
           vazio: 'Complete Phase 1'
         },
-        missao2: { nome: 'Phase 2', vazio: 'Phase 2 card' }
+        // Phase 2: same texts as the "Building the ISS" card in the Roblox game (Missoes.luau)
+        missao2: {
+          nome: 'Building the ISS · STS-88 · STS-97 · Soyuz MS-09',
+          aconteceu: 'In December 1998 the STS-88 crew used the shuttle\'s robotic arm to join the U.S. Unity node to the Russian Zarya module: the first two pieces of the ISS. In December 2000 the STS-97 crew installed the P6 truss with the station\'s first U.S. solar arrays, and spacewalkers re-tensioned a slack array blanket. In August 2018 a 2 mm hole in the Soyuz MS-09 caused a slow pressure leak; the crew found it and sealed it with epoxy on gauze.',
+          relacao: 'Task 1 is the Unity–Zarya docking, Task 2 the solar array cables of STS-97 and Task 3 the Soyuz MS-09 leak.',
+          tradeoff: 'Everything on the station was launched from Earth, so each tool and spare part competes for mass with food, water and science. In the game, the 60 kg limit makes you choose only two items.',
+          vazio: 'Complete Phase 2'
+        }
       },
-      album: { titulo: 'Space Album', sub: 'Complete the phases to collect the real mission cards.', real: 'REAL MISSION', objetivo: 'Goal: ', aconteceu: 'What happened: ' },
-      roblox: { titulo: 'The adventure continues on Roblox!', texto: 'The next phases are in the official Rookie Rocket game.', botao: 'Play on Roblox', em_breve: 'Game link coming soon',
+      album: { titulo: 'Space Album', sub: 'Complete the phases to collect the real mission cards.', real: 'REAL MISSION', objetivo: 'Goal: ', aconteceu: 'What happened: ', relacao: 'In the game: ', tradeoff: 'Mass trade-off: ' },
+      roblox: { titulo: 'The adventure continues on Roblox!', texto: 'You completed both phases of the demo! Phase 3 and beyond are in the official Rookie Rocket game.', botao: 'Play on Roblox', em_breve: 'Game link coming soon',
         titulo_totem: 'Play the real Rookie Rocket!', texto_totem: 'This is just the demo. The official game, with the full adventure, is on Roblox.' },
       placas: {
         totem_topo: '★ EXHIBIT ★', totem_pe: 'Press E to view',

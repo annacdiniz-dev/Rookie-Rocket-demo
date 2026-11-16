@@ -148,12 +148,53 @@ Todos os números ficam no [dados.js](dados.js): `regrasPeso`, `equipamentos` e 
 
 A pasta [rookie-rocket-roblox/](rookie-rocket-roblox/) guarda o projeto do Roblox (scripts Luau, specs e o place). A demo web não depende dela.
 
+## Fase 2 · Missão 2: Estação Espacial Internacional (ISS)
+
+Usa o mesmo fluxo, o mesmo peso (20 kg de nave, limite de 60 kg, até 2 itens), o mesmo bônus de leveza e as mesmas estrelas (45 / 70 / 100 s) da Fase 1. Só mudam os equipamentos e as 3 tasks.
+
+**Desbloqueio:** a ISS fica bloqueada até o jogador ganhar ao menos 1 estrela na Mercury. No Manifesto de voo, a aba **Missão** tem um seletor com as duas fases; a ISS bloqueada mostra "🔒 BLOQUEADA · Ganhe 1★ na Mercury". Depois de concluir a Fase 1, **Próxima fase** abre o manifesto já na ISS.
+
+| Equipamento | Peso | Task | Efeito |
+|---|---|---|---|
+| ⏲️ Sensor de pressão | 15 kg | 1 | zona verde do controle de pressão **50% maior** |
+| 🧤 Luvas aderentes | 20 kg | 2 | arrasta os cabos **2× mais rápido** sem escorregar |
+| 🧰 Kit de vedação | 25 kg | 3 | perda de ar **40% menor** e vedação em **2,0 s** (em vez de 3,0 s) |
+
+**Chegada:** contagem de 12 s (com Pular) e o aviso "ACOPLADO À ESTAÇÃO!".
+
+**Task 1 · O Acoplamento (STS-88, 1998)**
+- Alerta: **PRESSÃO DO BRAÇO ALTA DEMAIS**.
+- No console do braço robótico, o jogador arrasta **4 esferas** até 4 alvos (✕) e mantém a **pressão na zona verde** (centro em 0,5; meia largura de 0,1, ou 0,15 com o sensor), ajustando a válvula.
+- A pressão segue a válvula com atraso e sofre uma deriva que obriga a reajustar. Fora do verde o braço não obedece: a esfera que estava sendo carregada escorrega e volta.
+- Ao completar, a Zarya desliza e trava no Unity do lado de fora.
+- **Falha:** pressão no máximo (≥ 0,95) por 3 s seguidos, ou passar de 40 s.
+
+**Task 2 · O Painel Solar Preso (STS-97, 2000)**
+- Alerta: **CABOS DO PAINEL SOLAR SOLTOS**.
+- Caminhada espacial: a cabine some e fica só o espaço, com a Terra ao fundo. O jogador arrasta **2 cabos** soltos, cada um até a sua polia verde.
+- O cabo segue o dedo a no máximo 12 studs/s (os propulsores). Acima de 6 studs/s (12 com as luvas) por mais de 0,3 s, ele **escorrega e volta ao lugar**, sem fim de jogo. Uma barra de velocidade mostra o limite.
+- **Falha:** passar de 45 s.
+
+**Task 3 · O Vazamento de 2 mm (Soyuz MS-09, 2018)**
+- Alerta: **PRESSÃO DA CABINE CAINDO**; o ar cai 2,5% por segundo.
+- Em ordem: **fechar a escotilha** do módulo ao lado (corta a perda pela metade); **achar o furo** entre 4 painéis da parede (sorteado a cada tentativa, marcado por partículas de ar sendo sugadas); **pegar a gaze com epóxi** na caixa de ferramentas e **segurar** sobre o furo (3,0 s; 2,0 s com o kit). Soltar só pausa.
+- **Falha:** a pressão da cabine chegar a 0%.
+
+**Falas do Marcos na Fase 2:** as mesmas da Fase 1 para peso, tempo esgotado (com e sem o item) e sucesso, mais uma própria para a pressão no máximo na Task 1 ("Força demais esmaga o módulo! Na STS-88, a solução foi aliviar a pressão no braço…"). Na Task 3, ficar sem ar usa as falas de tempo esgotado.
+
+**Fim:** parabéns com a ciência e o fato real de cada task, resultado com a conta e as estrelas, e o card **Construindo a ISS** (STS-88 · STS-97 · Soyuz MS-09; 1998 · 2000 · 2018), com a foto oficial `iss020e005813`, o que aconteceu, a ligação com as três tasks, o trade-off de massa e os links das três páginas da NASA. O card entra no Álbum espacial. **Próxima fase** abre o banner do Roblox (Fase 3).
+
+**Onde mexer:** `missao2` e os itens com `missao: 2` em `equipamentos`, no [dados.js](dados.js); textos em `missao2` de cada idioma. A deriva da pressão é 0,25 na demo (0,32 no Roblox), porque aqui um jogador cuida das esferas e da pressão ao mesmo tempo.
+
+**O que a demo não tem:** co-op, andar pela estação (Cupola, Airlock e túnel viram painéis) e flutuar com propulsores (na Task 2 o jogador arrasta os cabos em um quadro). No Roblox a Missão 2 ainda aguarda playtest completo, então a demo segue a spec, não um comportamento já validado no jogo.
+
 ## Link do Roblox
 
-O link do jogo oficial fica em `linkRoblox`, no topo do [dados.js](dados.js). Se ficar vazio, o botão mostra "Link do jogo em breve". O botão **Jogar no Roblox** aparece em dois lugares:
+O link do jogo oficial fica em `linkRoblox`, no topo do [dados.js](dados.js). Se ficar vazio, o botão mostra "Link do jogo em breve". O botão **Jogar no Roblox** aparece em três lugares:
 
 - no **totem "JOGO OFICIAL"** da recepção (à direita de quem entra): chegar perto e apertar **E**, ou tocar nele;
-- no banner de **Próxima fase**, depois de concluir a Fase 1.
+- no banner de **Próxima fase**, depois de concluir a **Fase 2** (a Fase 3 é no Roblox);
+- no Manifesto de voo, como card "Fase 3", depois que a Fase 2 foi concluída.
 
 O nome do desafio (**Space Mission Design Game**) aparece em destaque no botão **i** (créditos) e leva à página do desafio. Nome, evento e link ficam em `desafio`, no dados.js.
 
@@ -183,7 +224,8 @@ O progresso (nome, missões, exposições vistas) fica salvo no navegador.
 - `index.html#lang=en&g=h&jogar&expo=atlantis`
 - `index.html#lang=pt&g=m&jogar&preparo=falha`: abre o Manifesto de voo com manual + escudo (65 kg: ao embarcar, o lançamento é cancelado) · `preparo=bom`: só o Giroscópio · `preparo=nada`: sem itens · `preparo`: últimas escolhas
 - `index.html#lang=pt&g=m&jogar&missao`: abre a missão pela contagem · `missao=1`, `missao=2` ou `missao=3` pula direto para aquela task (acrescente `&abrir` para já passar do aviso inicial)
-- `…&missao=fim&t=41`: mostra o aprendizado e o resultado com tempo total de 41 s (`t=120` mostra a falha por demora) · `missao=escolha` mostra a escolha ao reembarcar
+- `…&missao=fim&t=41`: mostra o aprendizado e o resultado com tempo total de 41 s (`t=120` mostra a falha por demora)
+- **Fase 2 (ISS):** acrescente `&m=2` a qualquer atalho de missão ou de manifesto, por exemplo `…&missao=1&abrir&m=2` (Task 1 da ISS), `…&missao=fim&t=50&m=2` (resultado da ISS) ou `…&preparo&m=2` (manifesto da ISS). O atalho libera a ISS sem precisar da estrela.
 - `index.html#lang=pt&g=m&jogar&album` e `…&roblox`: abrem o álbum e o banner do Roblox
 
 ## Regra de dados: só NASA
@@ -201,6 +243,8 @@ Todos os fatos e fotos das exposições vêm da **NASA Image and Video Library**
 | Atlantis | KSC-2012-6136, KSC-2012-6362, 2013-2311 |
 | Saturn V | KSC-98pc1004 |
 | Artemis I (inspiração da nave) | NHQ202211160030, MAF_20221211_Splashdown02 |
+| Card da Fase 1 (Friendship 7) | 9248362 |
+| Card da Fase 2 (Construindo a ISS) | iss020e005813 |
 
 Os textos estão em [dados.js](dados.js), em `idiomas.pt` e `idiomas.en`. Para trocar ou acrescentar uma exposição, edite só esse arquivo, sempre nos dois idiomas. Os textos em inglês seguem de perto as descrições originais da NASA.
 
@@ -210,7 +254,7 @@ Os textos estão em [dados.js](dados.js), em `idiomas.pt` e `idiomas.en`. Para t
 - **As falas do Marcos Pontes são fictícias** (aviso no balão e nos créditos). Os fatos citados nelas vêm dos registros da NASA acima.
 - O museu **junta em um salão** atrações que no Visitor Complex real ficam em lugares diferentes (Rocket Garden, Heroes and Legends, Space Shuttle Atlantis, Apollo/Saturn V Center). É uma representação para o jogo, não uma réplica arquitetônica.
 - A nave RR-01 é um **modelo original** inspirado no SLS com a Orion. O mapa-múndi do Controle Mercury é estilizado.
-- A Fase 1 da demo cobre a Missão 1 inteira (3 tasks). A Missão 2 fica só no jogo do Roblox.
+- A demo cobre as Missões 1 e 2 inteiras (3 tasks cada). A Fase 3 em diante fica só no jogo do Roblox.
 
 ## Para quem vai montar no Roblox Studio
 

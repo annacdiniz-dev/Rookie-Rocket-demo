@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16284f">
 <title>Rookie Rocket · Demo</title>
-<link rel="stylesheet" href="estilo.css?v=15">
+<link rel="stylesheet" href="estilo.css?v=16">
 </head>
 <body class="inicio">
 
@@ -66,6 +66,34 @@
       <div class="t2-teclado" id="t2-teclado"></div>
     </div>
   </div>
+  <!-- ===== Missão 2 (ISS) ===== -->
+  <!-- Task 1: console do braço robótico (esferas + pressão) -->
+  <div class="m-painel largo" id="m-i1" hidden>
+    <p class="mp-dica" id="i1-dica" aria-live="polite"></p>
+    <div class="i1-corpo">
+      <div class="i1-quadro" id="i1-quadro"></div>
+      <div class="i1-pressao">
+        <span id="i1-pr-l"></span>
+        <div class="i1-medidor" id="i1-medidor" role="meter" aria-valuemin="0" aria-valuemax="100"><i class="zona"></i><i class="max"></i><i class="agulha"></i></div>
+        <label for="i1-valvula" id="i1-val-l"></label>
+        <input type="range" id="i1-valvula" min="0" max="100" step="1" value="50">
+      </div>
+    </div>
+  </div>
+  <!-- Task 2: caminhada espacial (cabos e polias), ocupa a tela -->
+  <div class="m-eva" id="m-i2" hidden>
+    <p class="mp-dica" id="i2-dica" aria-live="polite"></p>
+    <div class="i2-quadro" id="i2-quadro"></div>
+    <div class="i2-vel"><span id="i2-vel-l"></span><div class="i2-vel-barra" id="i2-vel-barra"><i></i><em></em></div></div>
+  </div>
+  <!-- Task 3: vazamento (pressão, escotilha, parede e gaze) -->
+  <div class="m-painel" id="m-i3" hidden>
+    <p class="mp-dica" id="i3-dica" aria-live="polite"></p>
+    <div class="i3-pressao"><span id="i3-pr-l"></span><div class="i3-barra" id="i3-barra" role="meter" aria-valuemin="0" aria-valuemax="100"><i></i><b id="i3-pct">100%</b></div></div>
+    <div class="i3-acoes"><button id="i3-escotilha"></button><button id="i3-gaze"></button></div>
+    <div class="i3-parede" id="i3-parede"></div>
+    <div class="t3-barra" id="i3-vedar" role="meter" aria-valuemin="0" aria-valuemax="100"><i></i><span id="i3-vedar-l"></span></div>
+  </div>
   <!-- Task 3: console de reentrada -->
   <div class="m-painel" id="m-t3" hidden>
     <p class="mp-dica" id="t3-dica" aria-live="polite"></p>
@@ -123,6 +151,7 @@
   <div class="banner-corpo">
     <div class="pr-abas"><button id="pr-aba1" aria-pressed="true"></button><button id="pr-aba2" aria-pressed="false"></button></div>
     <section id="pr-passo1">
+      <div class="pr-missoes" id="pr-missoes"></div>
       <p class="pr-task" id="pr-task"></p>
       <p class="pr-obj" id="pr-obj"></p>
       <ol class="pr-guia" id="pr-guia"></ol>
@@ -253,7 +282,7 @@
 <div id="sr" class="sr-only" aria-live="polite"></div>
 
 <script src="lib/three.min.js"></script>
-<script src="dados.js?v=15"></script>
-<script src="jogo.js?v=15"></script>
+<script src="dados.js?v=16"></script>
+<script src="jogo.js?v=16"></script>
 </body>
 </html>

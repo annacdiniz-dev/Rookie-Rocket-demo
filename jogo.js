@@ -19,7 +19,8 @@ if (toque) document.body.classList.add('touch');
 
 /* ---------------- salvamento ---------------- */
 const SAVE = 'rookie-rocket-v4';
-const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [], estrelas: 0, equip: [] };
+// estrelas/equip = missão 1 (Mercury) · estrelas2/equip2 = missão 2 (ISS)
+const estado = { lang: '', nome: '', av: { g: '' }, capacete: false, feitas: [], expos: [], estrelas: 0, equip: [], estrelas2: 0, equip2: [] };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE) || '{}');
   if (s.lang === 'pt' || s.lang === 'en') estado.lang = s.lang;
@@ -28,7 +29,9 @@ try {
   estado.capacete = s.capacete === true;
   if ([1, 2, 3].includes(s.estrelas)) estado.estrelas = s.estrelas; // melhor resultado da Fase 1
   // últimas escolhas da Preparação (só ids que existem no dados.js)
-  if (Array.isArray(s.equip)) estado.equip = s.equip.filter(id => DADOS.equipamentos.some(e => e.id === id));
+  if (Array.isArray(s.equip)) estado.equip = s.equip.filter(id => DADOS.equipamentos.some(e => e.id === id && e.missao === 1));
+  if ([1, 2, 3].includes(s.estrelas2)) estado.estrelas2 = s.estrelas2; // melhor resultado da Fase 2
+  if (Array.isArray(s.equip2)) estado.equip2 = s.equip2.filter(id => DADOS.equipamentos.some(e => e.id === id && e.missao === 2));
   if (Array.isArray(s.feitas)) estado.feitas = s.feitas.filter(x => typeof x === 'string');
   if (Array.isArray(s.expos)) estado.expos = s.expos.filter(x => typeof x === 'string' && DADOS.registros[x]);
 } catch (e) { /* segue sem salvar */ }
@@ -1169,7 +1172,7 @@ function alvoObjetivo() {
     case 'hangar': return new THREE.Vector3(0, 6, -160);
     case 'escada': return new THREE.Vector3(14, 6, -183);
     case 'elevador': return new THREE.Vector3(28, ELEV.h + 10, -226);
-    case 'missao1': return new THREE.Vector3(-2.5, 49, -210);
+    case 'missao1': case 'missao2': return new THREE.Vector3(-2.5, 49, -210); // as duas fases embarcam pela mesma escotilha
   }
   return null;
 }
@@ -1390,58 +1393,97 @@ function bip(f = 880, d = 0.08, tipo = 'square', vol = 0.05) {
     o.start(); gn.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + d); o.stop(audio.currentTime + d + 0.02);
   } catch (e) { /* sem áudio */ }
 }
-const LM = () => L.missao;
-const missaoFeita = () => estado.feitas.includes('missao1');
+// Textos da missão em andamento. A missão 2 usa os da missão 1 e troca só o que está em L.missao2.
+let textosM2 = null;
+const textosDe = n => n === 2 ? (textosM2 || (textosM2 = Object.assign({}, L.missao, L.missao2))) : L.missao;
+const LM = () => textosDe(M.missao || 1);
+const missaoFeita = (n = 1) => estado.feitas.includes('missao' + n);
+const missaoLiberada = n => n === 1 || estado.estrelas >= 1;                // a ISS abre com 1 estrela ou mais na Mercury
+const chaveEquip = n => n === 2 ? 'equip2' : 'equip', chaveEstrelas = n => n === 2 ? 'estrelas2' : 'estrelas';
 function embarcar() {
   if (M.ativa) return;
   const primeira = !estado.capacete;
   if (primeira) { estado.capacete = true; salvar(); falarSistema(L.msg.capacete); bip(660, 0.15, 'sine', 0.06); } // capacete aparece sozinho
-  if (missaoFeita()) abrirEscolha();         // fase 1 já concluída: refazer ou ir para a próxima (Roblox)
-  else if (primeira) setTimeout(() => abrirPreparo(), 1100); // espera o capacete aparecer
+  if (primeira) setTimeout(() => abrirPreparo(), 1100); // espera o capacete aparecer
   else abrirPreparo();                       // a missão não começa direto: antes vem o Manifesto de voo
 }
 
 /* ================================================================
-   MISSÃO 1 · PROJETO MERCURY (FRIENDSHIP 7)
-   Fluxo: Manifesto de voo (missão → equipamentos) → contagem de 12 s →
-   Task 1 (mira) → Task 2 (rádio) → Task 3 (reentrada) → parabéns e
-   aprendizado → resultado com estrelas → card da missão real.
-   Todos os números vêm do dados.js: DADOS.regrasPeso, DADOS.equipamentos e DADOS.missao1.
+   MISSÕES (FASES 1 E 2)
+   Fase 1 = Projeto Mercury (Friendship 7) · Fase 2 = Estação Espacial (ISS).
+   Fluxo das duas: Manifesto de voo (missão → equipamentos) → contagem de 12 s →
+   Task 1 → Task 2 → Task 3 → parabéns e aprendizado → resultado com estrelas →
+   card da missão real. Depois da fase 2, "Próxima fase" leva ao Roblox.
+   Todos os números vêm do dados.js: regrasPeso, equipamentos, missao1 e missao2.
    ================================================================ */
-const RP = DADOS.regrasPeso, CFG = DADOS.missao1;
+const RP = DADOS.regrasPeso;
+let CFG = DADOS.missao1;                                                     // números da missão em andamento (troca em comecarMissao)
 const equipPorId = id => DADOS.equipamentos.find(e => e.id === id);
+const equipDaMissao = n => DADOS.equipamentos.filter(e => e.missao === n);
 const pesoTotal = sel => RP.pesoNave + sel.reduce((soma, id) => soma + equipPorId(id).peso, 0);
 const kgLivres = sel => RP.limite - pesoTotal(sel);                         // negativo = acima do limite
 const bonusLeveza = sel => Math.floor(Math.max(0, kgLivres(sel)) / RP.kgPorBonus) * RP.segundosPorBonus; // em segundos
 const fmtNum = n => String(n).replace('.', L.codigo === 'pt-BR' ? ',' : '.');
 const tempoTxt = s => s.toFixed(1).replace('.', L.codigo === 'pt-BR' ? ',' : '.') + ' s';
 const txTask = n => LM().tasks['t' + n];                                    // textos da task n (nome, alerta, ok, guia)
-const rotuloTask = n => LM().task_n.replace('{n}', n);                      // "TASK 2/3"
+const rotuloTask = n => L.missao.task_n.replace('{n}', n);                  // "TASK 2/3"
+const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ---------------- Manifesto de voo (2 abas) ---------------- */
-let selPreparo = [];                                                         // escolhas marcadas no painel aberto
+let selPreparo = [], missaoPrep = 1;                                         // itens marcados e missão escolhida no painel aberto
 function passoPreparo(n) { // 1 = missão e guia das tasks · 2 = equipamentos
+  if (n === 2 && !missaoLiberada(missaoPrep)) n = 1;
   $('pr-passo1').hidden = n !== 1; $('pr-passo2').hidden = n !== 2;
   $('pr-aba1').setAttribute('aria-pressed', String(n === 1)); $('pr-aba2').setAttribute('aria-pressed', String(n === 2));
 }
-function abrirPreparo(selInicial, passo = 1) {
-  selPreparo = (selInicial || estado.equip).filter(equipPorId).slice();
-  const p = L.preparo, t = LM();
+// missao: 1 ou 2. Sem dizer, abre na primeira fase ainda não concluída (se a ISS já estiver liberada).
+function abrirPreparo(selInicial, passo = 1, missao) {
+  missaoPrep = missao || (missaoFeita(1) && missaoLiberada(2) ? 2 : 1);
+  if (!missaoLiberada(missaoPrep)) missaoPrep = 1;
+  selPreparo = (selInicial || estado[chaveEquip(missaoPrep)]).filter(id => equipPorId(id) && equipPorId(id).missao === missaoPrep);
+  desenharPreparo(); passoPreparo(passo);
+  limparTeclas();
+  if (!$('preparo').open) $('preparo').showModal();
+}
+function desenharPreparo() {
+  const p = L.preparo, t = textosDe(missaoPrep);
   $('pr-fase').textContent = t.fase; $('pr-titulo').textContent = p.titulo;
   $('pr-aba1').textContent = p.aba_missao; $('pr-aba2').textContent = p.aba_itens;
-  // aba 1: a missão e o guia das 3 tasks
-  $('pr-task').textContent = 'Friendship 7'; $('pr-obj').textContent = p.descricao;
+  // aba 1: seletor de missão (a ISS fica bloqueada até ganhar 1 estrela na Mercury)
+  const ms = $('pr-missoes'); ms.innerHTML = '';
+  [1, 2].forEach(n => {
+    const b = document.createElement('button'), ok = missaoLiberada(n), est = estado[chaveEstrelas(n)];
+    b.type = 'button'; b.className = 'pr-missao' + (ok ? '' : ' bloqueada'); b.setAttribute('aria-pressed', String(n === missaoPrep));
+    const s = document.createElement('small'); s.textContent = textosDe(n).fase;
+    const nome = document.createElement('b'); nome.textContent = p.missoes['m' + n].nome;
+    const sub = document.createElement('span'); sub.textContent = ok ? p.missoes['m' + n].sub : p.bloqueada;
+    b.append(s, nome, sub);
+    if (est > 0) { const e = document.createElement('i'); e.textContent = '★'.repeat(est) + '☆'.repeat(3 - est); b.appendChild(e); }
+    b.onclick = () => {
+      if (!ok) { bip(200, 0.15, 'square', 0.05); return; }
+      if (n !== missaoPrep) { missaoPrep = n; selPreparo = estado[chaveEquip(n)].slice(); desenharPreparo(); }
+    };
+    ms.appendChild(b);
+  });
+  if (missaoFeita(2)) { // as duas fases da demo concluídas: a fase 3 é no Roblox
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pr-missao roblox';
+    const nome = document.createElement('b'); nome.textContent = p.missoes.m3.nome;
+    const sub = document.createElement('span'); sub.textContent = p.missoes.m3.sub;
+    b.append(nome, sub); b.onclick = () => { $('preparo').close(); abrirRoblox(); }; ms.appendChild(b);
+  }
+  // aba 1: a missão escolhida e o guia das 3 tasks
+  $('pr-task').textContent = p.missoes['m' + missaoPrep].nome; $('pr-obj').textContent = missaoPrep === 2 ? p.descricao2 : p.descricao;
   const guia = $('pr-guia'); guia.innerHTML = '';
   [1, 2, 3].forEach(n => {
-    const li = document.createElement('li'), s = document.createElement('small'), b = document.createElement('b'), sp = document.createElement('span');
-    s.textContent = rotuloTask(n); b.textContent = txTask(n).nome; sp.textContent = txTask(n).guia;
+    const li = document.createElement('li'), s = document.createElement('small'), b = document.createElement('b'), sp = document.createElement('span'), tx = t.tasks['t' + n];
+    s.textContent = rotuloTask(n); b.textContent = tx.nome; sp.textContent = tx.guia;
     li.append(s, b, sp); guia.appendChild(li);
   });
   $('pr-continuar').textContent = p.continuar; $('pr-voltar').textContent = p.voltar; $('pr-lancar').textContent = p.lancar;
-  // aba 2: equipamentos (clicar liga/desliga), peso e checklist
+  // aba 2: equipamentos da missão (clicar liga/desliga), peso e checklist
   $('pr-nave').textContent = p.nave.replace('{n}', RP.pesoNave); $('pr-limite').textContent = p.limite.replace('{n}', RP.limite);
   const box = $('pr-itens'); box.innerHTML = '';
-  DADOS.equipamentos.forEach(eq => {
+  equipDaMissao(missaoPrep).forEach(eq => {
     const tx = p.itens[eq.id], b = document.createElement('button');
     b.type = 'button'; b.className = 'pr-item'; b.dataset.id = eq.id;
     const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = eq.icone;
@@ -1459,13 +1501,11 @@ function abrirPreparo(selInicial, passo = 1) {
     };
     box.appendChild(b);
   });
-  atualizarPreparo(); passoPreparo(passo);
-  limparTeclas();
-  if (!$('preparo').open) $('preparo').showModal();
+  atualizarPreparo();
 }
 function atualizarPreparo(avisoMax) {
   const p = L.preparo, peso = pesoTotal(selPreparo), livre = kgLivres(selPreparo);
-  const escala = RP.pesoNave + DADOS.equipamentos.reduce((s, e) => s + e.peso, 0); // barra vai até "tudo marcado"
+  const escala = RP.pesoNave + equipDaMissao(missaoPrep).reduce((s, e) => s + e.peso, 0); // barra vai até "tudo marcado"
   const cor = peso > RP.limite ? 'vermelho' : peso > RP.faixaVerde ? 'amarelo' : 'verde';
   $('pr-fill').style.width = Math.min(100, peso / escala * 100) + '%'; $('pr-fill').className = 'pr-fill ' + cor;
   $('pr-marca').style.left = (RP.limite / escala * 100) + '%';
@@ -1486,24 +1526,23 @@ $('pr-aba1').onclick = $('pr-voltar').onclick = () => passoPreparo(1);
 $('pr-aba2').onclick = $('pr-continuar').onclick = () => passoPreparo(2);
 // Embarcar fica sempre habilitado: errar o peso faz parte do aprendizado
 $('pr-lancar').onclick = () => {
-  estado.equip = selPreparo.slice(); salvar();            // pré-marca na próxima vez
+  if (!missaoLiberada(missaoPrep)) return;
+  estado[chaveEquip(missaoPrep)] = selPreparo.slice(); salvar(); // pré-marca na próxima vez
   $('preparo').close();
-  comecarMissao();                                        // acima do limite também entra na cápsula: o lançamento é cancelado lá dentro
+  comecarMissao(missaoPrep);                              // acima do limite também entra na cápsula: o lançamento é cancelado lá dentro
 };
 
 /* ---------------- equipamentos, tempos e estrelas ---------------- */
 // Liga os efeitos escolhidos SÓ nesta tentativa (sempre partindo dos valores originais)
 function aplicarEquipamentos(sel) {
-  Object.assign(AJ, AJ_BASE); AJ.segurar = CFG.t1.segurar;
-  M.cfg = { limiteT2: CFG.t2.limite, destaque: false, segurarT3: CFG.t3.segurar, tremorT3: 1 };
+  Object.assign(AJ, AJ_BASE); AJ.segurar = DADOS.missao1.t1.segurar;
+  M.cfg = { limiteT2: DADOS.missao1.t2.limite, destaque: false, segurarT3: DADOS.missao1.t3.segurar, tremorT3: 1,
+            zonaI1: 1, velI2: 1, perdaI3: 1, vedarI3: DADOS.missao2.t3.vedar };
   sel.forEach(id => {
     const ef = equipPorId(id).efeito;
     if (ef.segurar) AJ.segurar = ef.segurar;
     if (ef.ima) AJ.ima = ef.ima;
-    if (ef.limiteT2) M.cfg.limiteT2 = ef.limiteT2;
-    if (ef.destaque) M.cfg.destaque = true;
-    if (ef.segurarT3) M.cfg.segurarT3 = ef.segurarT3;
-    if (ef.tremorT3) M.cfg.tremorT3 = ef.tremorT3;
+    for (const k of ['limiteT2', 'destaque', 'segurarT3', 'tremorT3', 'zonaI1', 'velI2', 'perdaI3', 'vedarI3']) if (ef[k] !== undefined) M.cfg[k] = ef[k];
   });
   M.equip = sel.slice(); M.peso = pesoTotal(sel); M.bonus = bonusLeveza(sel);
 }
@@ -1556,23 +1595,27 @@ function pararEstatica() { try { if (estatica) estatica.stop(); } catch (e) { /*
 
 /* ---------------- começo da missão e troca de task ---------------- */
 const CEU_PAD = new THREE.Color('#6fb7ff'), ESPACO = new THREE.Color('#02040a'), PLASMA = new THREE.Color('#ff6a1a'), corTmp = new THREE.Color();
-function comecarMissao() {
+const PAINEIS = ['m-t2', 'm-t3', 'm-i1', 'm-i2', 'm-i3'];   // painéis das tasks (só um aparece por vez)
+const esconderPaineis = () => PAINEIS.forEach(id => { $(id).hidden = true; });
+function comecarMissao(missao = 1) {
+  M.missao = missao; CFG = DADOS['missao' + missao];       // 1 = Mercury · 2 = ISS
   const t = LM();
   // zera tudo: a missão sempre começa da contagem, com os tempos das 3 tasks em 0
   Object.assign(M, { ativa: true, fase: 'contagem', task: 0, tempos: [0, 0, 0], t: 0, tFase: 0, naMira: false, teclas: {}, arrasto: null, ima: null, alertaPeso: false, alarme: false, estrelasBarra: undefined });
-  aplicarEquipamentos(estado.equip);                       // efeitos valem só nesta tentativa
+  aplicarEquipamentos(estado[chaveEquip(missao)]);         // efeitos valem só nesta tentativa
+  cabineM.visible = true; estacao.visible = false; posicionarZarya(0); esconderPaineis();
   M.pesado = M.peso > RP.limite;                           // acima do limite: o lançamento é cancelado na plataforma
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
   cena2.background.copy(CEU_PAD); exterior.visible = false; exterior.position.y = 0; luzCabine.color.set('#ffffff');
   M.pontos.forEach(p => { p.g.visible = false; });
   document.body.classList.add('em-missao'); $('missao').hidden = false; $('missao').className = '';
-  $('m-fase').textContent = t.fase; $('m-task').textContent = 'Friendship 7'; $('m-sair').textContent = '✕ ' + t.sair;
+  $('m-fase').textContent = t.fase; $('m-task').textContent = L.preparo.missoes['m' + missao].nome; $('m-sair').textContent = '✕ ' + t.sair;
   $('m-alvos-l').textContent = t.pontos; $('m-tempo-l').textContent = t.tempo; $('m-comb-l').textContent = t.limite;
   $('m-bonus').textContent = M.bonus > 0 ? `${t.bonus_hud} −${M.bonus} s` : '';
   $('m-estbar').setAttribute('aria-label', t.barra_estrelas);
   $('m-alerta').textContent = ''; $('m-alerta').className = 'm-alerta';
   $('m-vermelho').classList.remove('on'); $('m-plasma').className = 'm-plasma'; $('m-mira').className = 'm-mira'; $('m-mira').hidden = true;
-  $('m-splash').classList.remove('on'); $('m-t2').hidden = true; $('m-t3').hidden = true; $('m-grupo-pontos').hidden = true;
+  $('m-splash').classList.remove('on'); $('m-grupo-pontos').hidden = true;
   $('m-contagem').hidden = false; $('m-contagem').className = 'm-contagem';
   $('m-cont-l').textContent = t.contagem; $('m-cont-n').textContent = CFG.contagem; $('m-cont-pular').textContent = t.pular; $('m-cont-pular').hidden = M.pesado;
   dica(''); atualizarHud();
@@ -1586,14 +1629,16 @@ function iniciarTask(n) {
   Object.assign(M, { task: n, fase: 'intro', tFase: 0, alarme: true, naMira: false, ima: null });
   M.tempos[n - 1] = 0; pararEstatica();
   cena2.background.copy(ESPACO); exterior.visible = true; exterior.position.y = 0;
-  $('missao').className = 'task' + n;
-  $('m-contagem').hidden = true; $('m-t2').hidden = true; $('m-t3').hidden = true;
+  const iss = M.missao === 2, mira = !iss && n === 1;      // só a Task 1 da Mercury usa a mira; as outras têm painel
+  cabineM.visible = true; estacao.visible = iss; if (iss) posicionarZarya(n === 1 ? 0 : 1); // depois da Task 1 a Zarya já está acoplada
+  $('missao').className = 'task' + n + (mira ? '' : ' painel');
+  $('m-contagem').hidden = true; esconderPaineis();
   $('m-task').textContent = `${rotuloTask(n)} · ${tx.nome}`;
   $('m-splash-fase').textContent = rotuloTask(n); $('m-splash-task').textContent = tx.nome; $('m-splash').classList.add('on');
   $('m-alerta').textContent = tx.alerta; $('m-alerta').className = 'm-alerta pisca';
   $('m-vermelho').classList.add('on'); $('m-plasma').className = 'm-plasma'; luzCabine.color.set('#ff3030');
-  $('m-mira').className = 'm-mira'; $('m-mira').hidden = n !== 1; $('m-grupo-pontos').hidden = n !== 1;
-  M.pontos.forEach(p => { p.g.visible = n === 1; p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
+  $('m-mira').className = 'm-mira'; $('m-mira').hidden = !mira; $('m-grupo-pontos').hidden = !mira;
+  M.pontos.forEach(p => { p.g.visible = mira; p.prog = 0; p.ok = false; p.desenhado = -1; p.nucleo.material = matVerm; p.brilho.visible = true; p.arco.visible = false; });
   document.querySelectorAll('#m-luzes i').forEach(i => i.classList.remove('on'));
   M.olhar.x = M.alvo.x = 0; M.olhar.y = M.alvo.y = 0.2;
   dica(''); atualizarHud();
@@ -1604,6 +1649,7 @@ function iniciarTask(n) {
 function abrirTask() {
   const t = LM();
   M.fase = 'jogo'; M.tFase = 0; $('m-splash').classList.remove('on');
+  if (M.missao === 2) { dica(''); [montarI1, montarI2, montarI3][M.task - 1](); $('m-i' + M.task).hidden = false; return; } // ISS
   if (M.task === 1) dica(dicaMira());
   if (M.task === 2) { montarT2(); $('m-t2').hidden = false; dica(''); tocarEstatica(); } // a dica desta task fica dentro do painel
   if (M.task === 3) { montarT3(); $('m-t3').hidden = false; dica(''); }
@@ -1614,6 +1660,184 @@ function concluirTask() {
   $('m-vermelho').classList.remove('on'); $('m-plasma').className = 'm-plasma'; luzCabine.color.set('#ffffff');
   if (M.task === 1) $('m-mira').className = 'm-mira ok';
   dica(''); bip(1320, 0.3, 'sine', 0.07); vibrar(60);
+}
+
+/* ================================================================
+   MISSÃO 2 · ESTAÇÃO ESPACIAL INTERNACIONAL (ISS)
+   Task 1: acoplamento (esferas + pressão) · Task 2: caminhada espacial
+   (cabos e polias) · Task 3: vazamento de 2 mm (escotilha, furo e gaze).
+   ================================================================ */
+// Do lado de fora: módulos Unity e Zarya (formas simples) e um painel solar. A Zarya começa torta e encaixa no fim da Task 1.
+const estacao = new THREE.Group(); estacao.visible = false; cena2.add(estacao);
+const zarya = new THREE.Group(); estacao.add(zarya);
+{
+  const cilindro = (r, comp, cor, pai) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, comp, 20), mat(cor)); m.rotation.z = Math.PI / 2; pai.add(m); return m; };
+  const unity = new THREE.Group(); unity.position.set(-9, 9, -46); estacao.add(unity);
+  cilindro(3.2, 9, '#d9dde4', unity); cilindro(2.2, 1.2, '#8d93a1', unity).position.x = 5;                  // nó Unity e o anel de encaixe
+  cilindro(2.8, 12, '#c2c8d2', zarya); cilindro(2.2, 1.2, '#8d93a1', zarya).position.x = -6.4;              // Zarya e o anel dela
+  for (const s of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(3, 0.15, 11), mat('#24407a')); p.position.set(1, 0, s * 8.5); zarya.add(p); } // painéis solares
+}
+// k = 0: torta (≈12° e fora do encaixe) · k = 1: travada no Unity
+function posicionarZarya(k) { zarya.position.set(8.5 - 5.2 * k, 9 - 3.2 * (1 - k), -46 + 2 * (1 - k)); zarya.rotation.set(0, 0.1 * (1 - k), 0.21 * (1 - k)); zarya.userData.k = k; }
+posicionarZarya(0);
+
+/* ---------------- ISS · Task 1: console do braço robótico ---------------- */
+const ALVOS_I1 = [[30, 28], [70, 28], [30, 72], [70, 72]], INICIO_I1 = [[10, 80], [90, 20], [50, 50], [90, 80]]; // posições em % do quadro
+const noVerdeI1 = () => Math.abs(M.i1.p - CFG.t1.centro) <= CFG.t1.zona * M.cfg.zonaI1;
+function montarI1() {
+  const t = LM(), c = CFG.t1, q = $('i1-quadro');
+  // começa com a pressão alta (é o alerta da task): o jogador precisa aliviar a válvula
+  M.i1 = { p: 0.86, v: 0.86, tMax: 0, presas: 0, arr: null, fase: Math.random() * 6, ocupado: [false, false, false, false], aviso: 0 };
+  $('i1-dica').textContent = t.i1_dica; $('i1-pr-l').textContent = t.i1_pressao; $('i1-val-l').textContent = t.i1_valvula;
+  const meia = c.zona * M.cfg.zonaI1, zona = $('i1-medidor').querySelector('.zona');   // zona verde (maior com o sensor de pressão)
+  zona.style.left = ((c.centro - meia) * 100) + '%'; zona.style.width = (meia * 200) + '%';
+  $('i1-medidor').querySelector('.max').style.width = ((1 - c.max) * 100) + '%';
+  const valv = $('i1-valvula'); valv.value = Math.round(M.i1.v * 100); valv.oninput = () => { M.i1.v = valv.value / 100; };
+  q.innerHTML = ''; q.className = 'i1-quadro';
+  const alvos = ALVOS_I1.map(([x, y]) => { const a = document.createElement('i'); a.className = 'i1-alvo'; a.style.left = x + '%'; a.style.top = y + '%'; a.textContent = '✕'; q.appendChild(a); return a; });
+  INICIO_I1.forEach(([x0, y0], i) => {
+    const el = document.createElement('button'), o = { el, x: x0, y: y0, presa: false };
+    el.type = 'button'; el.className = 'i1-esfera'; el.setAttribute('aria-label', t.i1_esfera.replace('{n}', i + 1));
+    const por = () => { el.style.left = o.x + '%'; el.style.top = o.y + '%'; }; por();
+    o.voltar = () => { o.x = x0; o.y = y0; por(); };
+    el.addEventListener('pointerdown', ev => {
+      if (o.presa || M.fase !== 'jogo') return;
+      ev.preventDefault();
+      if (!noVerdeI1()) { avisoI1(t.i1_fora); return; }                 // fora do verde o braço não obedece
+      M.i1.arr = { o, id: ev.pointerId }; try { el.setPointerCapture(ev.pointerId); } catch (err) { /* sem captura */ }
+    });
+    el.addEventListener('pointermove', ev => {
+      const a = M.i1.arr; if (!a || a.o !== o || a.id !== ev.pointerId) return;
+      const r = q.getBoundingClientRect();
+      o.x = limitar((ev.clientX - r.left) / r.width * 100, 7, 93); o.y = limitar((ev.clientY - r.top) / r.height * 100, 14, 86); por();
+      // encaixa no primeiro ✕ livre que estiver perto
+      const k = ALVOS_I1.findIndex(([ax, ay], j) => !M.i1.ocupado[j] && Math.hypot(ax - o.x, (ay - o.y) * r.height / r.width) < 7);
+      if (k >= 0) { o.presa = true; M.i1.ocupado[k] = true; M.i1.presas++; M.i1.arr = null; o.x = ALVOS_I1[k][0]; o.y = ALVOS_I1[k][1]; por(); el.classList.add('presa'); alvos[k].classList.add('cheio'); bip(990, 0.12, 'sine', 0.07); vibrar(40); }
+    });
+    const soltar = () => { if (M.i1.arr && M.i1.arr.o === o) M.i1.arr = null; };
+    el.addEventListener('pointerup', soltar); el.addEventListener('pointercancel', soltar);
+    M.i1.esferas = (M.i1.esferas || []).concat(o); q.appendChild(el);
+  });
+  M.alvo.x = 0; M.alvo.y = 0.16;
+}
+function avisoI1(txt) { $('i1-dica').textContent = txt; M.i1.aviso = 2.2; bip(200, 0.15, 'square', 0.05); vibrar(40); }
+function atualizarI1(dt, tt) {
+  const t = LM(), c = CFG.t1, e = M.i1;
+  // a pressão segue a válvula com atraso e sofre uma deriva (duas ondas lentas) que obriga a reajustar
+  const deriva = c.deriva * (0.6 * Math.sin(tt * 0.9 + e.fase) + 0.4 * Math.sin(tt * 0.37 + e.fase * 2));
+  e.p += (limitar(e.v + deriva, 0, 1) - e.p) * Math.min(1, dt * c.resposta);
+  const verde = noVerdeI1(), perigo = e.p >= c.max, med = $('i1-medidor');
+  med.querySelector('.agulha').style.left = (e.p * 100) + '%'; med.setAttribute('aria-valuenow', Math.round(e.p * 100));
+  med.className = 'i1-medidor' + (perigo ? ' perigo' : verde ? '' : ' fora');
+  $('i1-quadro').classList.toggle('travado', !verde);
+  if (!verde && e.arr) { e.arr.o.voltar(); e.arr = null; avisoI1(t.i1_fora); }  // saiu do verde carregando: a esfera escorrega e volta
+  if (perigo) { e.tMax += dt; $('i1-dica').textContent = t.i1_perigo; e.aviso = 0.3; } else e.tMax = 0;
+  if (e.aviso > 0) { e.aviso -= dt; if (e.aviso <= 0) $('i1-dica').textContent = t.i1_dica; }
+  if (e.tMax >= c.maxSegundos) falhar('pressao');             // pressão no máximo por 3 s: colisão entre os módulos
+  else if (arred(tt) > c.limite) falhar('tempo');             // 40 s: a Zarya deriva para longe
+  else if (e.presas >= ALVOS_I1.length && verde) concluirTask(); // "clack": a Zarya trava no Unity (a animação roda no loop)
+  return perigo ? 0.012 : verde ? 0.002 : 0.005;
+}
+
+/* ---------------- ISS · Task 2: caminhada espacial (cabos e polias) ---------------- */
+const CABOS_I2 = [{ ancora: [8, 22], inicio: [24, 34], polia: [86, 24] }, { ancora: [8, 80], inicio: [22, 68], polia: [82, 78] }]; // em % do quadro
+function montarI2() {
+  const t = LM(), q = $('i2-quadro'), NS = 'http://www.w3.org/2000/svg';
+  M.i2 = { cabos: [], arr: null, presos: 0, vel: 0, tAcima: 0, aviso: 0 };
+  cabineM.visible = false; M.alvo.x = 0; M.alvo.y = -0.1;     // do lado de fora: some a cabine e a Terra aparece ao fundo
+  $('i2-dica').textContent = t.i2_dica; $('i2-vel-l').textContent = t.i2_vel;
+  q.innerHTML = '';
+  const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); q.appendChild(svg);
+  CABOS_I2.forEach((d, i) => {
+    const linha = document.createElementNS(NS, 'line'); svg.appendChild(linha);
+    const anc = document.createElement('i'); anc.className = 'i2-ancora'; anc.style.left = d.ancora[0] + '%'; anc.style.top = d.ancora[1] + '%'; q.appendChild(anc);
+    const pol = document.createElement('div'); pol.className = 'i2-polia'; pol.style.left = d.polia[0] + '%'; pol.style.top = d.polia[1] + '%'; pol.textContent = i + 1; q.appendChild(pol);
+    const el = document.createElement('button'); el.type = 'button'; el.className = 'i2-cabo'; el.textContent = i + 1; el.setAttribute('aria-label', t.i2_cabo.replace('{n}', i + 1)); q.appendChild(el);
+    const c = { d, el, linha, pol, x: d.inicio[0], y: d.inicio[1], ax: d.inicio[0], ay: d.inicio[1], preso: false }; // x,y = onde o cabo está · ax,ay = onde o dedo está
+    c.por = () => { el.style.left = c.x + '%'; el.style.top = c.y + '%'; linha.setAttribute('x1', d.ancora[0]); linha.setAttribute('y1', d.ancora[1]); linha.setAttribute('x2', c.x); linha.setAttribute('y2', c.y); }; c.por();
+    el.addEventListener('pointerdown', ev => { if (c.preso || M.fase !== 'jogo') return; ev.preventDefault(); M.i2.arr = { c, id: ev.pointerId }; M.i2.tAcima = 0; c.ax = c.x; c.ay = c.y; try { el.setPointerCapture(ev.pointerId); } catch (err) { /* sem captura */ } });
+    el.addEventListener('pointermove', ev => {
+      const a = M.i2.arr; if (!a || a.c !== c || a.id !== ev.pointerId) return;
+      const r = q.getBoundingClientRect();
+      c.ax = limitar((ev.clientX - r.left) / r.width * 100, 3, 97); c.ay = limitar((ev.clientY - r.top) / r.height * 100, 5, 95); // o cabo vai atrás do dedo no loop
+    });
+    const soltar = () => { if (M.i2.arr && M.i2.arr.c === c) M.i2.arr = null; };
+    el.addEventListener('pointerup', soltar); el.addEventListener('pointercancel', soltar);
+    M.i2.cabos.push(c);
+  });
+}
+function atualizarI2(dt, tt) {
+  const t = LM(), c2 = CFG.t2, e = M.i2, q = $('i2-quadro'), r = q.getBoundingClientRect();
+  const studs = c2.largura / 100, prop = r.width ? r.height / r.width : 1;   // 1% da largura do quadro em studs
+  const limite = c2.velMax * M.cfg.velI2;                                    // 6 studs/s; 12 com as luvas
+  let vel = 0;
+  if (e.arr) {
+    const c = e.arr.c;
+    // o cabo segue o dedo como um astronauta com propulsores: no máximo velEVA studs/s
+    const dx = c.ax - c.x, dy = (c.ay - c.y) * prop, falta = Math.hypot(dx, dy) * studs, passo = Math.min(falta, c2.velEVA * dt);
+    if (falta > 0.001) { c.x += dx / (falta / studs) * (passo / studs); c.y += dy / (falta / studs) * (passo / studs) / prop; c.por(); }
+    vel = passo / Math.max(dt, 0.001);
+    // prendeu na polia? (só se chegou devagar)
+    if (vel <= limite && Math.hypot(c.d.polia[0] - c.x, (c.d.polia[1] - c.y) * prop) * studs < c2.encaixe) {
+      c.preso = true; e.presos++; e.arr = null; c.x = c.d.polia[0]; c.y = c.d.polia[1]; c.por(); c.el.classList.add('preso'); c.linha.classList.add('preso'); c.pol.classList.add('cheia'); bip(990, 0.12, 'sine', 0.07); vibrar(45);
+    }
+  }
+  e.vel += (vel - e.vel) * Math.min(1, dt * 10);                             // suaviza para a barra não tremer
+  const barra = $('i2-vel-barra'); barra.style.setProperty('--n', Math.min(100, e.vel / (limite * 1.5) * 100) + '%'); barra.classList.toggle('alta', e.vel > limite);
+  if (e.arr && e.vel > limite) {                                             // rápido demais por mais de 0,3 s: o cabo escorrega e volta
+    e.tAcima += dt;
+    if (e.tAcima > c2.tolerancia) { const c = e.arr.c; e.arr = null; e.tAcima = 0; c.x = c.d.inicio[0]; c.y = c.d.inicio[1]; c.por(); c.el.classList.remove('escorregou'); void c.el.offsetWidth; c.el.classList.add('escorregou'); $('i2-dica').textContent = t.i2_escorregou; e.aviso = 2.4; bip(200, 0.2, 'square', 0.05); vibrar(60); }
+  } else e.tAcima = 0;
+  if (e.aviso > 0) { e.aviso -= dt; if (e.aviso <= 0) $('i2-dica').textContent = t.i2_dica; }
+  if (e.presos >= e.cabos.length) concluirTask();
+  else if (arred(tt) > c2.limite) falhar('tempo');
+  return 0.0015;
+}
+
+/* ---------------- ISS · Task 3: vazamento de 2 mm ---------------- */
+function montarI3() {
+  const t = LM(), c = CFG.t3, par = $('i3-parede');
+  M.i3 = { pressao: 100, escotilha: false, gaze: false, achou: false, furo: Math.floor(Math.random() * c.lugares), prog: 0, segurando: false, aviso: 0 }; // o furo é sorteado entre 4 lugares
+  $('i3-pr-l').textContent = t.i3_pressao; $('i3-vedar-l').textContent = t.i3_vedar; $('i3-vedar').style.setProperty('--n', '0%');
+  const esc = $('i3-escotilha'), gz = $('i3-gaze');
+  esc.textContent = t.i3_escotilha; esc.className = ''; gz.textContent = t.i3_gaze; gz.className = '';
+  esc.onclick = () => { if (M.fase !== 'jogo' || M.i3.escotilha) return; M.i3.escotilha = true; esc.textContent = t.i3_escotilha_ok; esc.className = 'feito'; par.classList.remove('bloqueada'); bip(300, 0.25, 'sine', 0.07); vibrar(40); };
+  gz.onclick = () => { if (M.fase !== 'jogo' || M.i3.gaze) return; M.i3.gaze = true; gz.textContent = t.i3_gaze_ok; gz.className = 'feito'; bip(700, 0.1, 'sine', 0.06); };
+  par.innerHTML = ''; par.className = 'i3-parede bloqueada';
+  for (let k = 0; k < c.lugares; k++) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'i3-ponto'; b.setAttribute('aria-label', t.i3_painel.replace('{n}', k + 1));
+    if (k === M.i3.furo) for (let j = 0; j < 3; j++) b.appendChild(document.createElement('em'));   // ar sendo sugado: só no painel do furo
+    const soltar = () => { M.i3.segurando = false; b.classList.remove('vedando'); };
+    b.addEventListener('pointerdown', ev => {
+      if (M.fase !== 'jogo') return; ev.preventDefault();
+      const e = M.i3;
+      if (!e.escotilha) { avisoI3(t.i3_feche); return; }
+      if (k !== e.furo) { b.classList.remove('errado'); void b.offsetWidth; b.classList.add('errado'); avisoI3(t.i3_nada); return; }
+      if (!e.achou) { e.achou = true; b.classList.add('achado'); bip(880, 0.12, 'sine', 0.07); vibrar(40); if (!e.gaze) { avisoI3(t.i3_achou); return; } }
+      if (!e.gaze) { avisoI3(t.i3_precisa); return; }
+      e.segurando = true; b.classList.add('vedando'); try { b.setPointerCapture(ev.pointerId); } catch (err) { /* sem captura */ }
+    });
+    b.addEventListener('pointerup', soltar); b.addEventListener('pointercancel', soltar); b.addEventListener('lostpointercapture', soltar);
+    b.addEventListener('contextmenu', ev => ev.preventDefault());
+    par.appendChild(b);
+  }
+  M.alvo.x = 0.3; M.alvo.y = 0.05;
+}
+function avisoI3(txt) { $('i3-dica').textContent = txt; M.i3.aviso = 2; bip(200, 0.15, 'square', 0.05); vibrar(30); }
+function atualizarI3(dt) {
+  const t = LM(), c = CFG.t3, e = M.i3;
+  // perda de ar: 2,5% por segundo; metade com a escotilha fechada; 40% menor com o kit de vedação
+  e.pressao = Math.max(0, e.pressao - c.perda * (e.escotilha ? c.escotilha : 1) * M.cfg.perdaI3 * dt);
+  const barra = $('i3-barra'); barra.style.setProperty('--n', e.pressao + '%'); barra.setAttribute('aria-valuenow', Math.round(e.pressao));
+  barra.className = 'i3-barra' + (e.pressao <= 25 ? ' baixa' : e.pressao <= 55 ? ' media' : ''); $('i3-pct').textContent = Math.round(e.pressao) + '%';
+  if (e.segurando) e.prog += dt;                              // segurar a gaze sobre o furo (soltar só pausa)
+  const f = Math.min(1, e.prog / M.cfg.vedarI3);
+  $('i3-vedar').style.setProperty('--n', (f * 100) + '%'); $('i3-vedar').setAttribute('aria-valuenow', Math.round(f * 100));
+  if (e.aviso > 0) e.aviso -= dt;
+  if (e.aviso <= 0) $('i3-dica').textContent = !e.escotilha ? t.i3_dica1 : !e.achou ? t.i3_dica2 : !e.gaze ? t.i3_dica3 : t.i3_dica4; // passo atual
+  if (f >= 1) { document.querySelectorAll('#i3-parede .i3-ponto').forEach(b => { b.classList.remove('vedando'); if (b.classList.contains('achado')) b.classList.add('vedado'); }); concluirTask(); return 0; }
+  if (e.pressao <= 0) { falhar('tempo'); return 0; }           // a cabine ficou sem ar
+  return 0.003 + (1 - e.pressao / 100) * 0.006;
 }
 
 /* ---------------- Task 2: prancheta e rádio ---------------- */
@@ -1714,8 +1938,9 @@ function falhar(motivo) {
   else {
     $('m-estrelas-txt').textContent = t.conta_task.replace('{n}', M.task).replace('{nome}', txTask(M.task).nome);
     if (motivo === 'ejetar') fala = falaMarcos('ejetar' + M.task);
-    else { // tempo: a dica depende de ter levado (ou não) o equipamento daquela task
-      const eq = DADOS.equipamentos.find(e => e.task === M.task);
+    else if (motivo === 'pressao') fala = falaMarcos('pressao_max');   // ISS, Task 1: força demais no braço
+    else { // tempo (ou ar) esgotado: a dica depende de ter levado (ou não) o equipamento daquela task
+      const eq = equipDaMissao(M.missao).find(e => e.task === M.task);
       fala = falaMarcos(M.equip.includes(eq.id) ? 'tempo_com' : 'tempo_sem', { equipamento: L.preparo.itens[eq.id].nome });
     }
   }
@@ -1723,10 +1948,10 @@ function falhar(motivo) {
   $('mf-topo').className = 'banner-topo falha'; $('mf-selo').textContent = '✕'; $('mf-titulo').textContent = t.falhou_titulo;
   $('mf-fala').textContent = fala; $('mf-dica').textContent = '';
   $('mf-novo').textContent = ''; $('mf-card').innerHTML = ''; $('mf-card').hidden = true;
-  $('m-t2').hidden = true; $('m-t3').hidden = true;         // os painéis das tasks saem de trás do banner
+  esconderPaineis();                                        // os painéis das tasks saem de trás do banner
   $('mf-voltar').textContent = t.sair_mapa; $('mf-voltar').onclick = sairMissao;
-  // Reiniciar missão: volta ao embarque (aba de equipamentos) e libera a troca de itens
-  $('mf-trocar').hidden = false; $('mf-trocar').textContent = '🎒 ' + t.reiniciar; $('mf-trocar').onclick = () => { sairMissao(); abrirPreparo(undefined, 2); };
+  // Reiniciar missão: volta ao embarque (aba de equipamentos) da mesma missão e libera a troca de itens
+  $('mf-trocar').hidden = false; $('mf-trocar').textContent = '🎒 ' + t.reiniciar; $('mf-trocar').onclick = () => { const mi = M.missao; sairMissao(); abrirPreparo(undefined, 2, mi); };
   // Repetir task: zera só o tempo da task e mantém os itens. Não existe no peso (nem decolou) nem no "demorou demais".
   $('mf-proxima').hidden = motivo === 'peso' || motivo === 'lento';
   $('mf-proxima').textContent = '↻ ' + t.tentar_task; $('mf-proxima').onclick = () => { const n = M.task; $('m-fim').close(); iniciarTask(n); };
@@ -1735,7 +1960,7 @@ function falhar(motivo) {
 }
 // As 3 tasks passaram: calcula as estrelas. Com 0 (acima de 100 s) é falha; senão vem o aprendizado.
 function finalizarMissao() {
-  M.fase = 'fim'; M.alarme = false; $('m-t2').hidden = true; $('m-t3').hidden = true;
+  M.fase = 'fim'; M.alarme = false; esconderPaineis();
   if (calcularEstrelas(tempoFinal()) === 0) { falhar('lento'); return; }
   const t = LM();
   $('ap-titulo').textContent = fmt(t.parabens_titulo); $('ap-sub').textContent = t.parabens_sub; $('ap-continuar').textContent = t.ver_resultado;
@@ -1761,12 +1986,15 @@ function mostrarResultado() {
   $('mf-topo').className = 'banner-topo ok'; $('mf-selo').textContent = '✔'; $('mf-titulo').textContent = t.sucesso_titulo;
   $('mf-fala').textContent = falaMarcos('sucesso'); $('mf-dica').textContent = '';
   const card = $('mf-card'); card.innerHTML = ''; card.hidden = false; $('mf-novo').textContent = t.novo_card;
-  card.appendChild(cardMissao(DADOS.album[0], true));            // The real mission: Friendship 7
+  const mi = M.missao;
+  card.appendChild(cardMissao(DADOS.album[mi - 1], true));       // The real mission: Friendship 7 (fase 1) ou Building the ISS (fase 2)
   $('mf-voltar').textContent = t.voltar; $('mf-voltar').onclick = sairMissao;
   $('mf-trocar').hidden = true;
-  $('mf-proxima').hidden = false; $('mf-proxima').textContent = t.proxima + ' ▶'; $('mf-proxima').onclick = () => { sairMissao(); abrirRoblox(); };
-  estado.estrelas = Math.max(estado.estrelas, estrelas); salvar(); // guarda o melhor resultado
-  concluir('missao1');
+  // Próxima fase: da fase 1 vai para o manifesto da fase 2 (ISS); da fase 2 vai para o Roblox (fase 3)
+  $('mf-proxima').hidden = false; $('mf-proxima').textContent = t.proxima + ' ▶';
+  $('mf-proxima').onclick = () => { sairMissao(); if (mi === 1) abrirPreparo(undefined, 1, 2); else abrirRoblox(); };
+  estado[chaveEstrelas(mi)] = Math.max(estado[chaveEstrelas(mi)], estrelas); salvar(); // guarda o melhor resultado
+  concluir('missao' + mi);
   $('m-fim').showModal();
 }
 function sairMissao() {
@@ -1777,6 +2005,7 @@ function sairMissao() {
   document.body.classList.remove('em-missao'); $('missao').hidden = true;
   $('m-vermelho').classList.remove('on'); $('m-splash').classList.remove('on'); $('m-plasma').className = 'm-plasma';
   cena2.background.copy(ESPACO); exterior.visible = true; exterior.position.y = 0;
+  cabineM.visible = true; estacao.visible = false; esconderPaineis();
   teleportar('braco');
 }
 $('m-sair').onclick = sairMissao;
@@ -1789,7 +2018,12 @@ function atualizarHud() {
   // barra LIMITE: quanto falta para a task atual falhar por tempo
   let resta = 1;
   const tt = M.task ? M.tempos[M.task - 1] : 0;
-  if (M.task === 1) resta = 1 - tt / CFG.t1.limite;
+  if (M.missao === 2) { // ISS: tempo nas Tasks 1 e 2; na Task 3 o limite é o ar da cabine
+    if (M.task === 1) resta = 1 - tt / CFG.t1.limite;
+    else if (M.task === 2) resta = 1 - tt / CFG.t2.limite;
+    else if (M.task === 3 && M.i3 && M.fase !== 'intro') resta = M.i3.pressao / 100;
+  }
+  else if (M.task === 1) resta = 1 - tt / CFG.t1.limite;
   else if (M.task === 2) resta = 1 - tt / M.cfg.limiteT2;
   else if (M.task === 3 && !M.t3.decidiu) resta = 1 - tt / CFG.t3.decidir;   // depois de decidir não há mais limite
   resta = Math.max(0, Math.min(1, resta));
@@ -1842,15 +2076,17 @@ function atualizarMissao(dt) {
   } else if (M.fase === 'jogo') {
     M.tempos[M.task - 1] += dt;                               // o cronômetro só corre com a task ativa
     const tt = M.tempos[M.task - 1];
-    if (M.task === 1) { tremor = AJ.tremor; if (arred(tt) > CFG.t1.limite) { falhar('tempo'); } }
+    if (M.missao === 2) tremor = M.task === 1 ? atualizarI1(dt, tt) : M.task === 2 ? atualizarI2(dt, tt) : atualizarI3(dt);
+    else if (M.task === 1) { tremor = AJ.tremor; if (arred(tt) > CFG.t1.limite) { falhar('tempo'); } }
     else if (M.task === 2) { tremor = 0.002; if (arred(tt) > M.cfg.limiteT2) { falhar('tempo'); } }
     else if (M.task === 3) tremor = atualizarT3(dt, tt);
   } else if (M.fase === 'ok') {
     tremor = Math.max(0, AJ.tremor * (1 - M.tFase));
+    if (M.missao === 2 && M.task === 1) posicionarZarya(Math.min(1, M.tFase / 1.2));   // a Zarya desliza e trava no Unity
     if (M.tFase > 1.7) { if (M.task < 3) iniciarTask(M.task + 1); else finalizarMissao(); }
   }
   // câmera: na Task 1 o jogador move a mira (teclado soma no alvo, mouse/toque definem o alvo); nas outras ela vira sozinha para a estação
-  const mirando = M.task === 1 && M.fase === 'jogo';
+  const mirando = M.missao !== 2 && M.task === 1 && M.fase === 'jogo';
   if (mirando) {
     const kx = (M.teclas.arrowright || M.teclas.d ? 1 : 0) - (M.teclas.arrowleft || M.teclas.a ? 1 : 0), ky = (M.teclas.arrowup || M.teclas.w ? 1 : 0) - (M.teclas.arrowdown || M.teclas.s ? 1 : 0);
     M.alvo.x = Math.max(-AJ.yawMax, Math.min(AJ.yawMax, M.alvo.x + kx * dt * 0.7));
@@ -1928,7 +2164,7 @@ function atualizarT3(dt, tt) {
 }
 // mover a mira (só na Task 1): mouse (posição na tela), toque (arrastar) ou setas/WASD
 addEventListener('pointermove', e => {
-  if (!M.ativa || M.task !== 1 || M.fase !== 'jogo' || document.querySelector('dialog[open]')) return;
+  if (!M.ativa || M.missao === 2 || M.task !== 1 || M.fase !== 'jogo' || document.querySelector('dialog[open]')) return;
   if (e.pointerType === 'mouse') {
     M.alvo.x = (e.clientX / innerWidth - 0.5) * 2 * AJ.yawMax;
     M.alvo.y = AJ.pitchMin + (1 - e.clientY / innerHeight) * (AJ.pitchMax - AJ.pitchMin);
@@ -1943,7 +2179,7 @@ addEventListener('pointerup', () => { M.arrasto = null; });
 addEventListener('keyup', e => { delete M.teclas[e.key.toLowerCase()]; });
 // teclado na Task 2: números, Backspace e Enter digitam no rádio; ← e → trocam de estação
 addEventListener('keydown', e => {
-  if (!M.ativa || M.task !== 2 || M.fase !== 'jogo' || document.querySelector('dialog[open]')) return;
+  if (!M.ativa || M.missao === 2 || M.task !== 2 || M.fase !== 'jogo' || document.querySelector('dialog[open]')) return;
   if (/^[0-9]$/.test(e.key)) { abaT2('radio'); teclaT2(e.key); }
   else if (e.key === 'Backspace') { e.preventDefault(); teclaT2('del'); }
   else if (e.key === 'Enter') { e.preventDefault(); teclaT2('ok'); }
@@ -1962,13 +2198,17 @@ function cardMissao(c, completo) {
   const nome = document.createElement('b'); nome.textContent = tx.nome;
   corpo.append(tag, nome);
   if (completo) {
-    for (const [rot, val] of [[L.album.objetivo, tx.objetivo], [L.album.aconteceu, tx.aconteceu]]) {
+    // objetivo, o que aconteceu, ligação com as tasks e trade-off de massa (só os que o card tiver)
+    for (const [rot, val] of [[L.album.objetivo, tx.objetivo], [L.album.aconteceu, tx.aconteceu], [L.album.relacao, tx.relacao], [L.album.tradeoff, tx.tradeoff]]) {
+      if (!val) continue;
       const p = document.createElement('p'); const s = document.createElement('span'); s.textContent = rot; p.append(s, val); corpo.appendChild(p);
     }
     const f = document.createElement('div'); f.className = 'cm-fonte';
-    const a1 = document.createElement('a'); a1.href = 'https://images.nasa.gov/details/' + encodeURIComponent(c.registro.id); a1.target = '_blank'; a1.rel = 'noopener noreferrer'; a1.textContent = c.registro.id;
-    const a2 = document.createElement('a'); a2.href = DADOS.ntrs.url; a2.target = '_blank'; a2.rel = 'noopener noreferrer'; a2.textContent = 'NTRS ' + DADOS.ntrs.id;
-    f.append(L.ui.fonte + ': NASA · ', a1, ' · ', a2); corpo.appendChild(f);
+    const link = (href, txt) => { const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = txt; return a; };
+    f.append(L.ui.fonte + ': NASA · ', link('https://images.nasa.gov/details/' + encodeURIComponent(c.registro.id), c.registro.id));
+    // fontes do card: páginas da NASA listadas no dados.js; sem lista, o relatório do NTRS (fase 1)
+    (c.fontes || [{ rot: 'NTRS ' + DADOS.ntrs.id, url: DADOS.ntrs.url }]).forEach(fo => f.append(' · ', link(fo.url, fo.rot)));
+    corpo.appendChild(f);
   }
   el.append(foto, corpo);
   return el;
@@ -2160,7 +2400,9 @@ if (PONTOS[h.get('tp')]) teleportar(h.get('tp'));
 // #missao abre a missão 1 pela contagem · #missao=1, =2 ou =3 pula direto para aquela task (&abrir já passa do splash)
 // #missao=fim&t=60 mostra o aprendizado e o resultado com tempo total de 60 s (t=120 mostra a falha por demora)
 if (h.has('missao')) setTimeout(() => {
-  estado.capacete = true; teleportar('braco'); comecarMissao();
+  const fase = h.get('m') === '2' ? 2 : 1;                  // &m=2 = fase 2 (ISS)
+  if (fase === 2 && !estado.estrelas) estado.estrelas = 1;  // o atalho libera a ISS
+  estado.capacete = true; teleportar('braco'); comecarMissao(fase);
   const m = h.get('missao');
   if (['1', '2', '3'].includes(m)) { M.pesado = false; iniciarTask(+m); if (h.has('abrir')) abrirTask(); }
   if (m === 'fim') { const tt = parseFloat(h.get('t')) || 41; M.pesado = false; iniciarTask(3); M.tempos = [tt * 0.3, tt * 0.4, tt * 0.3]; finalizarMissao(); }
@@ -2171,7 +2413,10 @@ if (h.has('capacete')) estado.capacete = true; // atalho: já chega com o capace
 if (h.has('preparo')) setTimeout(() => {
   estado.capacete = true; teleportar('braco');
   const modo = h.get('preparo');
-  abrirPreparo(modo === 'falha' ? ['manual', 'escudo'] : modo === 'bom' ? ['giroscopio'] : modo === 'nada' ? [] : undefined, 2);
+  const fase = h.get('m') === '2' ? 2 : 1;                  // &m=2 abre o manifesto da fase 2 (ISS)
+  if (fase === 2 && !estado.estrelas) estado.estrelas = 1;
+  const itens = fase === 2 ? { falha: ['luvas', 'kit'], bom: ['sensor'] } : { falha: ['manual', 'escudo'], bom: ['giroscopio'] };
+  abrirPreparo(modo === 'nada' ? [] : itens[modo], modo === 'missao' ? 1 : 2, fase);
 }, 300);
 if (h.has('album')) setTimeout(abrirAlbum, 300);
 if (h.has('roblox')) setTimeout(abrirRoblox, 300);
